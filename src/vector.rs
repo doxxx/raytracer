@@ -3,17 +3,6 @@ use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Neg};
 #[derive(Debug,Clone,Copy)]
 pub struct Vector2f(pub f64, pub f64);
 
-impl Vector2f {
-    pub fn zero() -> Vector2f {
-        Vector2f(0.0, 0.0)
-    }
-
-    pub fn identity() -> Vector2f {
-        Vector2f(1.0, 1.0)
-    }
-
-}
-
 #[derive(Debug,Clone,Copy)]
 pub struct Vector3f(pub f64, pub f64, pub f64);
 

@@ -7,45 +7,14 @@ mod material;
 
 use std::fs::File;
 use std::path::Path;
-use std::cmp::Ordering;
-use std::f64;
 
 use vector::Vector3f;
 use shapes::{Shape, Sphere};
-use system::{Camera, Ray};
+use system::{Camera, cast_ray};
 use material::{Color,Checkerboard};
-
-
-// struct Ray {
-
-// }
-
-// impl Ray {
-//     fn new(sx: u32, sy: u32) -> Ray {
-//         Ray{}
-//     }
-// }
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
     image::Rgb([(v.0 * 255.0) as u8, (v.1 * 255.0) as u8, (v.2 * 255.0) as u8])
-}
-
-fn cast_ray(ray: Ray, objects: &Vec<Box<Shape>>) -> Option<(&Box<Shape>, f64)> {
-    objects.iter()
-            .flat_map(|o| o.intersect(ray.origin, ray.direction).map(|i| (o, i)))
-            .min_by(|&(_, i1), &(_, i2)| i1.partial_cmp(&i2).unwrap())
-
-    // let mut nearest = f64::MAX;
-    // let mut nearest_object = None;
-
-    // for object in &objects {
-    //     if let Some(i) = object.intersect(ray.origin, ray.direction) {
-    //         if i < nearest {
-    //             nearest = i;
-    //             nearest_object = Some(object);
-    //         }
-    //     }
-    // }
 }
 
 fn main() {
@@ -77,7 +46,6 @@ fn main() {
             let color = object.material().color(ray.direction, normal, texture_coords);
             *pixel = color_to_pixel(color);
         }
-
     }
 
     let ref mut fout = File::create(&Path::new("out.png")).unwrap();

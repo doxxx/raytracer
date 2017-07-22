@@ -1,7 +1,7 @@
 use std::mem;
 use std::f64;
 use vector::{Vector2f,Vector3f};
-use material::{Color,Material};
+use material::{Material};
 
 pub trait Shape {
     fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<f64>;
