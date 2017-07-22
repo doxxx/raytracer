@@ -1,5 +1,5 @@
 use vector::Vector3f;
-use shapes::Shape;
+use object::Object;
 
 use std::f64;
 
@@ -45,8 +45,8 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, objects: &Vec<Box<Shape>>) -> Option<(&Box<Shape>, f64)> {
+pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<(&Object, f64)> {
     objects.iter()
-            .flat_map(|o| o.intersect(ray.origin, ray.direction).map(|i| (o, i)))
-            .min_by(|&(_, i1), &(_, i2)| i1.partial_cmp(&i2).unwrap())
+        .flat_map(|o| o.shape.intersect(ray.origin, ray.direction).map(|i| (o, i)))
+        .min_by(|&(_, i1), &(_, i2)| i1.partial_cmp(&i2).unwrap())
 }

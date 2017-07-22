@@ -19,10 +19,6 @@ impl Vector3f {
         self.0.powi(2) + self.1.powi(2) + self.2.powi(2)
     }
 
-    pub fn length(&self) -> f64 {
-        self.length_squared().sqrt()
-    }
-
     pub fn normalize(self) -> Vector3f {
         let l2 = self.length_squared();
         if l2 > 0.0 {
