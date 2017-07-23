@@ -1,8 +1,9 @@
 use shapes::Shape;
 use system::Color;
 use texture::Texture;
-use vector::Vector3f;
+use vector::{Vector2f, Vector3f};
 
+#[derive(Debug)]
 pub struct Object {
     pub shape: Box<Shape>,
     pub texture: Box<Texture>,
@@ -16,9 +17,8 @@ impl Object {
         }
     }
 
-    pub fn color(&self, point: Vector3f, incidence: Vector3f) -> Color {
-        let (normal, texture_coords) = self.shape.surface_data(point);
-        let color = self.texture.color(texture_coords);
+    pub fn color(&self, incidence: Vector3f, normal: Vector3f, uv: Vector2f) -> Color {
+        let color = self.texture.color(uv);
         let facing_ratio = f64::max(0.0, normal.dot(-incidence));
         color * facing_ratio
     }

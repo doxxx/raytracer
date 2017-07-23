@@ -1,4 +1,5 @@
 use std::f64;
+use std::fmt::Debug;
 
 use system::Color;
 use vector::Vector2f;
@@ -7,7 +8,7 @@ fn mix(a: Color, b: Color, v: f64) -> Color {
     a * (1.0 - v) + b * v
 }
 
-pub trait Texture {
+pub trait Texture: Debug {
     fn color(&self, point: Vector2f) -> Color;
 }
 

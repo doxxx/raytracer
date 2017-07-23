@@ -1,6 +1,7 @@
 use std::f64;
 
 use object::Object;
+use shapes::Intersection;
 use vector::Vector3f;
 
 pub type Color = Vector3f;
@@ -41,17 +42,28 @@ pub struct Ray {
     pub direction: Vector3f,
 }
 
-impl Ray {
-    pub fn project(&self, t: f64) -> Vector3f {
-        self.origin + self.direction * t
-    }
-}
-
-pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<(&Object, f64)> {
+pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<RayHit> {
     objects
         .iter()
         .flat_map(|o| {
-            o.shape.intersect(ray.origin, ray.direction).map(|i| (o, i))
+            o.shape
+                .intersect(ray.origin, ray.direction)
+                .map(|i| RayHit::new(o, i))
         })
-        .min_by(|&(_, i1), &(_, i2)| i1.partial_cmp(&i2).unwrap())
+        .min_by(|r1, r2| r1.i.t.partial_cmp(&r2.i.t).unwrap())
+}
+
+#[derive(Debug)]
+pub struct RayHit<'a> {
+    pub object: &'a Object,
+    pub i: Intersection,
+}
+
+impl<'a> RayHit<'a> {
+    pub fn new(object: &Object, i: Intersection) -> RayHit {
+        RayHit {
+            object: object,
+            i: i,
+        }
+    }
 }

@@ -13,7 +13,7 @@ use std::path::Path;
 use clap::{App, Arg};
 
 use object::Object;
-use shapes::{Plane, Sphere};
+use shapes::{Plane, Sphere, Triangle};
 use system::{Camera, Color, cast_ray};
 use texture::{Checkerboard, Flat};
 use vector::Vector3f;
@@ -68,12 +68,15 @@ fn main() {
     let camera = Camera::new(w, h, 60.0);
 
     let white = Vector3f(1.0, 1.0, 1.0);
-    let blue = Vector3f(0.5, 0.5, 1.0);
+    let blue = Vector3f(0.0, 0.0, 1.0);
+    let red = Vector3f(1.0, 0.0, 0.0);
 
     let white_flat = Flat::new(white);
+    let red_flat = Flat::new(red);
     let white_checkboard = Checkerboard::new(white, white * 0.8, 4.0);
     let white_checkboard_large = Checkerboard::new(white, white * 0.8, 0.5);
     let blue_checkboard = Checkerboard::new(blue, blue * 0.8, 4.0);
+    let red_checkboard = Checkerboard::new(red, red * 0.8, 0.1);
 
     let objects: Vec<Object> = vec![
         Object::new(
@@ -103,14 +106,30 @@ fn main() {
             Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
             Box::new(blue_checkboard),
         ),
+        Object::new(
+            Box::new(Triangle::new(
+                Vector3f(-4.0, 0.0, -20.0),
+                Vector3f(0.0, -4.0, -15.0),
+                Vector3f(4.0, 4.0, -25.0),
+            )),
+            Box::new(white_flat),
+        ),
+        Object::new(
+            Box::new(Triangle::new(
+                Vector3f(-4.0, 4.0, -10.0),
+                Vector3f(-4.0, 0.0, -10.0),
+                Vector3f(4.0, 4.0, -10.0),
+            )),
+            Box::new(red_checkboard),
+        ),
     ];
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let ray = camera.pixel_ray(x, y);
-        let intersection = cast_ray(ray, &objects);
+        let hit = cast_ray(ray, &objects);
 
-        if let Some((object, t)) = intersection {
-            let color = object.color(ray.project(t), ray.direction);
+        if let Some(hit) = hit {
+            let color = hit.object.color(ray.direction, hit.i.n, hit.i.uv);
             *pixel = color_to_pixel(color);
         }
     }
