@@ -33,7 +33,7 @@ impl Camera {
     }
 }
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Vector3f,
     pub direction: Vector3f,
@@ -46,7 +46,10 @@ impl Ray {
 }
 
 pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<(&Object, f64)> {
-    objects.iter()
-        .flat_map(|o| o.shape.intersect(ray.origin, ray.direction).map(|i| (o, i)))
+    objects
+        .iter()
+        .flat_map(|o| {
+            o.shape.intersect(ray.origin, ray.direction).map(|i| (o, i))
+        })
         .min_by(|&(_, i1), &(_, i2)| i1.partial_cmp(&i2).unwrap())
 }

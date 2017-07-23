@@ -1,5 +1,6 @@
 use std::f64;
 use std::mem;
+
 use vector::{Vector2f, Vector3f};
 
 pub trait Shape {
@@ -52,8 +53,10 @@ impl Shape for Sphere {
 
     fn surface_data(&self, point: Vector3f) -> (Vector3f, Vector2f) {
         let n = (point - self.center).normalize();
-        let t = Vector2f(((1.0 + n.2.atan2(n.0)) / f64::consts::PI) * 0.5,
-                         n.1.acos() / f64::consts::PI);
+        let t = Vector2f(
+            ((1.0 + n.2.atan2(n.0)) / f64::consts::PI) * 0.5,
+            n.1.acos() / f64::consts::PI,
+        );
         (n, t)
     }
 }
