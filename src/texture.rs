@@ -1,16 +1,14 @@
 use std::f64;
+
+use system::Color;
 use vector::Vector2f;
-
-use vector::Vector3f;
-
-pub type Color = Vector3f;
 
 fn mix(a: Color, b: Color, v: f64) -> Color {
     a * (1.0 - v) + b * v
 }
 
-pub trait Material {
-    fn color(&self, texture_coords: Vector2f) -> Color;
+pub trait Texture {
+    fn color(&self, point: Vector2f) -> Color;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -20,14 +18,13 @@ pub struct Flat {
 
 impl Flat {
     pub fn new(color: Color) -> Flat {
-        Flat { 
-            color: color
-        }
+        Flat { color: color }
     }
 }
 
-impl Material for Flat {
-    fn color(&self, texture_coords: Vector2f) -> Color {
+impl Texture for Flat {
+    #![allow(unused_variables)]
+    fn color(&self, point: Vector2f) -> Color {
         return self.color;
     }
 }
@@ -49,10 +46,10 @@ impl Checkerboard {
     }
 }
 
-impl Material for Checkerboard {
-    fn color(&self, texture_coords: Vector2f) -> Color {
-        let scaled_x_frac = (texture_coords.0 * self.scale).fract();
-        let scaled_y_frac = (texture_coords.1 * self.scale).fract();
+impl Texture for Checkerboard {
+    fn color(&self, point: Vector2f) -> Color {
+        let scaled_x_frac = (point.0 * self.scale).fract();
+        let scaled_y_frac = (point.1 * self.scale).fract();
         let x_pattern = (scaled_x_frac.abs() > 0.5) ^ (scaled_x_frac < 0.0);
         let y_pattern = (scaled_y_frac.abs() > 0.5) ^ (scaled_y_frac < 0.0);
         let pattern = if x_pattern ^ y_pattern { 1.0 } else { 0.0 };

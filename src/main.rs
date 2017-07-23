@@ -1,21 +1,21 @@
 extern crate image;
 extern crate clap;
 
-mod vector;
+mod object;
 mod shapes;
 mod system;
-mod material;
-mod object;
+mod texture;
+mod vector;
 
 use std::fs::File;
 use std::path::Path;
 
 use clap::{App, Arg};
 
-use material::{Checkerboard, Color, Flat};
 use object::Object;
-use shapes::{Plane,Sphere};
-use system::{Camera, cast_ray};
+use shapes::{Plane, Sphere};
+use system::{Camera, Color, cast_ray};
+use texture::{Checkerboard, Flat};
 use vector::Vector3f;
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
@@ -77,7 +77,10 @@ fn main() {
 
     let objects: Vec<Object> = vec![
         Object::new(
-            Box::new(Plane::new(Vector3f(0.0, -5.0, 0.0), Vector3f(0.0, 1.0, 0.0))),
+            Box::new(Plane::new(
+                Vector3f(0.0, -5.0, 0.0),
+                Vector3f(0.0, 1.0, 0.0),
+            )),
             Box::new(white_checkboard_large),
         ),
         Object::new(

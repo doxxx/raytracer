@@ -3,6 +3,8 @@ use std::f64;
 use object::Object;
 use vector::Vector3f;
 
+pub type Color = Vector3f;
+
 #[derive(Debug)]
 pub struct Camera {
     width: f64,
