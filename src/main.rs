@@ -1,4 +1,5 @@
 extern crate image;
+extern crate clap;
 
 mod vector;
 mod shapes;
@@ -8,6 +9,8 @@ mod object;
 
 use std::fs::File;
 use std::path::Path;
+
+use clap::{Arg, App};
 
 use material::{Checkerboard, Color};
 use object::Object;
@@ -20,8 +23,39 @@ fn color_to_pixel(v: Color) -> image::Rgb<u8> {
 }
 
 fn main() {
-    let w = 640;
-    let h = 480;
+    let app = App::new("raytracer")
+        .version("0.1.0")
+        .author("Gordon Tyler <gordon@doxxx.net>")
+        .about("Simple ray tracer")
+        .arg(Arg::with_name("width")
+            .short("w")
+            .value_name("WIDTH")
+            .help("Image width")
+            .takes_value(true)
+            .default_value("1024"))
+        .arg(Arg::with_name("height")
+            .short("h")
+            .value_name("HEIGHT")
+            .help("Image height")
+            .takes_value(true)
+            .default_value("768"));
+    let options = app.get_matches();
+
+    let w = match options.value_of("width").unwrap().parse() {
+        Ok(n) => n,
+        Err(_) => {
+             println!("ERROR: Bad width!");
+             return;
+        }
+    };
+    let h = match options.value_of("height").unwrap().parse() {
+        Ok(n) => n,
+        Err(_) => {
+             println!("ERROR: Bad height!");
+             return;
+        }
+    };
+
     let mut imgbuf = image::RgbImage::new(w, h);
     let camera = Camera::new(w, h, 60.0);
 
