@@ -14,7 +14,7 @@ use clap::{App, Arg};
 
 use material::{Checkerboard, Color, Flat};
 use object::Object;
-use shapes::Sphere;
+use shapes::{Plane,Sphere};
 use system::{Camera, cast_ray};
 use vector::Vector3f;
 
@@ -72,9 +72,14 @@ fn main() {
 
     let white_flat = Flat::new(white);
     let white_checkboard = Checkerboard::new(white, white * 0.8, 4.0);
+    let white_checkboard_large = Checkerboard::new(white, white * 0.8, 0.5);
     let blue_checkboard = Checkerboard::new(blue, blue * 0.8, 4.0);
 
     let objects: Vec<Object> = vec![
+        Object::new(
+            Box::new(Plane::new(Vector3f(0.0, -5.0, 0.0), Vector3f(0.0, 1.0, 0.0))),
+            Box::new(white_checkboard_large),
+        ),
         Object::new(
             Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
             Box::new(white_flat),

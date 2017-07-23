@@ -51,8 +51,10 @@ impl Checkerboard {
 
 impl Material for Checkerboard {
     fn color(&self, texture_coords: Vector2f) -> Color {
-        let x_pattern = (texture_coords.0 * self.scale).fract() > 0.5;
-        let y_pattern = (texture_coords.1 * self.scale).fract() > 0.5;
+        let scaled_x_frac = (texture_coords.0 * self.scale).fract();
+        let scaled_y_frac = (texture_coords.1 * self.scale).fract();
+        let x_pattern = (scaled_x_frac.abs() > 0.5) ^ (scaled_x_frac < 0.0);
+        let y_pattern = (scaled_y_frac.abs() > 0.5) ^ (scaled_y_frac < 0.0);
         let pattern = if x_pattern ^ y_pattern { 1.0 } else { 0.0 };
         mix(self.color1, self.color2, pattern)
     }

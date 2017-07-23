@@ -60,3 +60,50 @@ impl Shape for Sphere {
         (n, t)
     }
 }
+
+#[derive(Debug)]
+pub struct Plane {
+    point: Vector3f,
+    normal: Vector3f,
+}
+
+impl Plane {
+    pub fn new(point: Vector3f, normal: Vector3f) -> Plane {
+        Plane {
+            point: point,
+            normal: normal
+        }
+    }
+}
+
+impl Shape for Plane {
+    fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<f64> {
+        let denom = self.normal.dot(direction);
+        if denom.abs() > 1e-6 {
+            let w = origin - self.point;
+            let t = -self.normal.dot(w) / denom;
+            if t >= 0.0 {
+                Some(t)
+            }
+            else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    fn surface_data(&self, point: Vector3f) -> (Vector3f, Vector2f) {
+        let mut u = self.normal.cross(Vector3f(1.0, 0.0, 0.0));
+        if u.length_squared() < 1e-6 {
+            u = self.normal.cross(Vector3f(0.0, 1.0, 0.0));
+        }
+        if u.length_squared() < 1e-6 {
+            u = self.normal.cross(Vector3f(0.0, 0.0, 1.0));
+        }
+        u = u.normalize();
+        let v = self.normal.cross(u);
+        let t = Vector2f(u.dot(point-self.point), v.dot(point-self.point));
+        (self.normal, t)
+    }
+}

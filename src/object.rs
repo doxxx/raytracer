@@ -18,6 +18,8 @@ impl Object {
 
     pub fn color(&self, point: Vector3f, incidence: Vector3f) -> Color {
         let (normal, texture_coords) = self.shape.surface_data(point);
-        self.material.color(texture_coords) * f64::max(0.0, normal.dot(-incidence))
+        let color = self.material.color(texture_coords);
+        let shade = f64::max(0.0, normal.dot(-incidence));
+        color * shade
     }
 }

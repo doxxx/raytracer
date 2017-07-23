@@ -15,6 +15,14 @@ impl Vector3f {
         self.0 * other.0 + self.1 * other.1 + self.2 * other.2
     }
 
+    pub fn cross(&self, other: Vector3f) -> Vector3f {
+        Vector3f(
+            self.1 * other.2 - self.2 * other.1,
+            self.2 * other.0 - self.0 * other.2,
+            self.0 * other.1 - self.1 * other.0,
+        )
+    }
+
     pub fn length_squared(&self) -> f64 {
         self.0.powi(2) + self.1.powi(2) + self.2.powi(2)
     }
