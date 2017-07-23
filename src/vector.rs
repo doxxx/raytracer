@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Neg};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug,Clone,Copy)]
 pub struct Vector2f(pub f64, pub f64);

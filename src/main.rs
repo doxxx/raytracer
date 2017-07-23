@@ -9,11 +9,11 @@ mod object;
 use std::fs::File;
 use std::path::Path;
 
-use vector::Vector3f;
+use material::{Checkerboard, Color};
+use object::Object;
 use shapes::Sphere;
 use system::{Camera, cast_ray};
-use material::{Color, Checkerboard};
-use object::Object;
+use vector::Vector3f;
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
     image::Rgb([(v.0 * 255.0) as u8, (v.1 * 255.0) as u8, (v.2 * 255.0) as u8])

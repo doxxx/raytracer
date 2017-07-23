@@ -1,5 +1,5 @@
-use std::mem;
 use std::f64;
+use std::mem;
 use vector::{Vector2f, Vector3f};
 
 pub trait Shape {

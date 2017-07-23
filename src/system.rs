@@ -1,7 +1,7 @@
-use vector::Vector3f;
-use object::Object;
-
 use std::f64;
+
+use object::Object;
+use vector::Vector3f;
 
 #[derive(Debug)]
 pub struct Camera {

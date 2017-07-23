@@ -1,5 +1,5 @@
-use shapes::Shape;
 use material::Material;
+use shapes::Shape;
 
 pub struct Object {
     pub shape: Box<Shape>,

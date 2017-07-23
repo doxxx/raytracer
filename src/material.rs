@@ -1,7 +1,7 @@
 use std::f64;
+use vector::Vector2f;
 
 use vector::Vector3f;
-use vector::Vector2f;
 
 pub type Color = Vector3f;
 
