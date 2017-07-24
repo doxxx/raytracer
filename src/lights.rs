@@ -29,7 +29,8 @@ impl DistantLight {
 
 impl Light for DistantLight {
     fn calculate_color(&self, albedo: Color, surface_normal: Vector3f) -> Color {
-        albedo / PI * self.intensity * self.color * surface_normal.dot(-self.direction).max(0.0)
+        let surface_light_dot = surface_normal.dot(-self.direction);
+        albedo / PI * self.intensity * self.color * surface_light_dot.max(0.0)
     }
 }
 

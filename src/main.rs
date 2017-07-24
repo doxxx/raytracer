@@ -90,52 +90,52 @@ fn main() {
             Box::new(white_flat),
             None,
         ),
-        // Object::new(
-        //     Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Sphere::new(Vector3f(0.0, 6.0, -20.0), 2.0)),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Triangle::new(
-        //         Vector3f(-4.0, 0.0, -20.0),
-        //         Vector3f(0.0, -4.0, -15.0),
-        //         Vector3f(4.0, 4.0, -25.0),
-        //     )),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
-        // Object::new(
-        //     Box::new(Triangle::new(
-        //         Vector3f(-4.0, 4.0, -10.0),
-        //         Vector3f(-4.0, 0.0, -10.0),
-        //         Vector3f(4.0, 4.0, -10.0),
-        //     )),
-        //     Box::new(white_flat),
-        //     None,
-        // ),
+        Object::new(
+            Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
+            Box::new(white_flat),
+            None,
+        ),
+        Object::new(
+            Box::new(Sphere::new(Vector3f(0.0, 6.0, -20.0), 2.0)),
+            Box::new(white_flat),
+            None,
+        ),
+        Object::new(
+            Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
+            Box::new(white_flat),
+            None,
+        ),
+        Object::new(
+            Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
+            Box::new(white_flat),
+            Some(Vector3f(0.0, 0.0, 0.18)),
+        ),
+        Object::new(
+            Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
+            Box::new(white_flat),
+            None,
+        ),
+        Object::new(
+            Box::new(Triangle::new(
+                Vector3f(-4.0, 0.0, -20.0),
+                Vector3f(0.0, -4.0, -15.0),
+                Vector3f(4.0, 4.0, -25.0),
+            )),
+            Box::new(white_flat),
+            None,
+        ),
+        Object::new(
+            Box::new(Triangle::new(
+                Vector3f(-4.0, 4.0, -10.0),
+                Vector3f(-4.0, 0.0, -10.0),
+                Vector3f(4.0, 4.0, -10.0),
+            )),
+            Box::new(white_flat),
+            None,
+        ),
     ];
 
-    let light: Box<Light> = Box::new(DistantLight::new(white, 10.0, Vector3f(0.0, 0.0, -1.0)));
+    let light: Box<Light> = Box::new(DistantLight::new(white, 10.0, Vector3f(-0.5, -0.5, -1.0).normalize()));
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let ray = camera.pixel_ray(x, y);
