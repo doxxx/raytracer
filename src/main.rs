@@ -1,6 +1,7 @@
 extern crate image;
 extern crate clap;
 
+mod lights;
 mod object;
 mod shapes;
 mod system;
@@ -12,6 +13,7 @@ use std::path::Path;
 
 use clap::{App, Arg};
 
+use lights::{Light,DistantLight};
 use object::Object;
 use shapes::{Plane, Sphere, Triangle};
 use system::{Camera, Color, cast_ray};
@@ -20,9 +22,9 @@ use vector::Vector3f;
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
     image::Rgb([
-        (v.0 * 255.0) as u8,
-        (v.1 * 255.0) as u8,
-        (v.2 * 255.0) as u8,
+        (v.0 * 255.0).min(255.0) as u8,
+        (v.1 * 255.0).min(255.0) as u8,
+        (v.2 * 255.0).min(255.0) as u8,
     ])
 }
 
@@ -73,6 +75,7 @@ fn main() {
 
     let white_flat = Flat::new(white);
     let red_flat = Flat::new(red);
+    let blue_flat = Flat::new(blue);
     let white_checkboard = Checkerboard::new(white, white * 0.8, 4.0);
     let white_checkboard_large = Checkerboard::new(white, white * 0.8, 0.5);
     let blue_checkboard = Checkerboard::new(blue, blue * 0.8, 4.0);
@@ -84,52 +87,62 @@ fn main() {
                 Vector3f(0.0, -5.0, 0.0),
                 Vector3f(0.0, 1.0, 0.0),
             )),
-            Box::new(white_checkboard_large),
-        ),
-        Object::new(
-            Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
             Box::new(white_flat),
+            None,
         ),
-        Object::new(
-            Box::new(Sphere::new(Vector3f(0.0, 6.0, -20.0), 2.0)),
-            Box::new(white_checkboard),
-        ),
-        Object::new(
-            Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
-            Box::new(blue_checkboard),
-        ),
-        Object::new(
-            Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
-            Box::new(white_checkboard),
-        ),
-        Object::new(
-            Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
-            Box::new(blue_checkboard),
-        ),
-        Object::new(
-            Box::new(Triangle::new(
-                Vector3f(-4.0, 0.0, -20.0),
-                Vector3f(0.0, -4.0, -15.0),
-                Vector3f(4.0, 4.0, -25.0),
-            )),
-            Box::new(white_flat),
-        ),
-        Object::new(
-            Box::new(Triangle::new(
-                Vector3f(-4.0, 4.0, -10.0),
-                Vector3f(-4.0, 0.0, -10.0),
-                Vector3f(4.0, 4.0, -10.0),
-            )),
-            Box::new(red_checkboard),
-        ),
+        // Object::new(
+        //     Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Sphere::new(Vector3f(0.0, 6.0, -20.0), 2.0)),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Triangle::new(
+        //         Vector3f(-4.0, 0.0, -20.0),
+        //         Vector3f(0.0, -4.0, -15.0),
+        //         Vector3f(4.0, 4.0, -25.0),
+        //     )),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
+        // Object::new(
+        //     Box::new(Triangle::new(
+        //         Vector3f(-4.0, 4.0, -10.0),
+        //         Vector3f(-4.0, 0.0, -10.0),
+        //         Vector3f(4.0, 4.0, -10.0),
+        //     )),
+        //     Box::new(white_flat),
+        //     None,
+        // ),
     ];
+
+    let light: Box<Light> = Box::new(DistantLight::new(white, 10.0, Vector3f(0.0, 0.0, -1.0)));
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let ray = camera.pixel_ray(x, y);
         let hit = cast_ray(ray, &objects);
 
         if let Some(hit) = hit {
-            let color = hit.object.color(ray.direction, hit.i.n, hit.i.uv);
+            let color = hit.object.color(ray.direction, hit.i.n, hit.i.uv, &light);
             *pixel = color_to_pixel(color);
         }
     }

@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vector2f(pub f64, pub f64);
@@ -100,6 +100,38 @@ impl MulAssign<f64> for Vector3f {
         self.0 *= other;
         self.1 *= other;
         self.2 *= other;
+    }
+}
+
+impl Div for Vector3f {
+    type Output = Vector3f;
+
+    fn div(self, other: Vector3f) -> Vector3f {
+        Vector3f(self.0 / other.0, self.1 / other.1, self.2 / other.2)
+    }
+}
+
+impl Div<f64> for Vector3f {
+    type Output = Vector3f;
+
+    fn div(self, other: f64) -> Vector3f {
+        Vector3f(self.0 / other, self.1 / other, self.2 / other)
+    }
+}
+
+impl DivAssign for Vector3f {
+    fn div_assign(&mut self, other: Vector3f) {
+        self.0 /= other.0;
+        self.1 /= other.1;
+        self.2 /= other.2;
+    }
+}
+
+impl DivAssign<f64> for Vector3f {
+    fn div_assign(&mut self, other: f64) {
+        self.0 /= other;
+        self.1 /= other;
+        self.2 /= other;
     }
 }
 
