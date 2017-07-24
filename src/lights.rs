@@ -40,24 +40,33 @@ impl Light for DistantLight {
 }
 
 
+#[derive(Debug)]
+pub struct PointLight {
+    color: Color,
+    intensity: f64,
+    origin: Vector3f,
+    direction: Vector3f,
+}
 
-// #[derive(Debug)]
-// pub struct PointLight {
-//     color: Color,
-//     intensity: f64,
-//     origin: Vector3f,
-//     direction: Vector3f,
-// }
+impl PointLight {
+    pub fn new(color: Color, intensity: f64, origin: Vector3f, direction: Vector3f) -> PointLight {
+        PointLight {
+            color: color,
+            intensity: intensity,
+            origin: origin,
+            direction: direction,
+        }
+    }
+}
 
-// impl PointLight {
-//     pub fn new(color: Color, intensity: f64, origin: Vector3f, direction: Vector3f) -> PointLight {
-//         PointLight {
-//             color: color,
-//             intensity: intensity,
-//             origin: origin,
-//             direction: direction,
-//         }
-//     }
-// }
+impl Light for PointLight {
+    fn get_direction_from_point(&self, point: Vector3f) -> Vector3f {
+        (self.origin - point).normalize()
+    }
 
-// impl Light for PointLight {}
+    fn get_surface_color(&self, albedo: Color, surface_point: Vector3f, surface_normal: Vector3f) -> Color {
+        // let surface_light_dot = surface_normal.dot(-self.direction);
+        // albedo / PI * self.intensity * self.color * surface_light_dot.max(0.0)
+    }
+    
+}
