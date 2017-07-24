@@ -42,13 +42,22 @@ pub struct Ray {
     pub direction: Vector3f,
 }
 
+impl Ray {
+    pub fn new(origin: Vector3f, direction: Vector3f) -> Ray {
+        Ray {
+            origin: origin,
+            direction: direction,
+        }
+    }
+}
+
 pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<RayHit> {
     objects
         .iter()
         .flat_map(|o| {
-            o.shape
-                .intersect(ray.origin, ray.direction)
-                .map(|i| RayHit::new(o, i))
+            o.shape.intersect(ray.origin, ray.direction).map(|i| {
+                RayHit::new(o, i)
+            })
         })
         .min_by(|r1, r2| r1.i.t.partial_cmp(&r2.i.t).unwrap())
 }

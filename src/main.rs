@@ -13,19 +13,21 @@ use std::path::Path;
 
 use clap::{App, Arg};
 
-use lights::{Light,DistantLight};
+use lights::{DistantLight, Light};
 use object::Object;
 use shapes::{Plane, Sphere, Triangle};
-use system::{Camera, Color, cast_ray};
+use system::{Camera, Color, Ray, cast_ray};
 use texture::{Checkerboard, Flat};
 use vector::Vector3f;
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
-    image::Rgb([
-        (v.0 * 255.0).min(255.0) as u8,
-        (v.1 * 255.0).min(255.0) as u8,
-        (v.2 * 255.0).min(255.0) as u8,
-    ])
+    image::Rgb(
+        [
+            (v.0 * 255.0).min(255.0) as u8,
+            (v.1 * 255.0).min(255.0) as u8,
+            (v.2 * 255.0).min(255.0) as u8,
+        ],
+    )
 }
 
 fn main() {
@@ -88,32 +90,32 @@ fn main() {
                 Vector3f(0.0, 1.0, 0.0),
             )),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Sphere::new(Vector3f(0.0, 0.0, -20.0), 1.0)),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Sphere::new(Vector3f(0.0, 6.0, -20.0), 2.0)),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
             Box::new(white_flat),
-            Some(Vector3f(0.0, 0.0, 0.18)),
+            Some(Vector3f(0.0, 0.0, 0.18))
         ),
         Object::new(
             Box::new(Sphere::new(Vector3f(-6.0, -4.0, -20.0), 2.0)),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Triangle::new(
@@ -122,7 +124,7 @@ fn main() {
                 Vector3f(4.0, 4.0, -25.0),
             )),
             Box::new(white_flat),
-            None,
+            None
         ),
         Object::new(
             Box::new(Triangle::new(
@@ -131,18 +133,45 @@ fn main() {
                 Vector3f(4.0, 4.0, -10.0),
             )),
             Box::new(white_flat),
-            None,
+            None
         ),
     ];
 
-    let light: Box<Light> = Box::new(DistantLight::new(white, 10.0, Vector3f(-0.5, -0.5, -1.0).normalize()));
+    let light: Box<Light> = Box::new(DistantLight::new(
+        white,
+        10.0,
+        Vector3f(-0.5, -0.5, -1.0).normalize(),
+    ));
+
+    let bias = 1e-4;
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let ray = camera.pixel_ray(x, y);
         let hit = cast_ray(ray, &objects);
 
         if let Some(hit) = hit {
-            let color = hit.object.color(ray.direction, hit.i.n, hit.i.uv, &light);
+            let hit_point = ray.origin + ray.direction * hit.i.t;
+
+            let shadow_hit = cast_ray(
+                Ray::new(
+                    hit_point + hit.i.n * bias,
+                    light.get_direction_from_point(hit_point),
+                ),
+                &objects,
+            );
+
+            let mut color = Vector3f::zero();
+
+            if shadow_hit.is_none() {
+                color = hit.object.get_color(
+                    hit_point,
+                    ray.direction,
+                    hit.i.n,
+                    hit.i.uv,
+                    &light,
+                )
+            }
+
             *pixel = color_to_pixel(color);
         }
     }

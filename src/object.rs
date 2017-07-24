@@ -20,8 +20,9 @@ impl Object {
         }
     }
 
-    pub fn color(
+    pub fn get_color(
         &self,
+        point: Vector3f,
         incident: Vector3f,
         normal: Vector3f,
         uv: Vector2f,
@@ -30,6 +31,6 @@ impl Object {
         // let color = self.texture.color(uv);
         // let facing_ratio = f64::max(0.0, normal.dot(-incident));
         // color * facing_ratio
-        light.calculate_color(self.albedo, normal)
+        light.get_surface_color(self.albedo, point, normal)
     }
 }
