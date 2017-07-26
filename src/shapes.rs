@@ -2,14 +2,8 @@ use std::f64;
 use std::fmt::Debug;
 use std::mem;
 
+use system::Intersection;
 use vector::{Vector2f, Vector3f};
-
-#[derive(Debug)]
-pub struct Intersection {
-    pub t: f64,
-    pub n: Vector3f,
-    pub uv: Vector2f,
-}
 
 pub trait Shape: Debug {
     fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection>;

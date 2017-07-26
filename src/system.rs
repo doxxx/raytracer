@@ -1,10 +1,15 @@
 use std::f64;
 
+use lights::Light;
 use object::Object;
-use shapes::Intersection;
-use vector::Vector3f;
+use vector::{Vector2f, Vector3f};
 
 pub type Color = Vector3f;
+
+#[derive(Debug)]
+pub struct Options {
+    pub bias: f64,
+}
 
 #[derive(Debug)]
 pub struct Camera {
@@ -51,15 +56,21 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, objects: &[Object]) -> Option<RayHit> {
-    objects
-        .iter()
-        .flat_map(|o| {
-            o.shape.intersect(ray.origin, ray.direction).map(|i| {
-                RayHit::new(o, i)
-            })
-        })
-        .min_by(|r1, r2| r1.i.t.partial_cmp(&r2.i.t).unwrap())
+pub fn cast_ray(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
+    let mut nearest_distance = max_distance;
+    let mut nearest: Option<RayHit> = None;
+
+    for object in objects {
+        let maybe_intersection = object.shape.intersect(ray.origin, ray.direction);
+        if let Some(intersection) = maybe_intersection {
+            if intersection.t < nearest_distance {
+                nearest_distance = intersection.t;
+                nearest = Some(RayHit::new(&object, intersection));
+            }
+        }
+    }
+
+    nearest
 }
 
 #[derive(Debug)]
@@ -74,5 +85,49 @@ impl<'a> RayHit<'a> {
             object: object,
             i: i,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Intersection {
+    pub t: f64,
+    pub n: Vector3f,
+    pub uv: Vector2f,
+}
+
+pub fn calculate_pixel_color(
+    options: &Options,
+    camera: &Camera,
+    objects: &Vec<Object>,
+    lights: &Vec<Box<Light>>,
+    x: u32,
+    y: u32,
+) -> Option<Color> {
+    let ray = camera.pixel_ray(x, y);
+    let maybe_hit = cast_ray(ray, &objects, f64::MAX);
+
+    if let Some(hit) = maybe_hit {
+        let hit_distance = hit.i.t;
+        let hit_point = ray.origin + ray.direction * hit_distance;
+        let hit_normal = hit.i.n;
+
+        let mut hit_color = Vector3f::zero();
+
+        for light in lights {
+            let (dir, intensity, distance) = light.illuminate(hit_point);
+            let shadow_ray = Ray::new(hit_point + hit_normal * options.bias, -dir);
+            let maybe_shadow_hit = cast_ray(shadow_ray, objects, distance);
+            if maybe_shadow_hit.is_none() {
+                let albedo = hit.object.albedo;
+                let dot = hit_normal.dot(-dir);
+                if dot > 0.0 {
+                    hit_color += albedo * intensity * dot;
+                }
+            }
+        }
+
+        Some(hit_color)
+    } else {
+        None
     }
 }
