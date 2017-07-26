@@ -30,42 +30,53 @@ impl Sphere {
     }
 }
 
+fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
+    let discr = b * b - 4.0 * a * c;
+    if discr < 0.0 { return None; }
+    else if discr == 0.0 {
+        let x = - 0.5 * b / a;
+        return Some((x, x));
+    }
+    else {
+        let q = if b > 0.0 {
+            -0.5 * (b + discr.sqrt())
+        }
+        else {
+            -0.5 * (b - discr.sqrt())
+        };
+        Some((q / a, c / q))
+    }
+}
+
 impl Shape for Sphere {
     fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection> {
-        let l = self.center - origin;
-        let tca = l.dot(direction);
-        if tca < 0f64 {
-            return None;
-        }
-        let d2 = l.dot(l) - tca.powi(2);
-        if d2 > self.radius_squared {
-            return None;
-        }
-        let thc = (self.radius_squared - d2).sqrt();
-        let mut t0 = tca - thc;
-        let mut t1 = tca + thc;
-        if t0 > t1 {
-            mem::swap(&mut t0, &mut t1);
-        }
-        if t0 < 0.0 {
-            t0 = t1;
-            if t0 < 0.0 {
-                return None;
+        let L = origin - self.center;
+        let a = direction.dot(direction);
+        let b = 2.0 * direction.dot(L);
+        let c = L.dot(L) - self.radius_squared;
+        if let Some((mut t0, mut t1)) = solve_quadratic(a, b, c) {
+            if t0 > t1 {
+                mem::swap(&mut t0, &mut t1);
             }
+            if t0 < 0.0 {
+                t0 = t1;
+                if t0 < 0.0 {
+                    return None;
+                }
+            }
+
+            let p = origin + direction * t0;
+            let n = (p - self.center).normalize();
+
+            Some(Intersection {
+                t: t0,
+                n: n,
+                uv: Vector2f(0.0, 0.0),
+            })
         }
-
-        let p = origin + direction * t0;
-        let n = (p - self.center).normalize();
-        let uv = Vector2f(
-            ((1.0 + n.2.atan2(n.0)) / f64::consts::PI) * 0.5,
-            n.1.acos() / f64::consts::PI,
-        );
-
-        Some(Intersection {
-            t: t0,
-            n: n,
-            uv: uv,
-        })
+        else {
+            None
+        }
     }
 }
 

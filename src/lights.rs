@@ -67,6 +67,7 @@ impl Light for PointLight {
     fn get_surface_color(&self, albedo: Color, surface_point: Vector3f, surface_normal: Vector3f) -> Color {
         // let surface_light_dot = surface_normal.dot(-self.direction);
         // albedo / PI * self.intensity * self.color * surface_light_dot.max(0.0)
+        Vector3f::zero()
     }
     
 }
