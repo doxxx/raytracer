@@ -1,14 +1,16 @@
 use std::f64;
 
 use lights::Light;
-use object::Object;
+use object::{Object,MaterialType};
 use vector::{Vector2f, Vector3f};
 
 pub type Color = Vector3f;
 
 #[derive(Debug)]
 pub struct Options {
+    pub background_color: Color,
     pub bias: f64,
+    pub max_depth: u16,
 }
 
 #[derive(Debug)]
@@ -56,23 +58,6 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
-    let mut nearest_distance = max_distance;
-    let mut nearest: Option<RayHit> = None;
-
-    for object in objects {
-        let maybe_intersection = object.shape.intersect(ray.origin, ray.direction);
-        if let Some(intersection) = maybe_intersection {
-            if intersection.t < nearest_distance {
-                nearest_distance = intersection.t;
-                nearest = Some(RayHit::new(&object, intersection));
-            }
-        }
-    }
-
-    nearest
-}
-
 #[derive(Debug)]
 pub struct RayHit<'a> {
     pub object: &'a Object,
@@ -95,16 +80,33 @@ pub struct Intersection {
     pub uv: Vector2f,
 }
 
-pub fn calculate_pixel_color(
-    options: &Options,
-    camera: &Camera,
-    objects: &Vec<Object>,
-    lights: &Vec<Box<Light>>,
-    x: u32,
-    y: u32,
-) -> Option<Color> {
-    let ray = camera.pixel_ray(x, y);
-    let maybe_hit = cast_ray(ray, &objects, f64::MAX);
+fn reflect(incident: Vector3f, normal: Vector3f) -> Vector3f {
+    incident - normal * 2.0 * incident.dot(normal)
+}
+
+fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
+    let mut nearest_distance = max_distance;
+    let mut nearest: Option<RayHit> = None;
+
+    for object in objects {
+        let maybe_intersection = object.shape.intersect(ray.origin, ray.direction);
+        if let Some(intersection) = maybe_intersection {
+            if intersection.t < nearest_distance {
+                nearest_distance = intersection.t;
+                nearest = Some(RayHit::new(&object, intersection));
+            }
+        }
+    }
+
+    nearest
+}
+
+fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, ray: Ray, depth: u16) -> Color {
+    if depth > options.max_depth {
+        return options.background_color;
+    }
+
+    let maybe_hit = trace(ray, &objects, f64::MAX);
 
     if let Some(hit) = maybe_hit {
         let hit_distance = hit.i.t;
@@ -113,21 +115,44 @@ pub fn calculate_pixel_color(
 
         let mut hit_color = Vector3f::zero();
 
-        for light in lights {
-            let (dir, intensity, distance) = light.illuminate(hit_point);
-            let shadow_ray = Ray::new(hit_point + hit_normal * options.bias, -dir);
-            let maybe_shadow_hit = cast_ray(shadow_ray, objects, distance);
-            if maybe_shadow_hit.is_none() {
-                let albedo = hit.object.albedo;
-                let dot = hit_normal.dot(-dir);
-                if dot > 0.0 {
-                    hit_color += albedo * intensity * dot;
+        match hit.object.material_type {
+            MaterialType::Diffuse => {
+                for light in lights {
+                    let (dir, intensity, distance) = light.illuminate(hit_point);
+                    let shadow_ray = Ray::new(hit_point + hit_normal * options.bias, -dir);
+                    let maybe_shadow_hit = trace(shadow_ray, objects, distance);
+                    if maybe_shadow_hit.is_none() {
+                        let albedo = hit.object.albedo;
+                        let dot = hit_normal.dot(-dir);
+                        if dot > 0.0 {
+                            hit_color += albedo * intensity * dot;
+                        }
+                    }
                 }
+            }
+            MaterialType::Reflective => {
+                let reflected = Ray {
+                    origin: hit_point + hit_normal * options.bias,
+                    direction: reflect(ray.direction, hit_normal).normalize(),
+                };
+                let reflected_color = cast_ray(options, objects, lights, reflected, depth + 1);
+                hit_color += reflected_color * 0.8;
             }
         }
 
-        Some(hit_color)
+        hit_color
     } else {
-        None
+        options.background_color
     }
+}
+
+pub fn calculate_pixel_color(
+    options: &Options,
+    camera: &Camera,
+    objects: &Vec<Object>,
+    lights: &Vec<Box<Light>>,
+    x: u32,
+    y: u32,
+) -> Color {
+    cast_ray(options, objects, lights, camera.pixel_ray(x, y), 0)
 }
