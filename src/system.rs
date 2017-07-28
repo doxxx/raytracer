@@ -2,7 +2,7 @@ use std::f64;
 use std::mem;
 
 use lights::Light;
-use object::{MaterialType, Object};
+use object::{Material, Object};
 use vector::{Vector2f, Vector3f};
 
 pub type Color = Vector3f;
@@ -152,9 +152,12 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
         let maybe_intersection = object.shape.intersect(ray.origin, ray.direction);
         if let Some(intersection) = maybe_intersection {
             if intersection.t < nearest_distance {
-                if !(ray.kind == RayKind::Shadow && object.material_type == MaterialType::ReflectiveAndRefractive) {
-                    nearest_distance = intersection.t;
-                    nearest = Some(RayHit::new(&object, intersection));
+                match (ray.kind, object.material) {
+                    (RayKind::Shadow, Material::ReflectiveAndRefractive(_)) => {}
+                    _ => {
+                        nearest_distance = intersection.t;
+                        nearest = Some(RayHit::new(&object, intersection));
+                    }
                 }
             }
         }
@@ -177,8 +180,8 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, 
 
         let mut hit_color = Vector3f::zero();
 
-        match hit.object.material_type {
-            MaterialType::Diffuse => {
+        match hit.object.material {
+            Material::Diffuse(color) => {
                 for light in lights {
                     let (dir, intensity, distance) = light.illuminate(hit_point);
                     let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
@@ -187,12 +190,12 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, 
                         let albedo = hit.object.albedo;
                         let dot = hit_normal.dot(-dir);
                         if dot > 0.0 {
-                            hit_color += albedo * intensity * dot;
+                            hit_color += color * albedo * intensity * dot;
                         }
                     }
                 }
             }
-            MaterialType::Reflective => {
+            Material::Reflective => {
                 let reflection_ray = Ray::primary(
                     hit_point + hit_normal * options.bias,
                     reflect(ray.direction, hit_normal).normalize(),
@@ -200,9 +203,9 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, 
                 let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
                 hit_color += reflection_color * 0.8;
             }
-            MaterialType::ReflectiveAndRefractive => {
+            Material::ReflectiveAndRefractive(ior) => {
                 let mut refraction_color = Vector3f::zero();
-                let kr = fresnel(ray.direction, hit_normal, hit.object.ior);
+                let kr = fresnel(ray.direction, hit_normal, ior);
                 let outside = ray.direction.dot(hit_normal) < 0.0;
                 let bias = hit_normal * options.bias;
                 if kr < 1.0 {
@@ -212,7 +215,7 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, 
                         } else {
                             hit_point + bias
                         },
-                        refract(ray.direction, hit_normal, hit.object.ior).normalize(),
+                        refract(ray.direction, hit_normal, ior).normalize(),
                     );
                     refraction_color = cast_ray(options, objects, lights, refraction_ray, depth + 1);
                 }
