@@ -2,7 +2,8 @@ use std::f64;
 use std::mem;
 
 use lights::Light;
-use object::{Material, Object};
+use material::Material;
+use object::Object;
 use vector::{Vector2f, Vector3f};
 
 pub type Color = Vector3f;

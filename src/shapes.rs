@@ -26,16 +26,15 @@ impl Sphere {
 
 fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
     let discr = b * b - 4.0 * a * c;
-    if discr < 0.0 { return None; }
-    else if discr == 0.0 {
-        let x = - 0.5 * b / a;
+    if discr < 0.0 {
+        return None;
+    } else if discr == 0.0 {
+        let x = -0.5 * b / a;
         return Some((x, x));
-    }
-    else {
+    } else {
         let q = if b > 0.0 {
             -0.5 * (b + discr.sqrt())
-        }
-        else {
+        } else {
             -0.5 * (b - discr.sqrt())
         };
         Some((q / a, c / q))
@@ -67,8 +66,7 @@ impl Shape for Sphere {
                 n: n,
                 uv: Vector2f(0.0, 0.0),
             })
-        }
-        else {
+        } else {
             None
         }
     }
