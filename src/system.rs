@@ -43,32 +43,37 @@ impl Camera {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum RayKind {
+pub enum RayKind {
     Normal,
     Shadow,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Ray {
+pub struct Ray {
+    pub kind: RayKind,
     pub origin: Vector3f,
     pub direction: Vector3f,
-    pub kind: RayKind,
+    pub inverse_direction: Vector3f,
+    pub sign: [usize; 3],
 }
 
 impl Ray {
     pub fn primary(origin: Vector3f, direction: Vector3f) -> Ray {
-        Ray {
-            origin: origin,
-            direction: direction,
-            kind: RayKind::Normal,
-        }
+        Ray::new(RayKind::Normal, origin, direction)
     }
 
     pub fn shadow(origin: Vector3f, direction: Vector3f) -> Ray {
+        Ray::new(RayKind::Shadow, origin, direction)
+    }
+
+    fn new(kind: RayKind, origin: Vector3f, direction: Vector3f) -> Ray {
+        let inverse_direction = 1.0 / direction;
         Ray {
+            kind: kind,
             origin: origin,
             direction: direction,
-            kind: RayKind::Shadow,
+            inverse_direction: inverse_direction,
+            sign: inverse_direction.sign(),
         }
     }
 }
@@ -150,7 +155,12 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
     let mut nearest: Option<RayHit> = None;
 
     for object in objects {
-        let maybe_intersection = object.shape.intersect(ray.origin, ray.direction);
+        // check bounding box first if present
+        if !object.bounds.map_or(true, |b| b.intersect(ray)) {
+            continue;
+        }
+        // try calculate intersection with object shape
+        let maybe_intersection = object.shape.intersect(ray);
         if let Some(intersection) = maybe_intersection {
             if intersection.t < nearest_distance {
                 match (ray.kind, object.material) {

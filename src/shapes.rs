@@ -2,11 +2,15 @@ use std::f64;
 use std::fmt::Debug;
 use std::mem;
 
-use system::Intersection;
+use system::{Intersection, Ray};
 use vector::{Vector2f, Vector3f};
+use object::BoundingBox;
 
 pub trait Shape: Debug {
-    fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection>;
+    fn intersect(&self, ray: Ray) -> Option<Intersection>;
+    fn bounding_box(&self) -> Option<BoundingBox> {
+        None
+    }
 }
 
 #[derive(Debug)]
@@ -42,10 +46,10 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
 }
 
 impl Shape for Sphere {
-    fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection> {
-        let L = origin - self.center;
-        let a = direction.dot(direction);
-        let b = 2.0 * direction.dot(L);
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+        let L = ray.origin - self.center;
+        let a = ray.direction.dot(ray.direction);
+        let b = 2.0 * ray.direction.dot(L);
         let c = L.dot(L) - self.radius_squared;
         if let Some((mut t0, mut t1)) = solve_quadratic(a, b, c) {
             if t0 > t1 {
@@ -58,7 +62,7 @@ impl Shape for Sphere {
                 }
             }
 
-            let p = origin + direction * t0;
+            let p = ray.origin + ray.direction * t0;
             let n = (p - self.center).normalize();
 
             Some(Intersection {
@@ -101,17 +105,17 @@ impl Plane {
 }
 
 impl Shape for Plane {
-    fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection> {
-        let denom = self.normal.dot(direction);
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+        let denom = self.normal.dot(ray.direction);
         if denom.abs() < 1e-6 {
             return None;
         }
-        let w = origin - self.point;
+        let w = ray.origin - self.point;
         let t = -self.normal.dot(w) / denom;
         if t < 0.0 {
             return None;
         }
-        let p = origin + direction * t;
+        let p = ray.origin + ray.direction * t;
         let uv = Vector2f(self.u.dot(p - self.point), self.v.dot(p - self.point));
         Some(Intersection {
             t: t,
@@ -139,21 +143,21 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn intersect(&self, origin: Vector3f, direction: Vector3f) -> Option<Intersection> {
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
         let denom = self.normal.dot(self.normal);
 
-        let normal_dot_ray = self.normal.dot(direction);
+        let normal_dot_ray = self.normal.dot(ray.direction);
         if normal_dot_ray.abs() < 1e-6 {
             return None;
         }
 
         let d = self.normal.dot(self.vertices[0]);
-        let t = (self.normal.dot(origin) + d) / normal_dot_ray;
+        let t = (self.normal.dot(ray.origin) + d) / normal_dot_ray;
         if t < 0.0 {
             return None;
         }
 
-        let p = origin + direction * t;
+        let p = ray.origin + ray.direction * t;
 
         let c0 = self.edges[0].cross(p - self.vertices[0]);
         let u = self.normal.dot(c0);

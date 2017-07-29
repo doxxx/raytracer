@@ -41,7 +41,14 @@ impl Vector3f {
         } else {
             self
         }
+    }
 
+    pub fn sign(self) -> [usize; 3] {
+        [
+            if self.0 < 0.0 { 1 } else { 0 },
+            if self.1 < 0.0 { 1 } else { 0 },
+            if self.2 < 0.0 { 1 } else { 0 },
+        ]
     }
 }
 
@@ -93,6 +100,14 @@ impl Mul<f64> for Vector3f {
     }
 }
 
+impl Mul<Vector3f> for f64 {
+    type Output = Vector3f;
+
+    fn mul(self, other: Vector3f) -> Vector3f {
+        other * self
+    }
+}
+
 impl MulAssign for Vector3f {
     fn mul_assign(&mut self, other: Vector3f) {
         self.0 *= other.0;
@@ -122,6 +137,14 @@ impl Div<f64> for Vector3f {
 
     fn div(self, other: f64) -> Vector3f {
         Vector3f(self.0 / other, self.1 / other, self.2 / other)
+    }
+}
+
+impl Div<Vector3f> for f64 {
+    type Output = Vector3f;
+
+    fn div(self, other: Vector3f) -> Vector3f {
+        Vector3f(self / other.0, self / other.1, self / other.2)
     }
 }
 
