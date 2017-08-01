@@ -117,14 +117,14 @@ fn main() {
         ),
     ];
 
-    let lights: Vec<Box<Light>> = vec![
-        Box::new(DistantLight::new(
+    let lights: Vec<Light> = vec![
+        Light::Distant(DistantLight::new(
             white,
             1.0,
             Vector3f(0.0, -1.0, 0.0).normalize(),
         )),
-        Box::new(PointLight::new(blue, 5000.0, Vector3f(-10.0, 10.0, -15.0))),
-        Box::new(PointLight::new(red, 5000.0, Vector3f(10.0, 10.0, -15.0))),
+        Light::Point(PointLight::new(blue, 5000.0, Vector3f(-10.0, 10.0, -15.0))),
+        Light::Point(PointLight::new(red, 5000.0, Vector3f(10.0, 10.0, -15.0))),
     ];
 
     let options = Options {

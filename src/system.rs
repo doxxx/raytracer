@@ -1,7 +1,7 @@
 use std::f64;
 use std::mem;
 
-use lights::Light;
+use lights::{LightSource, Light};
 use material::Material;
 use object::Object;
 use vector::{Vector2f, Vector3f};
@@ -177,7 +177,7 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
     nearest
 }
 
-fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, ray: Ray, depth: u16) -> Color {
+fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &[Light], ray: Ray, depth: u16) -> Color {
     if depth > options.max_depth {
         return options.background_color;
     }
@@ -194,7 +194,10 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &Vec<Box<Light>>, 
         match hit.object.material {
             Material::Diffuse(color) => {
                 for light in lights {
-                    let (dir, intensity, distance) = light.illuminate(hit_point);
+                    let (dir, intensity, distance) = match light {
+                        &Light::Distant(ref light) => light.illuminate(hit_point),
+                        &Light::Point(ref light) => light.illuminate(hit_point),
+                    };
                     let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
                     let maybe_shadow_hit = trace(shadow_ray, objects, distance);
                     if maybe_shadow_hit.is_none() {
@@ -253,7 +256,7 @@ pub fn calculate_pixel_color(
     options: &Options,
     camera: &Camera,
     objects: &Vec<Object>,
-    lights: &Vec<Box<Light>>,
+    lights: &[Light],
     x: u32,
     y: u32,
 ) -> Color {
