@@ -6,3 +6,4 @@ authors = ["Gordon Tyler <gordon@doxxx.net>"]
 [dependencies]
 image = "0.14.0"
 clap = "2.25.0"
+rayon = "0.8.2"

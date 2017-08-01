@@ -177,7 +177,7 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
     nearest
 }
 
-fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &[Light], ray: Ray, depth: u16) -> Color {
+fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, depth: u16) -> Color {
     if depth > options.max_depth {
         return options.background_color;
     }
@@ -255,7 +255,7 @@ fn cast_ray(options: &Options, objects: &Vec<Object>, lights: &[Light], ray: Ray
 pub fn calculate_pixel_color(
     options: &Options,
     camera: &Camera,
-    objects: &Vec<Object>,
+    objects: &[Object],
     lights: &[Light],
     x: u32,
     y: u32,

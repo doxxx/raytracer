@@ -1,5 +1,6 @@
 extern crate image;
 extern crate clap;
+extern crate rayon;
 
 mod lights;
 mod material;
@@ -13,6 +14,7 @@ use std::fs::File;
 use std::path::Path;
 
 use clap::{App, Arg};
+use rayon::prelude::*;
 
 use lights::{DistantLight, Light, PointLight};
 use material::{IOR_GLASS, Material};
@@ -35,6 +37,11 @@ fn main() {
         .author("Gordon Tyler <gordon@doxxx.net>")
         .about("Simple ray tracer")
         .arg(
+            Arg::with_name("parallel")
+                .short("p")
+                .help("Use parallel rendering"),
+        )
+        .arg(
             Arg::with_name("width")
                 .short("w")
                 .value_name("WIDTH")
@@ -52,20 +59,21 @@ fn main() {
         );
     let options = app.get_matches();
 
-    let w = match options.value_of("width").unwrap().parse() {
+    let w: u32 = match options.value_of("width").unwrap().parse() {
         Ok(n) => n,
         Err(_) => {
             println!("ERROR: Bad width!");
             return;
         }
     };
-    let h = match options.value_of("height").unwrap().parse() {
+    let h: u32 = match options.value_of("height").unwrap().parse() {
         Ok(n) => n,
         Err(_) => {
             println!("ERROR: Bad height!");
             return;
         }
     };
+    let parallel: bool = options.is_present("parallel");
 
     let mut imgbuf = image::RgbImage::new(w, h);
     let camera = Camera::new(w, h, 60.0);
@@ -133,6 +141,41 @@ fn main() {
         max_depth: 5,
     };
 
+    if parallel {
+        render_parallel(&mut imgbuf, &options, &camera, &objects, &lights);
+    }
+    else {
+        render_serial(&mut imgbuf, &options, &camera, &objects, &lights);
+    }
+
+    let ref mut fout = File::create(&Path::new("out.png")).unwrap();
+    let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
+}
+
+fn render_parallel(imgbuf: &mut image::RgbImage, options: &Options, camera: &Camera, objects: &[Object], lights: &[Light]) {
+    let width = imgbuf.width();
+    let height = imgbuf.height();
+    let rows: Vec<u32> = (0..height).collect();
+    let colors: Vec<Color> = rows.par_iter().flat_map(|y| -> Vec<Color> {
+        (0..width).map(|x| {
+            calculate_pixel_color(
+                &options,
+                &camera,
+                &objects,
+                &lights,
+                x,
+                *y,
+            )
+        }).collect()
+    }).collect();
+
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        let offset = (y*width+x) as usize;
+        *pixel = color_to_pixel(colors[offset]);
+    }
+}
+
+fn render_serial(imgbuf: &mut image::RgbImage, options: &Options, camera: &Camera, objects: &[Object], lights: &[Light]) {
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         *pixel = color_to_pixel(calculate_pixel_color(
             &options,
@@ -143,7 +186,4 @@ fn main() {
             y,
         ));
     }
-
-    let ref mut fout = File::create(&Path::new("out.png")).unwrap();
-    let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
 }
