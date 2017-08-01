@@ -4,6 +4,7 @@ use std::mem;
 use lights::{LightSource, Light};
 use material::Material;
 use object::Object;
+use shapes::{Shape,Intersectable};
 use vector::{Vector2f, Vector3f};
 
 pub type Color = Vector3f;
@@ -155,13 +156,12 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
     let mut nearest: Option<RayHit> = None;
 
     for object in objects {
-        // check bounding box first if present
-        if !object.bounds.map_or(true, |b| b.intersect(ray)) {
-            continue;
-        }
-        // try calculate intersection with object shape
-        let maybe_intersection = object.shape.intersect(ray);
-        if let Some(intersection) = maybe_intersection {
+        let intersection = match &object.shape {
+            &Shape::Sphere(ref s) => s.intersect(ray),
+            &Shape::Plane(ref s) => s.intersect(ray),
+            &Shape::Triangle(ref s) => s.intersect(ray),
+        };
+        if let Some(intersection) = intersection {
             if intersection.t < nearest_distance {
                 match (ray.kind, object.material) {
                     (RayKind::Shadow, Material::ReflectiveAndRefractive(_)) => {}

@@ -17,7 +17,7 @@ use clap::{App, Arg};
 use lights::{DistantLight, Light, PointLight};
 use material::{IOR_GLASS, Material};
 use object::{DEFAULT_ALBEDO, Object};
-use shapes::{Plane, Sphere};
+use shapes::{Shape, Plane, Sphere};
 use system::{Camera, Color, Options, calculate_pixel_color};
 
 use vector::Vector3f;
@@ -78,40 +78,40 @@ fn main() {
     let objects: Vec<Object> = vec![
         Object::new(
             "plane",
-            Box::new(Plane::new(
+            Shape::Plane(Plane::new(
                 Vector3f(0.0, -5.0, 0.0),
                 Vector3f(0.0, 1.0, 0.0),
             )),
             DEFAULT_ALBEDO,
-            Material::Diffuse(green)
+            Material::Diffuse(white)
         ),
         Object::new(
             "sphere2",
-            Box::new(Sphere::new(Vector3f(0.0, 6.0, -24.0), 2.0)),
+            Shape::Sphere(Sphere::new(Vector3f(0.0, 6.0, -24.0), 2.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
         ),
         Object::new(
             "sphere3",
-            Box::new(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
+            Shape::Sphere(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
         ),
         Object::new(
             "sphere4",
-            Box::new(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
+            Shape::Sphere(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
             DEFAULT_ALBEDO,
             Material::Reflective
         ),
         Object::new(
             "sphere5",
-            Box::new(Sphere::new(Vector3f(-6.0, -3.0, -20.0), 2.0)),
+            Shape::Sphere(Sphere::new(Vector3f(-6.0, -3.0, -20.0), 2.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
         ),
         Object::new(
             "sphere6",
-            Box::new(Sphere::new(Vector3f(-1.0, -1.0, -10.0), 2.0)),
+            Shape::Sphere(Sphere::new(Vector3f(-1.0, -1.0, -10.0), 2.0)),
             DEFAULT_ALBEDO,
             Material::ReflectiveAndRefractive(IOR_GLASS)
         ),

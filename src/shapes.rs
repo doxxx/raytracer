@@ -1,16 +1,62 @@
 use std::f64;
-use std::fmt::Debug;
 use std::mem;
 
 use system::{Intersection, Ray};
 use vector::{Vector2f, Vector3f};
-use object::BoundingBox;
 
-pub trait Shape: Debug {
-    fn intersect(&self, ray: Ray) -> Option<Intersection>;
-    fn bounding_box(&self) -> Option<BoundingBox> {
-        None
+#[derive(Debug, Copy, Clone)]
+pub struct BoundingBox {
+    bounds: [Vector3f; 2],
+}
+
+impl BoundingBox {
+    pub fn new(min: Vector3f, max: Vector3f) -> BoundingBox {
+        BoundingBox { bounds: [min, max] }
     }
+
+    pub fn intersect(&self, ray: Ray) -> bool {
+        let mut tmin = (self.bounds[ray.sign[0]].0 - ray.origin.0) * ray.inverse_direction.0;
+        let mut tmax = (self.bounds[1 - ray.sign[0]].0 - ray.origin.0) * ray.inverse_direction.0;
+        let tymin = (self.bounds[ray.sign[1]].1 - ray.origin.1) * ray.inverse_direction.1;
+        let tymax = (self.bounds[1 - ray.sign[1]].1 - ray.origin.1) * ray.inverse_direction.1;
+
+        if (tmin > tymax) || (tymin > tmax) {
+            return false;
+        }
+        if tymin > tmin {
+            tmin = tymin;
+        }
+        if tymax < tmax {
+            tmax = tymax;
+        }
+
+        let tzmin = (self.bounds[ray.sign[2]].2 - ray.origin.2) * ray.inverse_direction.2;
+        let tzmax = (self.bounds[1 - ray.sign[2]].2 - ray.origin.2) * ray.inverse_direction.2;
+
+        if (tmin > tzmax) || (tzmin > tmax) {
+            return false;
+        }
+
+        // if tzmin > tmin {
+        //     tmin = tzmin;
+        // }
+        // if tzmax < tmax {
+        //     tmax = tzmax;
+        // }
+
+        return true;
+    }
+}
+
+#[derive(Debug)]
+pub enum Shape {
+    Sphere(Sphere),
+    Plane(Plane),
+    Triangle(Triangle),
+}
+
+pub trait Intersectable {
+    fn intersect(&self, ray: Ray) -> Option<Intersection>;
 }
 
 #[derive(Debug)]
@@ -45,7 +91,7 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
     }
 }
 
-impl Shape for Sphere {
+impl Intersectable for Sphere {
     fn intersect(&self, ray: Ray) -> Option<Intersection> {
         let L = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
@@ -104,7 +150,7 @@ impl Plane {
     }
 }
 
-impl Shape for Plane {
+impl Intersectable for Plane {
     fn intersect(&self, ray: Ray) -> Option<Intersection> {
         let denom = self.normal.dot(ray.direction);
         if denom.abs() < 1e-6 {
@@ -142,7 +188,7 @@ impl Triangle {
     }
 }
 
-impl Shape for Triangle {
+impl Intersectable for Triangle {
     fn intersect(&self, ray: Ray) -> Option<Intersection> {
         let denom = self.normal.dot(self.normal);
 
