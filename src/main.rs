@@ -19,7 +19,7 @@ use rayon::prelude::*;
 use lights::{DistantLight, Light, PointLight};
 use material::{IOR_GLASS, Material};
 use object::{DEFAULT_ALBEDO, Object};
-use shapes::{Shape, Plane, Sphere};
+use shapes::{Plane, Shape, Sphere};
 use system::{Camera, Color, Options, calculate_pixel_color};
 
 use vector::Vector3f;
@@ -36,11 +36,9 @@ fn main() {
         .version("0.1.0")
         .author("Gordon Tyler <gordon@doxxx.net>")
         .about("Simple ray tracer")
-        .arg(
-            Arg::with_name("parallel")
-                .short("p")
-                .help("Use parallel rendering"),
-        )
+        .arg(Arg::with_name("parallel").short("p").help(
+            "Use parallel rendering",
+        ))
         .arg(
             Arg::with_name("width")
                 .short("w")
@@ -143,8 +141,7 @@ fn main() {
 
     if parallel {
         render_parallel(&mut imgbuf, &options, &camera, &objects, &lights);
-    }
-    else {
+    } else {
         render_serial(&mut imgbuf, &options, &camera, &objects, &lights);
     }
 
@@ -152,30 +149,39 @@ fn main() {
     let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
 }
 
-fn render_parallel(imgbuf: &mut image::RgbImage, options: &Options, camera: &Camera, objects: &[Object], lights: &[Light]) {
+fn render_parallel(
+    imgbuf: &mut image::RgbImage,
+    options: &Options,
+    camera: &Camera,
+    objects: &[Object],
+    lights: &[Light],
+) {
     let width = imgbuf.width();
     let height = imgbuf.height();
     let rows: Vec<u32> = (0..height).collect();
-    let colors: Vec<Color> = rows.par_iter().flat_map(|y| -> Vec<Color> {
-        (0..width).map(|x| {
-            calculate_pixel_color(
-                &options,
-                &camera,
-                &objects,
-                &lights,
-                x,
-                *y,
-            )
-        }).collect()
-    }).collect();
+    let colors: Vec<Color> = rows.par_iter()
+        .flat_map(|y| -> Vec<Color> {
+            (0..width)
+                .map(|x| {
+                    calculate_pixel_color(&options, &camera, &objects, &lights, x, *y)
+                })
+                .collect()
+        })
+        .collect();
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let offset = (y*width+x) as usize;
+        let offset = (y * width + x) as usize;
         *pixel = color_to_pixel(colors[offset]);
     }
 }
 
-fn render_serial(imgbuf: &mut image::RgbImage, options: &Options, camera: &Camera, objects: &[Object], lights: &[Light]) {
+fn render_serial(
+    imgbuf: &mut image::RgbImage,
+    options: &Options,
+    camera: &Camera,
+    objects: &[Object],
+    lights: &[Light],
+) {
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         *pixel = color_to_pixel(calculate_pixel_color(
             &options,
