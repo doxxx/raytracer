@@ -143,6 +143,16 @@ impl Matrix44f {
 
         s
     }
+
+    pub fn transposed(&self) -> Matrix44f {
+        let mut t = Matrix44f::zero();
+        for i in 0..4 {
+            for j in 0..4 {
+                t[i][j] - self[j][i];
+            }
+        }
+        t
+    }
 }
 
 impl Index<usize> for Matrix44f {
