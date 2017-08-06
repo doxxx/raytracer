@@ -2,6 +2,7 @@ use std::ops::{Index, IndexMut, Mul};
 
 use vector::Vector3f;
 
+#[derive(Debug,Clone,Copy)]
 pub struct Matrix44f([[f64; 4]; 4]);
 
 impl Matrix44f {
@@ -69,6 +70,78 @@ impl Matrix44f {
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ])
+    }
+
+    pub fn inverse(&self) -> Matrix44f {
+        let mut s = Matrix44f::identity();
+        let mut t = self.clone();
+
+        // forward elimination
+        for i in 0..3 {
+            let mut pivot = i;
+            let mut pivot_size = t[i][i];
+            if pivot_size < 0.0 {
+                pivot_size = -pivot_size;
+            }
+            for j in (i + 1)..4 {
+                let mut tmp = t[j][i];
+                if tmp < 0.0 {
+                    tmp = -tmp;
+                }
+                if tmp > pivot_size {
+                    pivot = j;
+                    pivot_size = tmp;
+                }
+            }
+            if pivot_size == 0.0 {
+                // cannot invert singular matrix
+                return Matrix44f::identity();
+            }
+            if pivot != i {
+                for j in 0..4 {
+                    let mut tmp = t[i][j];
+                    t[i][j] = t[pivot][j];
+                    t[pivot][j] = tmp;
+
+                    tmp = s[i][j];
+                    s[i][j] = s[pivot][j];
+                    s[pivot][j] = tmp;
+                }
+            }
+            for j in (i + 1)..4 {
+                let f = t[j][i] / t[i][i];
+
+                for k in 0..4 {
+                    t[j][k] -= f * t[i][k];
+                    s[j][k] -= f * s[i][k];
+                }
+            }
+        }
+
+        // backward substitution
+        for i in (0..4).rev() {
+            let mut f = t[i][i];
+            if f == 0.0 {
+                // cannot invert singular matrix
+                return Matrix44f::identity();
+            }
+
+            for j in 0..4 {
+                t[i][j] /= f;
+                s[i][j] /= f;
+            }
+
+            for j in 0..i {
+                f = t[j][i];
+
+                for k in 0..4 {
+                    t[j][k] -= f * t[i][k];
+                    s[j][k] -= f * s[i][k];
+                }
+            }
+        }
+
+        s
     }
 }
 
