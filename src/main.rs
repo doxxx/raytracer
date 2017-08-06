@@ -4,6 +4,7 @@ extern crate rayon;
 
 mod lights;
 mod material;
+mod matrix;
 mod object;
 mod shapes;
 mod system;
