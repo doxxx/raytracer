@@ -22,6 +22,54 @@ impl Matrix44f {
             [0.0, 0.0, 0.0, 1.0],
         ])
     }
+
+    pub fn translation(v: Vector3f) -> Matrix44f {
+        Matrix44f([
+            [1.0, 0.0, 0.0, v.0],
+            [0.0, 1.0, 0.0, v.1],
+            [0.0, 0.0, 1.0, v.2],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn scaling(v: Vector3f) -> Matrix44f {
+        Matrix44f([
+            [v.0, 0.0, 0.0, 0.0],
+            [0.0, v.1, 0.0, 0.0],
+            [0.0, 0.0, v.2, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_x(deg: f64) -> Matrix44f {
+        let (sin, cos) = deg.to_radians().sin_cos();
+        Matrix44f([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, cos, sin, 0.0],
+            [0.0, -sin, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_y(deg: f64) -> Matrix44f {
+        let (sin, cos) = deg.to_radians().sin_cos();
+        Matrix44f([
+            [cos, 0.0, -sin, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [sin, 0.0, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_z(deg: f64) -> Matrix44f {
+        let (sin, cos) = deg.to_radians().sin_cos();
+        Matrix44f([
+            [cos, sin, 0.0, 0.0],
+            [-sin, cos, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
 }
 
 impl Index<usize> for Matrix44f {
