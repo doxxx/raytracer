@@ -153,6 +153,14 @@ impl Matrix44f {
         }
         t
     }
+
+    pub fn mult_normal(self, n: Vector3f) -> Vector3f {
+        Vector3f(
+            n.0 * self[0][0] + n.1 * self[1][0] + n.2 * self[2][0] + self[3][0],
+            n.0 * self[0][1] + n.1 * self[1][1] + n.2 * self[2][1] + self[3][1],
+            n.0 * self[0][2] + n.1 * self[1][2] + n.2 * self[2][2] + self[3][2],
+        )
+    }
 }
 
 impl Index<usize> for Matrix44f {
