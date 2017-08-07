@@ -232,3 +232,39 @@ impl PartialEq for Matrix44f {
         !self.eq(other)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::Matrix44f;
+
+    #[test]
+    fn inverse_identity() {
+        let m = Matrix44f::identity();
+        let inv = m.inverse();
+        assert_eq!(m, inv);
+    }
+
+    #[test]
+    fn inverse_non_identity() {
+        let m = Matrix44f(
+            [
+                [1.0, 3.0, 2.0, 4.0],
+                [4.0, 2.0, 3.0, 5.0],
+                [5.0, 4.0, 3.0, 1.0],
+                [3.0, 1.0, 2.0, 4.0],
+            ],
+        );
+        let expected = Matrix44f(
+            [
+                [0.0, -20.0 / 12.0, 4.0 / 12.0, 24.0 / 12.0],
+                [6.0 / 12.0, -20.0 / 12.0, 4.0 / 12.0, 18.0 / 12.0],
+                [-9.0 / 12.0, 64.0 / 12.0, -8.0 / 12.0, -69.0 / 12.0],
+                [3.0 / 12.0, -12.0 / 12.0, 0.0, 15.0 / 12.0],
+            ],
+        );
+        let actual = m.inverse();
+        assert_eq!(actual, expected);
+        let identity = m * actual;
+        assert_eq!(identity, Matrix44f::identity());
+    }
+}
