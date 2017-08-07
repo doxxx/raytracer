@@ -1,8 +1,10 @@
+use std::cmp::PartialEq;
+use std::f64;
 use std::ops::{Index, IndexMut, Mul};
 
 use vector::Vector3f;
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Matrix44f([[f64; 4]; 4]);
 
 impl Matrix44f {
@@ -208,5 +210,25 @@ impl Mul<Matrix44f> for Vector3f {
             v /= w
         }
         v
+    }
+}
+
+const EPSILON: f64 = (f64::EPSILON * 100.0);
+
+impl PartialEq for Matrix44f {
+    fn eq(&self, other: &Self) -> bool {
+        for i in 0..4 {
+            for j in 0..4 {
+                if self[i][j] - other[i][j] > EPSILON {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
     }
 }
