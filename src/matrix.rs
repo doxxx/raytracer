@@ -82,9 +82,11 @@ impl Matrix44f {
         for i in 0..3 {
             let mut pivot = i;
             let mut pivot_size = t[i][i];
+
             if pivot_size < 0.0 {
                 pivot_size = -pivot_size;
             }
+
             for j in (i + 1)..4 {
                 let mut tmp = t[j][i];
                 if tmp < 0.0 {
@@ -95,10 +97,12 @@ impl Matrix44f {
                     pivot_size = tmp;
                 }
             }
+
             if pivot_size == 0.0 {
                 // cannot invert singular matrix
                 return Matrix44f::identity();
             }
+
             if pivot != i {
                 for j in 0..4 {
                     let mut tmp = t[i][j];
@@ -110,6 +114,7 @@ impl Matrix44f {
                     s[pivot][j] = tmp;
                 }
             }
+
             for j in (i + 1)..4 {
                 let f = t[j][i] / t[i][i];
 
