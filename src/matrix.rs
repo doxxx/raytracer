@@ -195,7 +195,7 @@ impl Mul<Matrix44f> for Vector3f {
             self.0 * rhs[0][1] + self.1 * rhs[1][1] + self.2 * rhs[2][1] + rhs[3][1],
             self.0 * rhs[0][2] + self.1 * rhs[1][2] + self.2 * rhs[2][2] + rhs[3][2],
         );
-        let w = self.0 * rhs[0][3] + self.0 * rhs[1][3] + self.0 * rhs[2][3] + self.0 * rhs[3][3];
+        let w = self.0 * rhs[0][3] + self.1 * rhs[1][3] + self.2 * rhs[2][3] + rhs[3][3];
         if w != 1.0 && w != 0.0 {
             v /= w
         }
