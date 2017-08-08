@@ -19,10 +19,10 @@ use rayon::prelude::*;
 
 use lights::{DistantLight, Light, PointLight};
 use material::{IOR_GLASS, Material};
+use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use shapes::{Plane, Shape, Sphere};
 use system::{Camera, Color, Options, calculate_pixel_color};
-
 use vector::Vector3f;
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
@@ -85,43 +85,40 @@ fn main() {
     let objects: Vec<Object> = vec![
         Object::new(
             "plane",
-            Shape::Plane(Plane::new(
-                Vector3f(0.0, -5.0, 0.0),
-                Vector3f(0.0, 1.0, 0.0),
-            )),
+            Shape::Plane(Plane::new(Vector3f(0.0, 1.0, 0.0))),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
-        ),
+        ).transform(Matrix44f::translation(Vector3f(0.0, -5.0, 0.0))),
         Object::new(
             "sphere2",
-            Shape::Sphere(Sphere::new(Vector3f(0.0, 6.0, -24.0), 2.0)),
+            Shape::Sphere(Sphere::new(2.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
-        ),
+        ).transform(Matrix44f::translation(Vector3f(0.0, 6.0, -24.0))),
         Object::new(
             "sphere3",
-            Shape::Sphere(Sphere::new(Vector3f(-4.0, 4.0, -25.0), 4.0)),
+            Shape::Sphere(Sphere::new(4.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
-        ),
+        ).transform(Matrix44f::translation(Vector3f(-4.0, 4.0, -25.0))),
         Object::new(
             "sphere4",
-            Shape::Sphere(Sphere::new(Vector3f(4.0, -4.0, -25.0), 6.0)),
+            Shape::Sphere(Sphere::new(6.0)),
             DEFAULT_ALBEDO,
             Material::Reflective
-        ),
+        ).transform(Matrix44f::translation(Vector3f(4.0, -4.0, -25.0))),
         Object::new(
             "sphere5",
-            Shape::Sphere(Sphere::new(Vector3f(-6.0, -3.0, -20.0), 2.0)),
+            Shape::Sphere(Sphere::new(2.0)),
             DEFAULT_ALBEDO,
             Material::Diffuse(white)
-        ),
+        ).transform(Matrix44f::translation(Vector3f(-6.0, -3.0, -20.0))),
         Object::new(
             "sphere6",
-            Shape::Sphere(Sphere::new(Vector3f(-1.0, -1.0, -10.0), 2.0)),
+            Shape::Sphere(Sphere::new(2.0)),
             DEFAULT_ALBEDO,
             Material::ReflectiveAndRefractive(IOR_GLASS)
-        ),
+        ).transform(Matrix44f::translation(Vector3f(-1.0, -1.0, -10.0))),
     ];
 
     let lights: Vec<Light> = vec![

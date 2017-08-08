@@ -1,6 +1,7 @@
 use std::f64;
 use std::mem;
 
+use matrix::Matrix44f;
 use system::{Intersection, Ray};
 use vector::{Vector2f, Vector3f};
 
@@ -59,6 +60,10 @@ pub trait Intersectable {
     fn intersect(&self, ray: Ray) -> Option<Intersection>;
 }
 
+pub trait Transformable {
+    fn transform(&self, m: Matrix44f) -> Self;
+}
+
 #[derive(Debug)]
 pub struct Sphere {
     center: Vector3f,
@@ -66,9 +71,9 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Vector3f, radius: f64) -> Sphere {
+    pub fn new(radius: f64) -> Sphere {
         Sphere {
-            center: center,
+            center: Vector3f::zero(),
             radius_squared: radius.powi(2),
         }
     }
@@ -122,6 +127,17 @@ impl Intersectable for Sphere {
     }
 }
 
+impl Transformable for Sphere {
+    fn transform(&self, m: Matrix44f) -> Self {
+        let center = self.center * m;
+        let radius_point = (self.center + Vector3f(self.radius_squared.sqrt(), 0.0, 0.0)) * m;
+        Sphere {
+            center: center,
+            radius_squared: (radius_point - center).length_squared(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Plane {
     point: Vector3f,
@@ -131,7 +147,7 @@ pub struct Plane {
 }
 
 impl Plane {
-    pub fn new(point: Vector3f, normal: Vector3f) -> Plane {
+    pub fn new(normal: Vector3f) -> Plane {
         let mut u = normal.cross(Vector3f(1.0, 0.0, 0.0));
         if u.length_squared() < 1e-6 {
             u = normal.cross(Vector3f(0.0, 1.0, 0.0));
@@ -142,7 +158,7 @@ impl Plane {
         u = u.normalize();
         let v = normal.cross(u);
         Plane {
-            point: point,
+            point: Vector3f::zero(),
             normal: normal,
             u: u,
             v: v,
@@ -170,6 +186,17 @@ impl Intersectable for Plane {
         })
     }
 }
+
+impl Transformable for Plane {
+    fn transform(&self, m: Matrix44f) -> Self {
+        let mut p = Plane::new(
+            m.inverse().transposed().mult_normal(self.normal)
+        );
+        p.point = self.point * m;
+        p
+    }
+}
+
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -227,6 +254,14 @@ impl Intersectable for Triangle {
             n: self.normal,
             uv: Vector2f(u / denom, v / denom),
         })
+    }
+}
 
+impl Transformable for Triangle {
+    fn transform(&self, m: Matrix44f) -> Self {
+        let v0 = self.vertices[0] * m;
+        let v1 = self.vertices[1] * m;
+        let v2 = self.vertices[2] * m;
+        Triangle::new(v0, v1, v2)
     }
 }
