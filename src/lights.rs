@@ -1,8 +1,9 @@
 use std::f64;
 use std::f64::consts::PI;
 
-use system::Color;
-use vector::Vector3f;
+use color::Color;
+use direction::Direction;
+use point::Point;
 
 pub enum Light {
     Distant(DistantLight),
@@ -11,7 +12,7 @@ pub enum Light {
 
 pub trait LightSource {
     /// Returns light direction, intensity/color and distance
-    fn illuminate(&self, point: Vector3f) -> (Vector3f, Color, f64);
+    fn illuminate(&self, point: Point) -> (Direction, Color, f64);
 }
 
 
@@ -19,11 +20,11 @@ pub trait LightSource {
 pub struct DistantLight {
     color: Color,
     intensity: f64,
-    direction: Vector3f,
+    direction: Direction,
 }
 
 impl DistantLight {
-    pub fn new(color: Color, intensity: f64, direction: Vector3f) -> DistantLight {
+    pub fn new(color: Color, intensity: f64, direction: Direction) -> DistantLight {
         DistantLight {
             color: color,
             intensity: intensity,
@@ -33,7 +34,7 @@ impl DistantLight {
 }
 
 impl LightSource for DistantLight {
-    fn illuminate(&self, point: Vector3f) -> (Vector3f, Color, f64) {
+    fn illuminate(&self, point: Point) -> (Direction, Color, f64) {
         (self.direction, self.color * self.intensity, f64::MAX)
     }
 }
@@ -43,11 +44,11 @@ impl LightSource for DistantLight {
 pub struct PointLight {
     color: Color,
     intensity: f64,
-    origin: Vector3f,
+    origin: Point,
 }
 
 impl PointLight {
-    pub fn new(color: Color, intensity: f64, origin: Vector3f) -> PointLight {
+    pub fn new(color: Color, intensity: f64, origin: Point) -> PointLight {
         PointLight {
             color: color,
             intensity: intensity,
@@ -57,7 +58,7 @@ impl PointLight {
 }
 
 impl LightSource for PointLight {
-    fn illuminate(&self, point: Vector3f) -> (Vector3f, Color, f64) {
+    fn illuminate(&self, point: Point) -> (Direction, Color, f64) {
         let mut dir = point - self.origin;
         let r2 = dir.length_squared();
         let distance = r2.sqrt();

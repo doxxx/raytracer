@@ -1,4 +1,4 @@
-use system::Color;
+use color::Color;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Material {

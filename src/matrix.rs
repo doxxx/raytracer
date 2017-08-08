@@ -2,7 +2,8 @@ use std::cmp::PartialEq;
 use std::f64;
 use std::ops::{Index, IndexMut, Mul};
 
-use vector::Vector3f;
+use direction::Direction;
+use point::Point;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix44f([[f64; 4]; 4]);
@@ -26,20 +27,20 @@ impl Matrix44f {
         ])
     }
 
-    pub fn translation(v: Vector3f) -> Matrix44f {
+    pub fn translation(d: Direction) -> Matrix44f {
         Matrix44f([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [v.0, v.1, v.2, 1.0],
+            [d.x, d.y, d.z, 1.0],
         ])
     }
 
-    pub fn scaling(v: Vector3f) -> Matrix44f {
+    pub fn scaling(d: Direction) -> Matrix44f {
         Matrix44f([
-            [v.0, 0.0, 0.0, 0.0],
-            [0.0, v.1, 0.0, 0.0],
-            [0.0, 0.0, v.2, 0.0],
+            [d.x, 0.0, 0.0, 0.0],
+            [0.0, d.y, 0.0, 0.0],
+            [0.0, 0.0, d.z, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ])
     }
@@ -161,11 +162,11 @@ impl Matrix44f {
         t
     }
 
-    pub fn mult_normal(self, n: Vector3f) -> Vector3f {
-        Vector3f(
-            n.0 * self[0][0] + n.1 * self[1][0] + n.2 * self[2][0] + self[3][0],
-            n.0 * self[0][1] + n.1 * self[1][1] + n.2 * self[2][1] + self[3][1],
-            n.0 * self[0][2] + n.1 * self[1][2] + n.2 * self[2][2] + self[3][2],
+    pub fn mult_normal(self, n: Direction) -> Direction {
+        Direction::new(
+            n.x * self[0][0] + n.y * self[1][0] + n.z * self[2][0] + self[3][0],
+            n.x * self[0][1] + n.y * self[1][1] + n.z * self[2][1] + self[3][1],
+            n.x * self[0][2] + n.y * self[1][2] + n.z * self[2][2] + self[3][2],
         )
     }
 }
@@ -201,16 +202,16 @@ impl Mul for Matrix44f {
     }
 }
 
-impl Mul<Matrix44f> for Vector3f {
-    type Output = Vector3f;
+impl Mul<Matrix44f> for Point {
+    type Output = Point;
 
     fn mul(self, rhs: Matrix44f) -> Self::Output {
-        let mut v = Vector3f(
-            self.0 * rhs[0][0] + self.1 * rhs[1][0] + self.2 * rhs[2][0] + rhs[3][0],
-            self.0 * rhs[0][1] + self.1 * rhs[1][1] + self.2 * rhs[2][1] + rhs[3][1],
-            self.0 * rhs[0][2] + self.1 * rhs[1][2] + self.2 * rhs[2][2] + rhs[3][2],
+        let mut v = Point::new(
+            self.x * rhs[0][0] + self.y * rhs[1][0] + self.z * rhs[2][0] + rhs[3][0],
+            self.x * rhs[0][1] + self.y * rhs[1][1] + self.z * rhs[2][1] + rhs[3][1],
+            self.x * rhs[0][2] + self.y * rhs[1][2] + self.z * rhs[2][2] + rhs[3][2],
         );
-        let w = self.0 * rhs[0][3] + self.1 * rhs[1][3] + self.2 * rhs[2][3] + rhs[3][3];
+        let w = self.x * rhs[0][3] + self.y * rhs[1][3] + self.z * rhs[2][3] + rhs[3][3];
         if w != 1.0 && w != 0.0 {
             v /= w
         }
@@ -231,10 +232,6 @@ impl PartialEq for Matrix44f {
         }
 
         true
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
     }
 }
 

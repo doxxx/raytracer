@@ -1,13 +1,14 @@
 use std::f64;
 use std::mem;
 
+use color::Color;
+use direction::{Dot,Direction};
 use lights::{LightSource, Light};
 use material::Material;
 use object::Object;
+use point::Point;
 use shapes::{Shape,Intersectable};
-use vector::{Vector2f, Vector3f};
-
-pub type Color = Vector3f;
+use vector::{Vector2f};
 
 #[derive(Debug)]
 pub struct Options {
@@ -39,7 +40,7 @@ impl Camera {
         let ndcy = (y as f64 + 0.5) / self.height;
         let cx = (2.0 * ndcx - 1.0) * self.fov_factor * self.aspect_ratio;
         let cy = (1.0 - 2f64 * ndcy) * self.fov_factor;
-        Ray::primary(Vector3f::zero(), Vector3f(cx, cy, -1.0).normalize())
+        Ray::primary(Point::zero(), Direction::new(cx, cy, -1.0).normalize())
     }
 }
 
@@ -52,22 +53,22 @@ pub enum RayKind {
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub kind: RayKind,
-    pub origin: Vector3f,
-    pub direction: Vector3f,
-    pub inverse_direction: Vector3f,
+    pub origin: Point,
+    pub direction: Direction,
+    pub inverse_direction: Direction,
     pub sign: [usize; 3],
 }
 
 impl Ray {
-    pub fn primary(origin: Vector3f, direction: Vector3f) -> Ray {
+    pub fn primary(origin: Point, direction: Direction) -> Ray {
         Ray::new(RayKind::Normal, origin, direction)
     }
 
-    pub fn shadow(origin: Vector3f, direction: Vector3f) -> Ray {
+    pub fn shadow(origin: Point, direction: Direction) -> Ray {
         Ray::new(RayKind::Shadow, origin, direction)
     }
 
-    fn new(kind: RayKind, origin: Vector3f, direction: Vector3f) -> Ray {
+    fn new(kind: RayKind, origin: Point, direction: Direction) -> Ray {
         let inverse_direction = 1.0 / direction;
         Ray {
             kind: kind,
@@ -97,7 +98,7 @@ impl<'a> RayHit<'a> {
 #[derive(Debug)]
 pub struct Intersection {
     pub t: f64,
-    pub n: Vector3f,
+    pub n: Direction,
     pub uv: Vector2f,
 }
 
@@ -105,11 +106,11 @@ fn clamp(lo: f64, hi: f64, val: f64) -> f64 {
     lo.max(hi.min(val))
 }
 
-fn reflect(incident: Vector3f, normal: Vector3f) -> Vector3f {
+fn reflect(incident: Direction, normal: Direction) -> Direction {
     incident - normal * 2.0 * incident.dot(normal)
 }
 
-fn refract(incident: Vector3f, normal: Vector3f, ior: f64) -> Vector3f {
+fn refract(incident: Direction, normal: Direction, ior: f64) -> Direction {
     let mut cos_i = clamp(-1.0, 1.0, incident.dot(normal));
     let mut eta_i = 1.0;
     let mut eta_t = ior;
@@ -123,14 +124,14 @@ fn refract(incident: Vector3f, normal: Vector3f, ior: f64) -> Vector3f {
     let eta = eta_i / eta_t;
     let k = 1.0 - eta * eta * (1.0 - cos_i * cos_i);
     if k < 0.0 {
-        Vector3f::zero()
+        Direction::zero()
     } else {
         incident * eta + n * (eta * cos_i - k.sqrt())
     }
 }
 
 //// incident, normal, index of reflection -> reflection
-fn fresnel(incident: Vector3f, normal: Vector3f, ior: f64) -> f64 {
+fn fresnel(incident: Direction, normal: Direction, ior: f64) -> f64 {
     let mut cos_i = clamp(-1.0, 1.0, incident.dot(normal));
     let mut eta_i = 1.0;
     let mut eta_t = ior;
@@ -189,7 +190,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
         let hit_point = ray.origin + ray.direction * hit_distance;
         let hit_normal = hit.i.n;
 
-        let mut hit_color = Vector3f::zero();
+        let mut hit_color = Color::zero();
 
         match hit.object.material {
             Material::Diffuse(color) => {
@@ -218,7 +219,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
                 hit_color += reflection_color * 0.8;
             }
             Material::ReflectiveAndRefractive(ior) => {
-                let mut refraction_color = Vector3f::zero();
+                let mut refraction_color = Color::zero();
                 let kr = fresnel(ray.direction, hit_normal, ior);
                 let outside = ray.direction.dot(hit_normal) < 0.0;
                 let bias = hit_normal * options.bias;

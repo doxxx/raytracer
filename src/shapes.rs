@@ -1,25 +1,27 @@
 use std::f64;
 use std::mem;
 
+use direction::{Dot,Direction};
 use matrix::Matrix44f;
+use point::Point;
 use system::{Intersection, Ray};
-use vector::{Vector2f, Vector3f};
+use vector::{Vector2f};
 
 #[derive(Debug, Copy, Clone)]
 pub struct BoundingBox {
-    bounds: [Vector3f; 2],
+    bounds: [Point; 2],
 }
 
 impl BoundingBox {
-    pub fn new(min: Vector3f, max: Vector3f) -> BoundingBox {
+    pub fn new(min: Point, max: Point) -> BoundingBox {
         BoundingBox { bounds: [min, max] }
     }
 
     pub fn intersect(&self, ray: Ray) -> bool {
-        let mut tmin = (self.bounds[ray.sign[0]].0 - ray.origin.0) * ray.inverse_direction.0;
-        let mut tmax = (self.bounds[1 - ray.sign[0]].0 - ray.origin.0) * ray.inverse_direction.0;
-        let tymin = (self.bounds[ray.sign[1]].1 - ray.origin.1) * ray.inverse_direction.1;
-        let tymax = (self.bounds[1 - ray.sign[1]].1 - ray.origin.1) * ray.inverse_direction.1;
+        let mut tmin = (self.bounds[ray.sign[0]].x - ray.origin.x) * ray.inverse_direction.x;
+        let mut tmax = (self.bounds[1 - ray.sign[0]].x - ray.origin.x) * ray.inverse_direction.x;
+        let tymin = (self.bounds[ray.sign[1]].y - ray.origin.y) * ray.inverse_direction.y;
+        let tymax = (self.bounds[1 - ray.sign[1]].y - ray.origin.y) * ray.inverse_direction.y;
 
         if (tmin > tymax) || (tymin > tmax) {
             return false;
@@ -31,8 +33,8 @@ impl BoundingBox {
             tmax = tymax;
         }
 
-        let tzmin = (self.bounds[ray.sign[2]].2 - ray.origin.2) * ray.inverse_direction.2;
-        let tzmax = (self.bounds[1 - ray.sign[2]].2 - ray.origin.2) * ray.inverse_direction.2;
+        let tzmin = (self.bounds[ray.sign[2]].z - ray.origin.z) * ray.inverse_direction.z;
+        let tzmax = (self.bounds[1 - ray.sign[2]].z - ray.origin.z) * ray.inverse_direction.z;
 
         if (tmin > tzmax) || (tzmin > tmax) {
             return false;
@@ -66,14 +68,14 @@ pub trait Transformable {
 
 #[derive(Debug)]
 pub struct Sphere {
-    center: Vector3f,
+    center: Point,
     radius_squared: f64,
 }
 
 impl Sphere {
     pub fn new(radius: f64) -> Sphere {
         Sphere {
-            center: Vector3f::zero(),
+            center: Point::zero(),
             radius_squared: radius.powi(2),
         }
     }
@@ -130,7 +132,7 @@ impl Intersectable for Sphere {
 impl Transformable for Sphere {
     fn transform(&self, m: Matrix44f) -> Self {
         let center = self.center * m;
-        let radius_point = (self.center + Vector3f(self.radius_squared.sqrt(), 0.0, 0.0)) * m;
+        let radius_point = (self.center + Direction::new(self.radius_squared.sqrt(), 0.0, 0.0)) * m;
         Sphere {
             center: center,
             radius_squared: (radius_point - center).length_squared(),
@@ -140,25 +142,25 @@ impl Transformable for Sphere {
 
 #[derive(Debug)]
 pub struct Plane {
-    point: Vector3f,
-    normal: Vector3f,
-    u: Vector3f,
-    v: Vector3f,
+    point: Point,
+    normal: Direction,
+    u: Direction,
+    v: Direction,
 }
 
 impl Plane {
-    pub fn new(normal: Vector3f) -> Plane {
-        let mut u = normal.cross(Vector3f(1.0, 0.0, 0.0));
+    pub fn new(normal: Direction) -> Plane {
+        let mut u = normal.cross(Direction::new(1.0, 0.0, 0.0));
         if u.length_squared() < 1e-6 {
-            u = normal.cross(Vector3f(0.0, 1.0, 0.0));
+            u = normal.cross(Direction::new(0.0, 1.0, 0.0));
         }
         if u.length_squared() < 1e-6 {
-            u = normal.cross(Vector3f(0.0, 0.0, 1.0));
+            u = normal.cross(Direction::new(0.0, 0.0, 1.0));
         }
         u = u.normalize();
         let v = normal.cross(u);
         Plane {
-            point: Vector3f::zero(),
+            point: Point::zero(),
             normal: normal,
             u: u,
             v: v,
@@ -200,13 +202,13 @@ impl Transformable for Plane {
 
 #[derive(Debug)]
 pub struct Triangle {
-    vertices: [Vector3f; 3],
-    edges: [Vector3f; 3],
-    normal: Vector3f,
+    vertices: [Point; 3],
+    edges: [Direction; 3],
+    normal: Direction,
 }
 
 impl Triangle {
-    pub fn new(v0: Vector3f, v1: Vector3f, v2: Vector3f) -> Triangle {
+    pub fn new(v0: Point, v1: Point, v2: Point) -> Triangle {
         Triangle {
             vertices: [v0, v1, v2],
             edges: [v1 - v0, v2 - v1, v0 - v2],

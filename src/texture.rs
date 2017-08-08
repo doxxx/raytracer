@@ -1,7 +1,7 @@
 use std::f64;
 use std::fmt::Debug;
 
-use system::Color;
+use color::Color;
 use vector::Vector2f;
 
 fn mix(a: Color, b: Color, v: f64) -> Color {
@@ -12,7 +12,7 @@ pub trait Texture: Debug {
     fn color(&self, point: Vector2f) -> Color;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone)]
 pub struct Flat {
     color: Color,
 }
@@ -30,7 +30,7 @@ impl Texture for Flat {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone)]
 pub struct Checkerboard {
     color1: Color,
     color2: Color,
