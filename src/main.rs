@@ -80,7 +80,10 @@ fn main() {
     let parallel: bool = options.is_present("parallel");
 
     let mut imgbuf = image::RgbImage::new(w, h);
-    let camera = Camera::new(w, h, 60.0);
+
+    let mut camera = Camera::new(w, h, 60.0);
+    camera.transform(Matrix44f::rotation_x(-15.0));
+    camera.transform(Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)));
 
     let white = Color::new(1.0, 1.0, 1.0);
     let red = Color::new(1.0, 0.0, 0.0);

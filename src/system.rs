@@ -5,6 +5,7 @@ use color::Color;
 use direction::{Dot,Direction};
 use lights::{LightSource, Light};
 use material::Material;
+use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use shapes::{Shape,Intersectable};
@@ -23,6 +24,7 @@ pub struct Camera {
     height: f64,
     aspect_ratio: f64,
     fov_factor: f64,
+    camera_to_world: Matrix44f,
 }
 
 impl Camera {
@@ -32,7 +34,12 @@ impl Camera {
             height: height as f64,
             aspect_ratio: width as f64 / height as f64,
             fov_factor: (fov * 0.5).to_radians().tan(),
+            camera_to_world: Matrix44f::identity(),
         }
+    }
+
+    pub fn transform(&mut self, m: Matrix44f) {
+        self.camera_to_world = self.camera_to_world * m;
     }
 
     fn pixel_ray(&self, x: u32, y: u32) -> Ray {
@@ -40,7 +47,9 @@ impl Camera {
         let ndcy = (y as f64 + 0.5) / self.height;
         let cx = (2.0 * ndcx - 1.0) * self.fov_factor * self.aspect_ratio;
         let cy = (1.0 - 2f64 * ndcy) * self.fov_factor;
-        Ray::primary(Point::zero(), Direction::new(cx, cy, -1.0).normalize())
+        let origin = Point::zero() * self.camera_to_world;
+        let dir_point = Point::new(cx, cy, -1.0) * self.camera_to_world;
+        Ray::primary(origin, (dir_point - origin).normalize())
     }
 }
 
