@@ -170,6 +170,7 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
             &Shape::Sphere(ref s) => s.intersect(ray),
             &Shape::Plane(ref s) => s.intersect(ray),
             &Shape::Triangle(ref s) => s.intersect(ray),
+            &Shape::Mesh(ref s) => s.intersect(ray),
         };
         if let Some(intersection) = intersection {
             if intersection.t < nearest_distance {

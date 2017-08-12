@@ -29,6 +29,7 @@ impl Object {
                 Shape::Plane(s) => Shape::Plane(s.transform(m)),
                 Shape::Triangle(s) => Shape::Triangle(s.transform(m)),
                 Shape::Sphere(s) => Shape::Sphere(s.transform(m)),
+                Shape::Mesh(s) => Shape::Mesh(s.transform(m)),
             },
             albedo: self.albedo,
             material: self.material,

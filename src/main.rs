@@ -1,6 +1,7 @@
 extern crate image;
 extern crate clap;
 extern crate rayon;
+extern crate wavefront_obj;
 
 mod color;
 mod direction;
@@ -15,6 +16,7 @@ mod texture;
 mod vector;
 
 use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 
 use clap::{App, Arg};
@@ -27,7 +29,7 @@ use material::{IOR_GLASS, Material};
 use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use point::Point;
-use shapes::{Plane, Shape, Sphere};
+use shapes::{Mesh, MeshTriangle, Plane, Shape, Sphere};
 use system::{Camera, Options, calculate_pixel_color};
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
@@ -36,6 +38,25 @@ fn color_to_pixel(v: Color) -> image::Rgb<u8> {
     let b = (v.b * 255.0).min(255.0) as u8;
     image::Rgb([r, g, b])
 }
+
+ fn convert_obj(o: &wavefront_obj::obj::Object) -> Mesh {
+     let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
+     let triangles = o.geometry
+         .iter()
+         .flat_map(|g| &g.shapes)
+         .flat_map(|s| match s.primitive {
+             wavefront_obj::obj::Primitive::Triangle(v0, v1, v2) => Some(MeshTriangle {
+                 indices: [v0.0, v1.0, v2.0],
+             }),
+             _ => None,
+         })
+         .collect();
+
+     Mesh {
+         vertices: vertices,
+         triangles: triangles,
+     }
+ }
 
 fn main() {
     let app = App::new("raytracer")
@@ -90,6 +111,19 @@ fn main() {
     let green = Color::new(0.0, 1.0, 1.0);
     let blue = Color::new(0.0, 0.0, 1.0);
 
+    let obj = {
+        print!("Loading object file...");
+        let mut obj_file_contents = String::new();
+        let mut obj_file = std::fs::File::open("LinkedTorus.obj").expect("could not open object file");
+        obj_file.read_to_string(&mut obj_file_contents).expect("could not read object file");
+        let obj_set = wavefront_obj::obj::parse(obj_file_contents).expect("Could not parse object file!");
+        println!(" done.");
+        print!("Converting object...");
+        let obj = convert_obj(&obj_set.objects[0]);
+        println!(" done.");
+        obj
+    };
+
     let objects: Vec<Object> = vec![
         Object::new(
             "plane",
@@ -98,35 +132,41 @@ fn main() {
             Material::Diffuse(white)
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
         Object::new(
-            "sphere2",
-            Shape::Sphere(Sphere::new(2.0)),
+            "object",
+            Shape::Mesh(obj),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white)
-        ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
-        Object::new(
-            "sphere3",
-            Shape::Sphere(Sphere::new(4.0)),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(white)
-        ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
-        Object::new(
-            "sphere4",
-            Shape::Sphere(Sphere::new(6.0)),
-            DEFAULT_ALBEDO,
-            Material::Reflective
-        ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
-        Object::new(
-            "sphere5",
-            Shape::Sphere(Sphere::new(2.0)),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(white)
-        ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
-        Object::new(
-            "sphere6",
-            Shape::Sphere(Sphere::new(2.0)),
-            DEFAULT_ALBEDO,
-            Material::ReflectiveAndRefractive(IOR_GLASS)
-        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
+            Material::Diffuse(white),
+        ).transform(Matrix44f::translation(Direction::new(0.0, 2.0, -20.0))),
+//        Object::new(
+//            "sphere2",
+//            Shape::Sphere(Sphere::new(2.0)),
+//            DEFAULT_ALBEDO,
+//            Material::Diffuse(white)
+//        ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
+//        Object::new(
+//            "sphere3",
+//            Shape::Sphere(Sphere::new(4.0)),
+//            DEFAULT_ALBEDO,
+//            Material::Diffuse(white)
+//        ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
+//        Object::new(
+//            "sphere4",
+//            Shape::Sphere(Sphere::new(6.0)),
+//            DEFAULT_ALBEDO,
+//            Material::Reflective
+//        ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
+//        Object::new(
+//            "sphere5",
+//            Shape::Sphere(Sphere::new(2.0)),
+//            DEFAULT_ALBEDO,
+//            Material::Diffuse(white)
+//        ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
+//        Object::new(
+//            "sphere6",
+//            Shape::Sphere(Sphere::new(2.0)),
+//            DEFAULT_ALBEDO,
+//            Material::ReflectiveAndRefractive(IOR_GLASS)
+//        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
     ];
 
     let lights: Vec<Light> = vec![

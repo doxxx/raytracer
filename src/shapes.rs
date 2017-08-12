@@ -56,6 +56,7 @@ pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
     Triangle(Triangle),
+    Mesh(Mesh),
 }
 
 pub trait Intersectable {
@@ -265,5 +266,86 @@ impl Transformable for Triangle {
         let v1 = self.vertices[1] * m;
         let v2 = self.vertices[2] * m;
         Triangle::new(v0, v1, v2)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Mesh {
+    pub vertices: Vec<Point>,
+    pub triangles: Vec<MeshTriangle>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MeshTriangle {
+    pub indices: [usize; 3],
+}
+
+impl Mesh {
+    fn intersect_triangle(&self, ray: Ray, triangle: &MeshTriangle) -> Option<Intersection> {
+        let v0 = self.vertices[triangle.indices[0]];
+        let v1 = self.vertices[triangle.indices[1]];
+        let v2 = self.vertices[triangle.indices[2]];
+        let n = (v1 - v0).cross(v2 - v0).normalize();
+        let edges = [v1 - v0, v2 - v1, v0 - v2];
+
+        let denom = n.dot(n);
+
+        let normal_dot_ray = n.dot(ray.direction);
+        if normal_dot_ray.abs() < 1e-6 {
+            return None;
+        }
+
+        let d = n.dot(v0);
+        let t = (n.dot(ray.origin) + d) / normal_dot_ray;
+        if t < 0.0 {
+            return None;
+        }
+
+        let p = ray.origin + ray.direction * t;
+
+        let c0 = edges[0].cross(p - v0);
+        let u = n.dot(c0);
+        if u < 0.0 {
+            return None;
+        }
+
+        let c1 = edges[1].cross(p - v1);
+        if n.dot(c1) < 0.0 {
+            return None;
+        }
+
+        let c2 = edges[2].cross(p - v2);
+        let v = n.dot(c2);
+        if v < 0.0 {
+            return None;
+        }
+
+        Some(Intersection {
+            t: t,
+            n: n,
+            uv: Vector2f(u / denom, v / denom),
+        })
+    }
+    
+}
+
+impl Intersectable for Mesh {
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+        for triangle in &self.triangles {
+            let i = self.intersect_triangle(ray, triangle);
+            if i.is_some() {
+                return i;
+            }
+        }
+        None
+    }
+}
+
+impl Transformable for Mesh {
+    fn transform(&self, m: Matrix44f) -> Self {
+        Mesh {
+            vertices: self.vertices.iter().map(|v| (*v) * m).collect(),
+            triangles: self.triangles.clone(),
+        }
     }
 }
