@@ -4,7 +4,7 @@ use shapes::{Shape,Transformable};
 
 pub const DEFAULT_ALBEDO: f64 = 0.18;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Object {
     pub name: &'static str,
     pub shape: Shape,

@@ -5,6 +5,7 @@ use color::Color;
 use direction::Direction;
 use point::Point;
 
+#[derive(Debug, Clone)]
 pub enum Light {
     Distant(DistantLight),
     Point(PointLight),
@@ -16,7 +17,7 @@ pub trait LightSource {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DistantLight {
     color: Color,
     intensity: f64,
@@ -40,7 +41,7 @@ impl LightSource for DistantLight {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PointLight {
     color: Color,
     intensity: f64,

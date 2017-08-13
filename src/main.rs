@@ -1,7 +1,8 @@
 extern crate image;
 extern crate clap;
-extern crate rayon;
 extern crate wavefront_obj;
+extern crate pbr;
+extern crate num_cpus;
 
 mod color;
 mod direction;
@@ -18,9 +19,13 @@ mod vector;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread::spawn;
+use std::io::Stdout;
 
 use clap::{App, Arg};
-use rayon::prelude::*;
+use pbr::ProgressBar;
 
 use color::Color;
 use direction::Direction;
@@ -59,13 +64,11 @@ fn color_to_pixel(v: Color) -> image::Rgb<u8> {
  }
 
 fn main() {
+    let default_cpus = format!("{}", num_cpus::get() - 1);
     let app = App::new("raytracer")
         .version("0.1.0")
         .author("Gordon Tyler <gordon@doxxx.net>")
         .about("Simple ray tracer")
-        .arg(Arg::with_name("parallel").short("p").help(
-            "Use parallel rendering",
-        ))
         .arg(
             Arg::with_name("width")
                 .short("w")
@@ -81,6 +84,18 @@ fn main() {
                 .help("Image height")
                 .takes_value(true)
                 .default_value("768"),
+        )
+        .arg(
+            Arg::with_name("num_threads")
+                .short("t")
+                .value_name("THREADS")
+                .help("Number of render threads")
+                .takes_value(true)
+                .validator(|s| {
+                    if s.parse::<usize>().is_ok() { return Ok(()); }
+                    Err(String::from("The value must be a number."))
+                })
+                .default_value(&default_cpus)
         );
     let options = app.get_matches();
 
@@ -98,9 +113,15 @@ fn main() {
             return;
         }
     };
-    let parallel: bool = options.is_present("parallel");
 
-    let mut imgbuf = image::RgbImage::new(w, h);
+    let options = Options {
+        num_threads: options.value_of("num_threads").unwrap().parse().unwrap(),
+        width: w,
+        height: h,
+        background_color: Color::new(0.1, 0.1, 0.5),
+        bias: 1e-4,
+        max_depth: 5,
+    };
 
     let mut camera = Camera::new(w, h, 60.0);
     camera.transform(Matrix44f::rotation_x(-15.0));
@@ -179,63 +200,75 @@ fn main() {
         Light::Point(PointLight::new(red, 5000.0, Point::new(10.0, 10.0, -15.0))),
     ];
 
-    let options = Options {
-        background_color: Color::new(0.1, 0.1, 0.5),
-        bias: 1e-4,
-        max_depth: 5,
-    };
-
-    if parallel {
-        render_parallel(&mut imgbuf, &options, &camera, &objects, &lights);
-    } else {
-        render_serial(&mut imgbuf, &options, &camera, &objects, &lights);
-    }
+    let imgbuf = render(options, camera, objects, lights);
 
     let ref mut fout = File::create(&Path::new("out.png")).unwrap();
     let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
 }
 
-fn render_parallel(
-    imgbuf: &mut image::RgbImage,
-    options: &Options,
-    camera: &Camera,
-    objects: &[Object],
-    lights: &[Light],
-) {
-    let width = imgbuf.width();
-    let height = imgbuf.height();
-    let rows: Vec<u32> = (0..height).collect();
-    let colors: Vec<Color> = rows.par_iter()
-        .flat_map(|y| -> Vec<Color> {
-            (0..width)
-                .map(|x| {
-                    calculate_pixel_color(&options, &camera, &objects, &lights, x, *y)
-                })
-                .collect()
-        })
-        .collect();
+fn render(
+    options: Options,
+    camera: Camera,
+    objects: Vec<Object>,
+    lights: Vec<Light>,
+) -> image::RgbImage {
+    let mut imgbuf = image::RgbImage::new(options.width, options.height);
+    let width = options.width;
+    let height = options.height;
+    let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
+    let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    results.resize(height as usize, Vec::new());
+    let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
 
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let offset = (y * width + x) as usize;
-        *pixel = color_to_pixel(colors[offset]);
-    }
-}
+    // start progress bar update task
+    let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
+    let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
 
-fn render_serial(
-    imgbuf: &mut image::RgbImage,
-    options: &Options,
-    camera: &Camera,
-    objects: &[Object],
-    lights: &[Light],
-) {
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        *pixel = color_to_pixel(calculate_pixel_color(
-            &options,
-            &camera,
-            &objects,
-            &lights,
-            x,
-            y,
-        ));
+    pb.message(&format!("Rendering (x{}): ", options.num_threads));
+
+    // spawn threads for rendering rows
+    // each thread sends the row index when it finishes rendering
+    for _ in 0..options.num_threads {
+        let options = options.clone();
+        let camera = camera.clone();
+        let objects = objects.to_vec();
+        let lights = lights.to_vec();
+        let rows = rows.clone();
+        let results = results.clone();
+        let tx = tx.clone();
+        spawn(move || {
+            loop {
+                let y = { rows.lock().unwrap().pop() };
+                match y {
+                    Some(y) => {
+                        let row = (0..width)
+                            .map(|x| {
+                                calculate_pixel_color(&options, &camera, &objects, &lights, x, y)
+                            })
+                            .collect();
+                        let mut results = results.lock().unwrap();
+                        results[y as usize] = row;
+                        let _ = tx.send(y);
+                    }
+                    None => break
+                }
+            }
+        });
     }
+
+    // wait for all the rows to be rendered,
+    // updating progress as each row is finished
+    for _ in 0..pb.total {
+        let _ = rx.recv();
+        pb.inc();
+    }
+
+    pb.finish();
+
+    let results = results.lock().unwrap();
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        *pixel = color_to_pixel(results[y as usize][x as usize]);
+    }
+
+    imgbuf
 }

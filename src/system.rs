@@ -11,17 +11,20 @@ use point::Point;
 use shapes::{Shape,Intersectable};
 use vector::{Vector2f};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Options {
+    pub num_threads: usize,
+    pub width: u32,
+    pub height: u32,
     pub background_color: Color,
     pub bias: f64,
     pub max_depth: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Camera {
-    width: f64,
-    height: f64,
+    pub width: f64,
+    pub height: f64,
     aspect_ratio: f64,
     fov_factor: f64,
     camera_to_world: Matrix44f,

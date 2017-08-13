@@ -51,7 +51,7 @@ impl BoundingBox {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
@@ -67,7 +67,7 @@ pub trait Transformable {
     fn transform(&self, m: Matrix44f) -> Self;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     center: Point,
     radius_squared: f64,
@@ -141,7 +141,7 @@ impl Transformable for Sphere {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Plane {
     point: Point,
     normal: Direction,
@@ -201,7 +201,7 @@ impl Transformable for Plane {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Triangle {
     vertices: [Point; 3],
     edges: [Direction; 3],
