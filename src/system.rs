@@ -1,5 +1,12 @@
 use std::f64;
 use std::mem;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread::spawn;
+use std::io::Stdout;
+
+use image;
+use pbr::ProgressBar;
 
 use color::Color;
 use direction::{Dot,Direction};
@@ -9,6 +16,7 @@ use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use shapes::{Shape,Intersectable};
+use scene::Scene;
 use vector::{Vector2f};
 
 #[derive(Debug, Copy, Clone)]
@@ -266,7 +274,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
     }
 }
 
-pub fn calculate_pixel_color(
+fn calculate_pixel_color(
     options: &Options,
     camera: &Camera,
     objects: &[Object],
@@ -275,4 +283,74 @@ pub fn calculate_pixel_color(
     y: u32,
 ) -> Color {
     cast_ray(options, objects, lights, camera.pixel_ray(x, y), 0)
+}
+
+fn color_to_pixel(v: Color) -> image::Rgb<u8> {
+    let r = (v.r * 255.0).min(255.0) as u8;
+    let g = (v.g * 255.0).min(255.0) as u8;
+    let b = (v.b * 255.0).min(255.0) as u8;
+    image::Rgb([r, g, b])
+}
+
+pub fn render(
+    options: Options,
+    scene: Scene,
+) -> image::RgbImage {
+    let mut imgbuf = image::RgbImage::new(options.width, options.height);
+    let width = options.width;
+    let height = options.height;
+    let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
+    let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    results.resize(height as usize, Vec::new());
+    let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
+
+    // start progress bar update task
+    let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
+    let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
+
+    pb.message(&format!("Rendering (x{}): ", options.num_threads));
+
+    // spawn threads for rendering rows
+    // each thread sends the row index when it finishes rendering
+    for _ in 0..options.num_threads {
+        let options = options.clone();
+        let scene = scene.clone();
+        let rows = rows.clone();
+        let results = results.clone();
+        let tx = tx.clone();
+        spawn(move || {
+            loop {
+                let y = { rows.lock().unwrap().pop() };
+                match y {
+                    Some(y) => {
+                        let row = (0..width)
+                            .map(|x| {
+                                calculate_pixel_color(&options, &scene.camera, &scene.objects, &scene.lights, x, y)
+                            })
+                            .collect();
+                        let mut results = results.lock().unwrap();
+                        results[y as usize] = row;
+                        let _ = tx.send(y);
+                    }
+                    None => break
+                }
+            }
+        });
+    }
+
+    // wait for all the rows to be rendered,
+    // updating progress as each row is finished
+    for _ in 0..pb.total {
+        let _ = rx.recv();
+        pb.inc();
+    }
+
+    pb.finish();
+
+    let results = results.lock().unwrap();
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        *pixel = color_to_pixel(results[y as usize][x as usize]);
+    }
+
+    imgbuf
 }
