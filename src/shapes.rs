@@ -51,6 +51,12 @@ impl BoundingBox {
     }
 }
 
+impl Transformable for BoundingBox {
+    fn transform(&self, m: Matrix44f) -> Self {
+        BoundingBox::new(self.bounds[0] * m, self.bounds[1] * m)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Shape {
     Sphere(Sphere),
@@ -193,7 +199,7 @@ impl Intersectable for Plane {
 impl Transformable for Plane {
     fn transform(&self, m: Matrix44f) -> Self {
         let mut p = Plane::new(
-            m.inverse().transposed().mult_normal(self.normal)
+            self.normal * m.inverse().transposed()
         );
         p.point = self.point * m;
         p
@@ -272,58 +278,81 @@ impl Transformable for Triangle {
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub vertices: Vec<Point>,
+    pub normals: Vec<Direction>,
     pub triangles: Vec<MeshTriangle>,
+    pub bounding_box: BoundingBox,
 }
 
 #[derive(Debug, Clone)]
 pub struct MeshTriangle {
-    pub indices: [usize; 3],
+    pub vertex_indices: [usize; 3],
+    pub normal_indices: [usize; 3],
 }
 
 impl Mesh {
+    pub fn new(vertices: Vec<Point>, normals: Vec<Direction>, triangles: Vec<MeshTriangle>) -> Mesh {
+        let mut min = Point::zero();
+        let mut max = Point::zero();
+
+        for v in &vertices {
+            min.x = min.x.min(v.x);
+            min.y = min.y.min(v.y);
+            min.z = min.z.min(v.z);
+            max.x = max.x.max(v.x);
+            max.y = max.y.max(v.y);
+            max.z = max.z.max(v.z);
+        }
+
+        Mesh {
+            vertices: vertices,
+            normals: normals,
+            triangles: triangles,
+            bounding_box: BoundingBox::new(min, max),
+        }
+    }
+
     fn intersect_triangle(&self, ray: Ray, triangle: &MeshTriangle) -> Option<Intersection> {
-        let v0 = self.vertices[triangle.indices[0]];
-        let v1 = self.vertices[triangle.indices[1]];
-        let v2 = self.vertices[triangle.indices[2]];
-        let n = (v1 - v0).cross(v2 - v0).normalize();
+        let v0 = self.vertices[triangle.vertex_indices[0]];
+        let v1 = self.vertices[triangle.vertex_indices[1]];
+        let v2 = self.vertices[triangle.vertex_indices[2]];
+        let n0 = self.normals[triangle.normal_indices[0]];
+        let n1 = self.normals[triangle.normal_indices[1]];
+        let n2 = self.normals[triangle.normal_indices[2]];
+        let n = (n0 + n1 + n2).normalize();
         let edges = [v1 - v0, v2 - v1, v0 - v2];
 
-        let denom = n.dot(n);
+        let v0v1 = (v1 - v0);
+        let v0v2 = v2 - v0;
+        let pvec = ray.direction.cross(v0v2);
+        let det = v0v1.dot(pvec);
 
-        let normal_dot_ray = n.dot(ray.direction);
-        if normal_dot_ray.abs() < 1e-6 {
+        if det < f64::EPSILON {
             return None;
         }
 
-        let d = n.dot(v0);
-        let t = (n.dot(ray.origin) + d) / normal_dot_ray;
+        let inv_det = 1.0 / det;
+
+        let tvec = ray.origin - v0;
+        let u = tvec.dot(pvec) * inv_det;
+        if u < 0.0 || u > 1.0 {
+            return None;
+        }
+
+        let qvec = tvec.cross(v0v1);
+        let v = ray.direction.dot(qvec) * inv_det;
+        if v < 0.0 || (u + v) > 1.0 {
+            return None;
+        }
+
+        let t = v0v2.dot(qvec) * inv_det;
         if t < 0.0 {
-            return None;
-        }
-
-        let p = ray.origin + ray.direction * t;
-
-        let c0 = edges[0].cross(p - v0);
-        let u = n.dot(c0);
-        if u < 0.0 {
-            return None;
-        }
-
-        let c1 = edges[1].cross(p - v1);
-        if n.dot(c1) < 0.0 {
-            return None;
-        }
-
-        let c2 = edges[2].cross(p - v2);
-        let v = n.dot(c2);
-        if v < 0.0 {
             return None;
         }
 
         Some(Intersection {
             t: t,
             n: n,
-            uv: Vector2f(u / denom, v / denom),
+            uv: Vector2f(u, v),
         })
     }
     
@@ -331,21 +360,34 @@ impl Mesh {
 
 impl Intersectable for Mesh {
     fn intersect(&self, ray: Ray) -> Option<Intersection> {
+        if !self.bounding_box.intersect(ray) {
+            return None;
+        }
+
+        let mut nearest = None;
+
         for triangle in &self.triangles {
             let i = self.intersect_triangle(ray, triangle);
-            if i.is_some() {
-                return i;
+            if let Some(i) = i {
+                nearest = match nearest {
+                    None => Some(i),
+                    Some(n) => if i.t < n.t { Some(i) } else { Some(n) },
+                }
             }
         }
-        None
+
+        nearest
     }
 }
 
 impl Transformable for Mesh {
     fn transform(&self, m: Matrix44f) -> Self {
+        let mit = m.inverse().transposed();
         Mesh {
             vertices: self.vertices.iter().map(|v| (*v) * m).collect(),
+            normals: self.normals.iter().map(|n| (*n) * mit).collect(),
             triangles: self.triangles.clone(),
+            bounding_box: self.bounding_box.clone().transform(m),
         }
     }
 }

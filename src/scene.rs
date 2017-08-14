@@ -107,19 +107,18 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
 fn convert_obj(o: &wavefront_obj::obj::Object) -> Mesh {
     let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
+    let normals = o.normals.iter().map(|n| Direction::new(n.x, n.y, n.z)).collect();
     let triangles = o.geometry
         .iter()
         .flat_map(|g| &g.shapes)
         .flat_map(|s| match s.primitive {
             wavefront_obj::obj::Primitive::Triangle(v0, v1, v2) => Some(MeshTriangle {
-                indices: [v0.0, v1.0, v2.0],
+                vertex_indices: [v0.0, v1.0, v2.0],
+                normal_indices: [v0.2.unwrap(), v1.2.unwrap(), v2.2.unwrap()],
             }),
             _ => None,
         })
         .collect();
 
-    Mesh {
-        vertices: vertices,
-        triangles: triangles,
-    }
+    Mesh::new(vertices, normals, triangles)
 }
