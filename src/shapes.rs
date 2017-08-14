@@ -281,6 +281,7 @@ pub struct Mesh {
     pub normals: Vec<Direction>,
     pub triangles: Vec<MeshTriangle>,
     pub bounding_box: BoundingBox,
+    pub smooth_shading: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -290,7 +291,7 @@ pub struct MeshTriangle {
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Point>, normals: Vec<Direction>, triangles: Vec<MeshTriangle>) -> Mesh {
+    pub fn new(vertices: Vec<Point>, normals: Vec<Direction>, triangles: Vec<MeshTriangle>, smooth_shading: bool) -> Mesh {
         let mut min = Point::zero();
         let mut max = Point::zero();
 
@@ -308,6 +309,7 @@ impl Mesh {
             normals: normals,
             triangles: triangles,
             bounding_box: BoundingBox::new(min, max),
+            smooth_shading: smooth_shading,
         }
     }
 
@@ -318,7 +320,6 @@ impl Mesh {
         let n0 = self.normals[triangle.normal_indices[0]];
         let n1 = self.normals[triangle.normal_indices[1]];
         let n2 = self.normals[triangle.normal_indices[2]];
-        let n = (n0 + n1 + n2).normalize();
         let edges = [v1 - v0, v2 - v1, v0 - v2];
 
         let v0v1 = (v1 - v0);
@@ -348,6 +349,12 @@ impl Mesh {
         if t < 0.0 {
             return None;
         }
+
+        let n = if self.smooth_shading {
+            ((1.0 - u - v) * n0 + u * n1 + v * n2).normalize()
+        } else {
+            (n0 + n1 + n2).normalize()
+        };
 
         Some(Intersection {
             t: t,
@@ -388,6 +395,7 @@ impl Transformable for Mesh {
             normals: self.normals.iter().map(|n| (*n) * mit).collect(),
             triangles: self.triangles.clone(),
             bounding_box: self.bounding_box.clone().transform(m),
+            smooth_shading: self.smooth_shading,
         }
     }
 }

@@ -120,5 +120,5 @@ fn convert_obj(o: &wavefront_obj::obj::Object) -> Mesh {
         })
         .collect();
 
-    Mesh::new(vertices, normals, triangles)
+    Mesh::new(vertices, normals, triangles, true)
 }
