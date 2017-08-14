@@ -204,73 +204,69 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
         return options.background_color;
     }
 
-    let maybe_hit = trace(ray, &objects, f64::MAX);
+    match trace(ray, objects, f64::MAX) {
+        None => options.background_color,
+        Some(hit) => {
+            let hit_distance = hit.i.t;
+            let hit_point = ray.origin + ray.direction * hit_distance;
+            let hit_normal = hit.i.n;
 
-    if let Some(hit) = maybe_hit {
-        let hit_distance = hit.i.t;
-        let hit_point = ray.origin + ray.direction * hit_distance;
-        let hit_normal = hit.i.n;
-
-        let mut hit_color = Color::zero();
-
-        match hit.object.material {
-            Material::Diffuse(color) => {
-                for light in lights {
-                    let (dir, intensity, distance) = match light {
-                        &Light::Distant(ref light) => light.illuminate(hit_point),
-                        &Light::Point(ref light) => light.illuminate(hit_point),
-                    };
-                    let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
-                    let maybe_shadow_hit = trace(shadow_ray, objects, distance);
-                    if maybe_shadow_hit.is_none() {
-                        let albedo = hit.object.albedo;
-                        let dot = hit_normal.dot(-dir);
-                        if dot > 0.0 {
-                            hit_color += color * albedo * intensity * dot;
+            match hit.object.material {
+                Material::Diffuse(color) => {
+                    let mut hit_color = Color::zero();
+                    for light in lights {
+                        let (dir, intensity, distance) = match light {
+                            &Light::Distant(ref l) => l.illuminate(hit_point),
+                            &Light::Point(ref l) => l.illuminate(hit_point),
+                        };
+                        let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
+                        if trace(shadow_ray, objects, distance).is_none() {
+                            let albedo = hit.object.albedo;
+                            let dot = hit_normal.dot(-dir);
+                            if dot > 0.0 {
+                                hit_color += color * albedo * intensity * dot;
+                            }
                         }
                     }
+                    hit_color
                 }
-            }
-            Material::Reflective => {
-                let reflection_ray = Ray::primary(
-                    hit_point + hit_normal * options.bias,
-                    reflect(ray.direction, hit_normal).normalize(),
-                );
-                let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
-                hit_color += reflection_color * 0.8;
-            }
-            Material::ReflectiveAndRefractive(ior) => {
-                let mut refraction_color = Color::zero();
-                let kr = fresnel(ray.direction, hit_normal, ior);
-                let outside = ray.direction.dot(hit_normal) < 0.0;
-                let bias = hit_normal * options.bias;
-                if kr < 1.0 {
-                    let refraction_ray = Ray::primary(
-                        if outside {
-                            hit_point - bias
-                        } else {
-                            hit_point + bias
-                        },
-                        refract(ray.direction, hit_normal, ior).normalize(),
+                Material::Reflective => {
+                    let reflection_ray = Ray::primary(
+                        hit_point + hit_normal * options.bias,
+                        reflect(ray.direction, hit_normal).normalize(),
                     );
-                    refraction_color = cast_ray(options, objects, lights, refraction_ray, depth + 1);
+                    let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
+                    reflection_color * 0.8
                 }
-                let reflection_ray = Ray::primary(
-                    if outside {
-                        hit_point + bias
-                    } else {
-                        hit_point - bias
-                    },
-                    reflect(ray.direction, hit_normal).normalize(),
-                );
-                let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
-                hit_color += reflection_color * kr + refraction_color * (1.0 - kr);
+                Material::ReflectiveAndRefractive(ior) => {
+                    let mut refraction_color = Color::zero();
+                    let kr = fresnel(ray.direction, hit_normal, ior);
+                    let outside = ray.direction.dot(hit_normal) < 0.0;
+                    let bias = hit_normal * options.bias;
+                    if kr < 1.0 {
+                        let refraction_ray = Ray::primary(
+                            if outside {
+                                hit_point - bias
+                            } else {
+                                hit_point + bias
+                            },
+                            refract(ray.direction, hit_normal, ior).normalize(),
+                        );
+                        refraction_color = cast_ray(options, objects, lights, refraction_ray, depth + 1);
+                    }
+                    let reflection_ray = Ray::primary(
+                        if outside {
+                            hit_point + bias
+                        } else {
+                            hit_point - bias
+                        },
+                        reflect(ray.direction, hit_normal).normalize(),
+                    );
+                    let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
+                    reflection_color * kr + refraction_color * (1.0 - kr)
+                }
             }
-        }
-
-        hit_color
-    } else {
-        options.background_color
+        },
     }
 }
 
