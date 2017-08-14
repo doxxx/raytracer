@@ -27,14 +27,15 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let blue = Color::new(0.0, 0.0, 1.0);
 
     let mut camera = Camera::new(w, h, 60.0);
-    camera.transform(Matrix44f::rotation_x(-15.0));
-    camera.transform(Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)));
+//    camera.transform(Matrix44f::rotation_x(-10.0));
+//    camera.transform(Matrix44f::rotation_y(10.0));
+//    camera.transform(Matrix44f::translation(Direction::new(3.0, 3.0, 0.0)));
 
     let lights: Vec<Light> = vec![
         Light::Distant(DistantLight::new(
             white,
-            1.0,
-            Direction::new(0.0, -1.0, 0.0).normalize(),
+            2.0,
+            Direction::new(-1.0, -1.0, -1.0).normalize(),
         )),
         Light::Point(PointLight::new(blue, 5000.0, Point::new(-10.0, 10.0, -15.0))),
         Light::Point(PointLight::new(red, 5000.0, Point::new(10.0, 10.0, -15.0))),
@@ -43,13 +44,15 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let obj = {
         print!("Loading object file...");
         let mut obj_file_contents = String::new();
-        let mut obj_file = File::open("LinkedTorus.obj").expect("could not open object file");
+        let mut obj_file = File::open("Monkey.obj").expect("could not open object file");
         obj_file.read_to_string(&mut obj_file_contents).expect("could not read object file");
         let obj_set = wavefront_obj::obj::parse(obj_file_contents).expect("Could not parse object file!");
         println!(" done.");
-        print!("Converting object...");
+//        println!("{:?}", obj_set.objects[0]);
+        print!("Converting objects...");
         let obj = convert_obj(&obj_set.objects[0]);
         println!(" done.");
+//        println!("{:?}", obj);
         obj
     };
 
@@ -65,37 +68,37 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
             Shape::Mesh(obj),
             DEFAULT_ALBEDO,
             Material::Diffuse(white),
-        ).transform(Matrix44f::translation(Direction::new(0.0, 2.0, -20.0))),
-        //        Object::new(
-        //            "sphere2",
-        //            Shape::Sphere(Sphere::new(2.0)),
-        //            DEFAULT_ALBEDO,
-        //            Material::Diffuse(white)
-        //        ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
-        //        Object::new(
-        //            "sphere3",
-        //            Shape::Sphere(Sphere::new(4.0)),
-        //            DEFAULT_ALBEDO,
-        //            Material::Diffuse(white)
-        //        ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
-        //        Object::new(
-        //            "sphere4",
-        //            Shape::Sphere(Sphere::new(6.0)),
-        //            DEFAULT_ALBEDO,
-        //            Material::Reflective
-        //        ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
-        //        Object::new(
-        //            "sphere5",
-        //            Shape::Sphere(Sphere::new(2.0)),
-        //            DEFAULT_ALBEDO,
-        //            Material::Diffuse(white)
-        //        ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
-        //        Object::new(
-        //            "sphere6",
-        //            Shape::Sphere(Sphere::new(2.0)),
-        //            DEFAULT_ALBEDO,
-        //            Material::ReflectiveAndRefractive(IOR_GLASS)
-        //        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
+        )/*.transform(Matrix44f::rotation_y(20.0))*/.transform(Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5))).transform(Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
+        Object::new(
+            "sphere2",
+            Shape::Sphere(Sphere::new(2.0)),
+            DEFAULT_ALBEDO,
+            Material::Diffuse(white)
+        ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
+        Object::new(
+            "sphere3",
+            Shape::Sphere(Sphere::new(4.0)),
+            DEFAULT_ALBEDO,
+            Material::Diffuse(white)
+        ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
+        Object::new(
+            "sphere4",
+            Shape::Sphere(Sphere::new(6.0)),
+            DEFAULT_ALBEDO,
+            Material::Reflective
+        ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
+        Object::new(
+            "sphere5",
+            Shape::Sphere(Sphere::new(2.0)),
+            DEFAULT_ALBEDO,
+            Material::Diffuse(white)
+        ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
+//        Object::new(
+//            "sphere6",
+//            Shape::Sphere(Sphere::new(2.0)),
+//            DEFAULT_ALBEDO,
+//            Material::ReflectiveAndRefractive(IOR_GLASS)
+//        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
     ];
 
     Scene {
