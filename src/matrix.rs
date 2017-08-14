@@ -161,14 +161,6 @@ impl Matrix44f {
         }
         t
     }
-
-    pub fn mult_normal(self, n: Direction) -> Direction {
-        Direction::new(
-            n.x * self[0][0] + n.y * self[1][0] + n.z * self[2][0] + self[3][0],
-            n.x * self[0][1] + n.y * self[1][1] + n.z * self[2][1] + self[3][1],
-            n.x * self[0][2] + n.y * self[1][2] + n.z * self[2][2] + self[3][2],
-        )
-    }
 }
 
 impl Index<usize> for Matrix44f {
@@ -216,6 +208,18 @@ impl Mul<Matrix44f> for Point {
             v /= w
         }
         v
+    }
+}
+
+impl Mul<Matrix44f> for Direction {
+    type Output = Direction;
+    
+    fn mul(self, rhs: Matrix44f) -> Self::Output {
+        Direction::new(
+            self.x * rhs[0][0] + self.y * rhs[1][0] + self.z * rhs[2][0] + rhs[3][0],
+            self.x * rhs[0][1] + self.y * rhs[1][1] + self.z * rhs[2][1] + rhs[3][1],
+            self.x * rhs[0][2] + self.y * rhs[1][2] + self.z * rhs[2][2] + rhs[3][2],
+        )
     }
 }
 
