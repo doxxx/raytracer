@@ -7,6 +7,7 @@ use std::io::Stdout;
 
 use image;
 use pbr::ProgressBar;
+use time;
 
 use color::Color;
 use direction::{Dot,Direction};
@@ -300,6 +301,11 @@ pub fn render(
     results.resize(height as usize, Vec::new());
     let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
 
+    let start_time = time::now();
+    let steady_start_time = time::SteadyTime::now();
+
+    println!("Started rendering at: {}", start_time.rfc822());
+
     // start progress bar update task
     let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
     let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
@@ -341,7 +347,12 @@ pub fn render(
         pb.inc();
     }
 
-    pb.finish();
+    let end_time = time::now();
+    let elapsed = time::SteadyTime::now() - steady_start_time;
+
+    pb.finish_println(&format!("Finished rendering at: {}\n", end_time.rfc822()));
+
+    println!("Elapsed time: {}", elapsed);
 
     let results = results.lock().unwrap();
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {

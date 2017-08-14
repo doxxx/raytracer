@@ -3,6 +3,7 @@ extern crate clap;
 extern crate wavefront_obj;
 extern crate pbr;
 extern crate num_cpus;
+extern crate time;
 
 mod color;
 mod direction;
