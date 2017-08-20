@@ -30,6 +30,7 @@ impl Object {
                 Shape::Triangle(s) => Shape::Triangle(s.transform(m)),
                 Shape::Sphere(s) => Shape::Sphere(s.transform(m)),
                 Shape::Mesh(s) => Shape::Mesh(s.transform(m)),
+                Shape::Composite(s) => Shape::Composite(s.transform(m)),
             },
             albedo: self.albedo,
             material: self.material,

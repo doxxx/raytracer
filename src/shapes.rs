@@ -13,6 +13,7 @@ pub enum Shape {
     Plane(Plane),
     Triangle(Triangle),
     Mesh(Mesh),
+    Composite(Composite),
 }
 
 pub trait Intersectable {
@@ -397,6 +398,45 @@ impl Transformable for Mesh {
             triangles: self.triangles.clone(),
             bounding_box: self.bounding_box.clone().transform(m),
             smooth_shading: self.smooth_shading,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Composite {
+    shapes: Vec<Shape>,
+}
+
+impl Composite {
+    pub fn new(shapes: Vec<Shape>) -> Composite {
+        Composite {
+            shapes: shapes,
+        }
+    }
+}
+
+impl Intersectable for Composite {
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+        self.shapes.iter().map(|s| match s {
+            &Shape::Sphere(ref s) => s.intersect(ray),
+            &Shape::Plane(ref s) => s.intersect(ray),
+            &Shape::Triangle(ref s) => s.intersect(ray),
+            &Shape::Mesh(ref s) => s.intersect(ray),
+            &Shape::Composite(ref s) => s.intersect(ray),
+        }).find(|i| i.is_some()).unwrap_or_default()
+    }
+}
+
+impl Transformable for Composite {
+    fn transform(&self, m: Matrix44f) -> Self {
+        Composite {
+            shapes: self.shapes.iter().map(|s| match s {
+                &Shape::Plane(ref s) => Shape::Plane(s.transform(m)),
+                &Shape::Triangle(ref s) => Shape::Triangle(s.transform(m)),
+                &Shape::Sphere(ref s) => Shape::Sphere(s.transform(m)),
+                &Shape::Mesh(ref s) => Shape::Mesh(s.transform(m)),
+                &Shape::Composite(ref s) => Shape::Composite(s.transform(m)),
+            }).collect()
         }
     }
 }

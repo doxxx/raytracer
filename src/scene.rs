@@ -10,7 +10,7 @@ use material::{IOR_GLASS, Material};
 use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use point::Point;
-use shapes::{Mesh, MeshTriangle, Plane, Shape, Sphere};
+use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
 use system::{Camera, Options, render};
 
 #[derive(Debug, Clone)]
@@ -50,7 +50,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         println!(" done.");
 //        println!("{:?}", obj_set.objects[0]);
         print!("Converting objects...");
-        let obj = convert_obj(&obj_set.objects[0]);
+        let obj = convert_objs(&obj_set);
         println!(" done.");
 //        println!("{:?}", obj);
         obj
@@ -65,7 +65,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
         Object::new(
             "object",
-            Shape::Mesh(obj),
+            Shape::Composite(obj),
             DEFAULT_ALBEDO,
             Material::Diffuse(white),
         )/*.transform(Matrix44f::rotation_y(20.0))*/.transform(Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5))).transform(Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
@@ -108,20 +108,22 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     }
 }
 
-fn convert_obj(o: &wavefront_obj::obj::Object) -> Mesh {
-    let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
-    let normals = o.normals.iter().map(|n| Direction::new(n.x, n.y, n.z)).collect();
-    let triangles = o.geometry
-        .iter()
-        .flat_map(|g| &g.shapes)
-        .flat_map(|s| match s.primitive {
-            wavefront_obj::obj::Primitive::Triangle(v0, v1, v2) => Some(MeshTriangle {
-                vertex_indices: [v0.0, v1.0, v2.0],
-                normal_indices: [v0.2.unwrap(), v1.2.unwrap(), v2.2.unwrap()],
-            }),
-            _ => None,
-        })
-        .collect();
+fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Composite {
+    Composite::new(objs.objects.iter().map(|o| {
+        let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
+        let normals = o.normals.iter().map(|n| Direction::new(n.x, n.y, n.z)).collect();
+        let triangles = o.geometry
+            .iter()
+            .flat_map(|g| &g.shapes)
+            .flat_map(|s| match s.primitive {
+                wavefront_obj::obj::Primitive::Triangle(v0, v1, v2) => Some(MeshTriangle {
+                    vertex_indices: [v0.0, v1.0, v2.0],
+                    normal_indices: [v0.2.unwrap(), v1.2.unwrap(), v2.2.unwrap()],
+                }),
+                _ => None,
+            })
+            .collect();
 
-    Mesh::new(vertices, normals, triangles, true)
+        Shape::Mesh(Mesh::new(vertices, normals, triangles, true))
+    }).collect())
 }
