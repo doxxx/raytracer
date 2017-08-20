@@ -7,6 +7,23 @@ use point::Point;
 use system::{Intersection, Ray};
 use vector::{Vector2f};
 
+#[derive(Debug, Clone)]
+pub enum Shape {
+    Sphere(Sphere),
+    Plane(Plane),
+    Triangle(Triangle),
+    Mesh(Mesh),
+}
+
+pub trait Intersectable {
+    fn intersect(&self, ray: Ray) -> Option<Intersection>;
+}
+
+pub trait Transformable {
+    fn transform(&self, m: Matrix44f) -> Self;
+}
+
+
 #[derive(Debug, Copy, Clone)]
 pub struct BoundingBox {
     bounds: [Point; 2],
@@ -55,22 +72,6 @@ impl Transformable for BoundingBox {
     fn transform(&self, m: Matrix44f) -> Self {
         BoundingBox::new(self.bounds[0] * m, self.bounds[1] * m)
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum Shape {
-    Sphere(Sphere),
-    Plane(Plane),
-    Triangle(Triangle),
-    Mesh(Mesh),
-}
-
-pub trait Intersectable {
-    fn intersect(&self, ray: Ray) -> Option<Intersection>;
-}
-
-pub trait Transformable {
-    fn transform(&self, m: Matrix44f) -> Self;
 }
 
 #[derive(Debug, Clone)]
@@ -322,7 +323,7 @@ impl Mesh {
         let n2 = self.normals[triangle.normal_indices[2]];
         let edges = [v1 - v0, v2 - v1, v0 - v2];
 
-        let v0v1 = (v1 - v0);
+        let v0v1 = v1 - v0;
         let v0v2 = v2 - v0;
         let pvec = ray.direction.cross(v0v2);
         let det = v0v1.dot(pvec);
