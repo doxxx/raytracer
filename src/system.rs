@@ -16,7 +16,6 @@ use material::Material;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
-use shapes::{Shape, Intersectable};
 use scene::Scene;
 use vector::Vector2f;
 
@@ -123,6 +122,14 @@ pub struct Intersection {
     pub uv: Vector2f,
 }
 
+pub trait Intersectable {
+    fn intersect(&self, ray: Ray) -> Option<Intersection>;
+}
+
+pub trait Transformable {
+    fn transform(&self, m: Matrix44f) -> Self;
+}
+
 fn clamp(lo: f64, hi: f64, val: f64) -> f64 {
     lo.max(hi.min(val))
 }
@@ -178,12 +185,7 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
     let mut nearest: Option<RayHit> = None;
 
     for object in objects {
-        let intersection = match &object.shape {
-            &Shape::Sphere(ref s) => s.intersect(ray),
-            &Shape::Plane(ref s) => s.intersect(ray),
-            &Shape::Mesh(ref s) => s.intersect(ray),
-            &Shape::Composite(ref s) => s.intersect(ray),
-        };
+        let intersection = object.intersect(ray);
         if let Some(intersection) = intersection {
             if intersection.t < nearest_distance {
                 match (ray.kind, object.material) {

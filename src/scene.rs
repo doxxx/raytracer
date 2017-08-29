@@ -11,7 +11,7 @@ use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use point::Point;
 use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
-use system::Camera;
+use system::{Camera, Transformable};
 
 #[derive(Debug, Clone)]
 pub struct Scene {
