@@ -10,15 +10,15 @@ use pbr::ProgressBar;
 use time;
 
 use color::Color;
-use direction::{Dot,Direction};
+use direction::{Dot, Direction};
 use lights::{LightSource, Light};
 use material::Material;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
-use shapes::{Shape,Intersectable};
+use shapes::{Shape, Intersectable};
 use scene::Scene;
-use vector::{Vector2f};
+use vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Options {
@@ -181,7 +181,6 @@ fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
         let intersection = match &object.shape {
             &Shape::Sphere(ref s) => s.intersect(ray),
             &Shape::Plane(ref s) => s.intersect(ray),
-            &Shape::Triangle(ref s) => s.intersect(ray),
             &Shape::Mesh(ref s) => s.intersect(ray),
             &Shape::Composite(ref s) => s.intersect(ray),
         };
@@ -215,7 +214,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
 
             match hit.object.material {
                 Material::Diffuse(color) => {
-                    let mut hit_color = Color::zero();
+                    let mut hit_color = Color::black();
                     for light in lights {
                         let (dir, intensity, distance) = match light {
                             &Light::Distant(ref l) => l.illuminate(hit_point),
@@ -241,7 +240,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
                     reflection_color * 0.8
                 }
                 Material::ReflectiveAndRefractive(ior) => {
-                    let mut refraction_color = Color::zero();
+                    let mut refraction_color = Color::black();
                     let kr = fresnel(ray.direction, hit_normal, ior);
                     let outside = ray.direction.dot(hit_normal) < 0.0;
                     let bias = hit_normal * options.bias;
@@ -268,19 +267,8 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
                     reflection_color * kr + refraction_color * (1.0 - kr)
                 }
             }
-        },
+        }
     }
-}
-
-fn calculate_pixel_color(
-    options: &Options,
-    camera: &Camera,
-    objects: &[Object],
-    lights: &[Light],
-    x: u32,
-    y: u32,
-) -> Color {
-    cast_ray(options, objects, lights, camera.pixel_ray(x, y), 0)
 }
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
@@ -328,7 +316,7 @@ pub fn render(
                     Some(y) => {
                         let row = (0..width)
                             .map(|x| {
-                                calculate_pixel_color(&options, &scene.camera, &scene.objects, &scene.lights, x, y)
+                                cast_ray(&options, &scene.objects, &scene.lights, scene.camera.pixel_ray(x, y), 0)
                             })
                             .collect();
                         let mut results = results.lock().unwrap();

@@ -11,7 +11,7 @@ use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use point::Point;
 use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
-use system::{Camera, Options, render};
+use system::Camera;
 
 #[derive(Debug, Clone)]
 pub struct Scene {
@@ -21,11 +21,6 @@ pub struct Scene {
 }
 
 pub fn setup_scene(w: u32, h: u32) -> Scene {
-    let white = Color::new(1.0, 1.0, 1.0);
-    let red = Color::new(1.0, 0.0, 0.0);
-    let green = Color::new(0.0, 1.0, 1.0);
-    let blue = Color::new(0.0, 0.0, 1.0);
-
     let mut camera = Camera::new(w, h, 60.0);
 //    camera.transform(Matrix44f::rotation_x(-10.0));
 //    camera.transform(Matrix44f::rotation_y(10.0));
@@ -33,12 +28,12 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
     let lights: Vec<Light> = vec![
         Light::Distant(DistantLight::new(
-            white,
+            Color::white(),
             2.0,
             Direction::new(-1.0, -1.0, -1.0).normalize(),
         )),
-        Light::Point(PointLight::new(blue, 5000.0, Point::new(-10.0, 10.0, -15.0))),
-        Light::Point(PointLight::new(red, 5000.0, Point::new(10.0, 10.0, -15.0))),
+        Light::Point(PointLight::new(Color::blue(), 5000.0, Point::new(-10.0, 10.0, -15.0))),
+        Light::Point(PointLight::new(Color::red(), 5000.0, Point::new(10.0, 10.0, -15.0))),
     ];
 
     let obj = {
@@ -61,25 +56,25 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
             "plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white)
+            Material::Diffuse(Color::white())
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
         Object::new(
             "object",
             Shape::Composite(obj),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white),
+            Material::Diffuse(Color::white()),
         )/*.transform(Matrix44f::rotation_y(20.0))*/.transform(Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5))).transform(Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
         Object::new(
             "sphere2",
             Shape::Sphere(Sphere::new(2.0)),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white)
+            Material::Diffuse(Color::white())
         ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
         Object::new(
             "sphere3",
             Shape::Sphere(Sphere::new(4.0)),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white)
+            Material::Diffuse(Color::white())
         ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
         Object::new(
             "sphere4",
@@ -91,7 +86,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
             "sphere5",
             Shape::Sphere(Sphere::new(2.0)),
             DEFAULT_ALBEDO,
-            Material::Diffuse(white)
+            Material::Diffuse(Color::white())
         ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
 //        Object::new(
 //            "sphere6",

@@ -35,7 +35,7 @@ impl DistantLight {
 }
 
 impl LightSource for DistantLight {
-    fn illuminate(&self, point: Point) -> (Direction, Color, f64) {
+    fn illuminate(&self, _point: Point) -> (Direction, Color, f64) {
         (self.direction, self.color * self.intensity, f64::MAX)
     }
 }

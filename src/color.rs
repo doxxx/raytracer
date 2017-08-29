@@ -1,5 +1,5 @@
 use std::f64;
-use std::ops::{Add, AddAssign, Div,Mul};
+use std::ops::{Add, AddAssign, Div, Mul};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Color {
@@ -17,9 +17,11 @@ impl Color {
         }
     }
 
-    pub fn zero() -> Color {
-        Color::new(0.0, 0.0, 0.0)
-    }
+    pub fn black() -> Color { Color::new(0.0, 0.0, 0.0) }
+    pub fn white() -> Color { Color::new(1.0, 1.0, 1.0) }
+    pub fn red() -> Color { Color::new(1.0, 0.0, 0.0) }
+    pub fn green() -> Color { Color::new(0.0, 1.0, 1.0) }
+    pub fn blue() -> Color { Color::new(0.0, 0.0, 1.0) }
 }
 
 impl Add for Color {
@@ -70,8 +72,6 @@ impl Div<f64> for Color {
     }
 }
 
-const EPSILON: f64 = (f64::EPSILON * 100.0);
-
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
         (self.r - other.r) <= f64::EPSILON && (self.g - other.g) <= f64::EPSILON && (self.b - other.b) <= f64::EPSILON
@@ -87,7 +87,7 @@ mod tests {
         let a = Color::new(0.1, 0.2, 0.3);
         let b = Color::new(0.4, 0.5, 0.6);
         let r = a + b;
-        assert_eq!(Color::new(0.1+0.4, 0.2+0.5, 0.3+0.6), r);
+        assert_eq!(Color::new(0.1 + 0.4, 0.2 + 0.5, 0.3 + 0.6), r);
     }
 
     #[test]
@@ -102,20 +102,20 @@ mod tests {
         let a = Color::new(0.1, 0.2, 0.3);
         let b = Color::new(0.4, 0.5, 0.6);
         let r = a * b;
-        assert_eq!(Color::new(0.1*0.4, 0.2*0.5, 0.3*0.6), r);
+        assert_eq!(Color::new(0.1 * 0.4, 0.2 * 0.5, 0.3 * 0.6), r);
     }
 
     #[test]
     fn mul_f64() {
         let c = Color::new(0.1, 0.2, 0.3);
         let r = c * 2.0;
-        assert_eq!(Color::new(0.1*2.0, 0.2*2.0, 0.3*2.0), r);
+        assert_eq!(Color::new(0.1 * 2.0, 0.2 * 2.0, 0.3 * 2.0), r);
     }
 
     #[test]
     fn div_f64() {
         let c = Color::new(0.1, 0.2, 0.3);
         let r = c / 2.0;
-        assert_eq!(Color::new(0.1/2.0, 0.2/2.0, 0.3/2.0), r);
+        assert_eq!(Color::new(0.1 / 2.0, 0.2 / 2.0, 0.3 / 2.0), r);
     }
 }

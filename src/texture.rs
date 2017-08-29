@@ -9,25 +9,7 @@ fn mix(a: Color, b: Color, v: f64) -> Color {
 }
 
 pub trait Texture: Debug {
-    fn color(&self, point: Vector2f) -> Color;
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Flat {
-    color: Color,
-}
-
-impl Flat {
-    pub fn new(color: Color) -> Flat {
-        Flat { color: color }
-    }
-}
-
-impl Texture for Flat {
-    #![allow(unused_variables)]
-    fn color(&self, point: Vector2f) -> Color {
-        return self.color;
-    }
+    fn color(&self, uv: Vector2f) -> Color;
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -48,9 +30,9 @@ impl Checkerboard {
 }
 
 impl Texture for Checkerboard {
-    fn color(&self, point: Vector2f) -> Color {
-        let scaled_x_frac = (point.0 * self.scale).fract();
-        let scaled_y_frac = (point.1 * self.scale).fract();
+    fn color(&self, uv: Vector2f) -> Color {
+        let scaled_x_frac = (uv.0 * self.scale).fract();
+        let scaled_y_frac = (uv.1 * self.scale).fract();
         let x_pattern = (scaled_x_frac.abs() > 0.5) ^ (scaled_x_frac < 0.0);
         let y_pattern = (scaled_y_frac.abs() > 0.5) ^ (scaled_y_frac < 0.0);
         let pattern = if x_pattern ^ y_pattern { 1.0 } else { 0.0 };

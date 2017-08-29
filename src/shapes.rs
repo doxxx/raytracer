@@ -1,17 +1,16 @@
 use std::f64;
 use std::mem;
 
-use direction::{Dot,Direction};
+use direction::{Dot, Direction};
 use matrix::Matrix44f;
 use point::Point;
 use system::{Intersection, Ray};
-use vector::{Vector2f};
+use vector::Vector2f;
 
 #[derive(Debug, Clone)]
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
-    Triangle(Triangle),
     Mesh(Mesh),
     Composite(Composite),
 }
@@ -109,10 +108,10 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
 
 impl Intersectable for Sphere {
     fn intersect(&self, ray: Ray) -> Option<Intersection> {
-        let L = ray.origin - self.center;
+        let l = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
-        let b = 2.0 * ray.direction.dot(L);
-        let c = L.dot(L) - self.radius_squared;
+        let b = 2.0 * ray.direction.dot(l);
+        let c = l.dot(l) - self.radius_squared;
         if let Some((mut t0, mut t1)) = solve_quadratic(a, b, c) {
             if t0 > t1 {
                 mem::swap(&mut t0, &mut t1);
@@ -208,75 +207,6 @@ impl Transformable for Plane {
     }
 }
 
-
-#[derive(Debug, Clone)]
-pub struct Triangle {
-    vertices: [Point; 3],
-    edges: [Direction; 3],
-    normal: Direction,
-}
-
-impl Triangle {
-    pub fn new(v0: Point, v1: Point, v2: Point) -> Triangle {
-        Triangle {
-            vertices: [v0, v1, v2],
-            edges: [v1 - v0, v2 - v1, v0 - v2],
-            normal: (v1 - v0).cross(v2 - v0).normalize(),
-        }
-    }
-}
-
-impl Intersectable for Triangle {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
-        let denom = self.normal.dot(self.normal);
-
-        let normal_dot_ray = self.normal.dot(ray.direction);
-        if normal_dot_ray.abs() < 1e-6 {
-            return None;
-        }
-
-        let d = self.normal.dot(self.vertices[0]);
-        let t = (self.normal.dot(ray.origin) + d) / normal_dot_ray;
-        if t < 0.0 {
-            return None;
-        }
-
-        let p = ray.origin + ray.direction * t;
-
-        let c0 = self.edges[0].cross(p - self.vertices[0]);
-        let u = self.normal.dot(c0);
-        if u < 0.0 {
-            return None;
-        }
-
-        let c1 = self.edges[1].cross(p - self.vertices[1]);
-        if self.normal.dot(c1) < 0.0 {
-            return None;
-        }
-
-        let c2 = self.edges[2].cross(p - self.vertices[2]);
-        let v = self.normal.dot(c2);
-        if v < 0.0 {
-            return None;
-        }
-
-        Some(Intersection {
-            t: t,
-            n: self.normal,
-            uv: Vector2f(u / denom, v / denom),
-        })
-    }
-}
-
-impl Transformable for Triangle {
-    fn transform(&self, m: Matrix44f) -> Self {
-        let v0 = self.vertices[0] * m;
-        let v1 = self.vertices[1] * m;
-        let v2 = self.vertices[2] * m;
-        Triangle::new(v0, v1, v2)
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub vertices: Vec<Point>,
@@ -322,7 +252,6 @@ impl Mesh {
         let n0 = self.normals[triangle.normal_indices[0]];
         let n1 = self.normals[triangle.normal_indices[1]];
         let n2 = self.normals[triangle.normal_indices[2]];
-        let edges = [v1 - v0, v2 - v1, v0 - v2];
 
         let v0v1 = v1 - v0;
         let v0v2 = v2 - v0;
@@ -364,7 +293,6 @@ impl Mesh {
             uv: Vector2f(u, v),
         })
     }
-    
 }
 
 impl Intersectable for Mesh {
@@ -420,7 +348,6 @@ impl Intersectable for Composite {
         self.shapes.iter().map(|s| match s {
             &Shape::Sphere(ref s) => s.intersect(ray),
             &Shape::Plane(ref s) => s.intersect(ray),
-            &Shape::Triangle(ref s) => s.intersect(ray),
             &Shape::Mesh(ref s) => s.intersect(ray),
             &Shape::Composite(ref s) => s.intersect(ray),
         }).find(|i| i.is_some()).unwrap_or_default()
@@ -432,7 +359,6 @@ impl Transformable for Composite {
         Composite {
             shapes: self.shapes.iter().map(|s| match s {
                 &Shape::Plane(ref s) => Shape::Plane(s.transform(m)),
-                &Shape::Triangle(ref s) => Shape::Triangle(s.transform(m)),
                 &Shape::Sphere(ref s) => Shape::Sphere(s.transform(m)),
                 &Shape::Mesh(ref s) => Shape::Mesh(s.transform(m)),
                 &Shape::Composite(ref s) => Shape::Composite(s.transform(m)),

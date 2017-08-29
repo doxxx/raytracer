@@ -1,6 +1,6 @@
 use material::Material;
 use matrix::Matrix44f;
-use shapes::{Shape,Transformable};
+use shapes::{Shape, Transformable};
 
 pub const DEFAULT_ALBEDO: f64 = 0.18;
 
@@ -27,7 +27,6 @@ impl Object {
             name: self.name,
             shape: match self.shape {
                 Shape::Plane(s) => Shape::Plane(s.transform(m)),
-                Shape::Triangle(s) => Shape::Triangle(s.transform(m)),
                 Shape::Sphere(s) => Shape::Sphere(s.transform(m)),
                 Shape::Mesh(s) => Shape::Mesh(s.transform(m)),
                 Shape::Composite(s) => Shape::Composite(s.transform(m)),
