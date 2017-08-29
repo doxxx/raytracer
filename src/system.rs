@@ -11,7 +11,7 @@ use time;
 
 use color::Color;
 use direction::{Dot, Direction};
-use lights::{LightSource, Light};
+use lights::Light;
 use material::Material;
 use matrix::Matrix44f;
 use object::Object;
@@ -216,10 +216,7 @@ fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, d
                 Material::Diffuse(color) => {
                     let mut hit_color = Color::black();
                     for light in lights {
-                        let (dir, intensity, distance) = match light {
-                            &Light::Distant(ref l) => l.illuminate(hit_point),
-                            &Light::Point(ref l) => l.illuminate(hit_point),
-                        };
+                        let (dir, intensity, distance) = light.illuminate(hit_point);
                         let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
                         if trace(shadow_ray, objects, distance).is_none() {
                             let albedo = hit.object.albedo;

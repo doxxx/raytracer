@@ -5,7 +5,7 @@ use wavefront_obj;
 
 use color::Color;
 use direction::Direction;
-use lights::{DistantLight, Light, PointLight};
+use lights::Light;
 use material::{IOR_GLASS, Material};
 use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
@@ -27,13 +27,9 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 //    camera.transform(Matrix44f::translation(Direction::new(3.0, 3.0, 0.0)));
 
     let lights: Vec<Light> = vec![
-        Light::Distant(DistantLight::new(
-            Color::white(),
-            2.0,
-            Direction::new(-1.0, -1.0, -1.0).normalize(),
-        )),
-        Light::Point(PointLight::new(Color::blue(), 5000.0, Point::new(-10.0, 10.0, -15.0))),
-        Light::Point(PointLight::new(Color::red(), 5000.0, Point::new(10.0, 10.0, -15.0))),
+        Light::Distant { color: Color::white(), intensity: 2.0, direction: Direction::new(-1.0, -1.0, -1.0).normalize() },
+        Light::Point { color: Color::blue(), intensity: 5000.0, origin: Point::new(-10.0, 10.0, -15.0) },
+        Light::Point { color: Color::red(), intensity: 5000.0, origin: Point::new(10.0, 10.0, -15.0) },
     ];
 
     let obj = {
