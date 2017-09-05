@@ -16,7 +16,7 @@ pub enum Shape {
 }
 
 impl Intersectable for Shape {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         match self {
             &Shape::Sphere(ref s) => s.intersect(ray),
             &Shape::Plane(ref s) => s.intersect(ray),
@@ -47,7 +47,7 @@ impl BoundingBox {
         BoundingBox { bounds: [min, max] }
     }
 
-    pub fn intersect(&self, ray: Ray) -> bool {
+    pub fn intersect(&self, ray: &Ray) -> bool {
         let mut tmin = (self.bounds[ray.sign[0]].x - ray.origin.x) * ray.inverse_direction.x;
         let mut tmax = (self.bounds[1 - ray.sign[0]].x - ray.origin.x) * ray.inverse_direction.x;
         let tymin = (self.bounds[ray.sign[1]].y - ray.origin.y) * ray.inverse_direction.y;
@@ -120,7 +120,7 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
 }
 
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let l = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(l);
@@ -190,7 +190,7 @@ impl Plane {
 }
 
 impl Intersectable for Plane {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let denom = self.normal.dot(ray.direction);
         if denom.abs() < 1e-6 {
             return None;
@@ -258,7 +258,7 @@ impl Mesh {
         }
     }
 
-    fn intersect_triangle(&self, ray: Ray, triangle: &MeshTriangle) -> Option<Intersection> {
+    fn intersect_triangle(&self, ray: &Ray, triangle: &MeshTriangle) -> Option<Intersection> {
         let v0 = self.vertices[triangle.vertex_indices[0]];
         let v1 = self.vertices[triangle.vertex_indices[1]];
         let v2 = self.vertices[triangle.vertex_indices[2]];
@@ -309,7 +309,7 @@ impl Mesh {
 }
 
 impl Intersectable for Mesh {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         if !self.bounding_box.intersect(ray) {
             return None;
         }
@@ -357,7 +357,7 @@ impl Composite {
 }
 
 impl Intersectable for Composite {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         self.shapes.iter()
             .map(|s| s.intersect(ray))
             .find(|i| i.is_some())

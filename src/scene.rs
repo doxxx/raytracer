@@ -6,10 +6,10 @@ use wavefront_obj;
 use color::Color;
 use direction::Direction;
 use lights::Light;
-use material::{IOR_GLASS, Material};
 use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
 use point::Point;
+use shader::{IOR_GLASS, Shader};
 use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
 use system::{Camera, Transformable};
 
@@ -35,60 +35,77 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let obj = {
         print!("Loading object file...");
         let mut obj_file_contents = String::new();
-        let mut obj_file = File::open("Monkey.obj").expect("could not open object file");
+        let mut obj_file = File::open("LinkedTorus.obj").expect("could not open object file");
         obj_file.read_to_string(&mut obj_file_contents).expect("could not read object file");
         let obj_set = wavefront_obj::obj::parse(obj_file_contents).expect("Could not parse object file!");
         println!(" done.");
-//        println!("{:?}", obj_set.objects[0]);
+        println!("# objects: {}", obj_set.objects.len());
         print!("Converting objects...");
         let obj = convert_objs(&obj_set);
         println!(" done.");
-//        println!("{:?}", obj);
+        //        println!("{:?}", obj);
         obj
     };
+
+    let matte_white = vec![
+        (1.0, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            diffuse_color: Color::white(),
+            specular_color: Color::white(),
+            roughness: 0.0,
+            highlight: 0.0,
+        })];
+
+    let shiny_white = vec![
+        (0.9, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            diffuse_color: Color::white(),
+            specular_color: Color::white(),
+            roughness: 0.2,
+            highlight: 50.0,
+        }),
+        (0.1, Shader::Reflection)
+    ];
+
+    let transparent = vec![
+        (1.0, Shader::Transparency { ior: IOR_GLASS }),
+    ];
 
     let objects: Vec<Object> = vec![
         Object::new(
             "plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(Color::white())
+            matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
         Object::new(
             "object",
             Shape::Composite(obj),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(Color::white()),
+            matte_white.clone()
         )/*.transform(Matrix44f::rotation_y(20.0))*/.transform(Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5))).transform(Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
         Object::new(
             "sphere2",
             Shape::Sphere(Sphere::new(2.0)),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(Color::white())
+            matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
         Object::new(
             "sphere3",
             Shape::Sphere(Sphere::new(4.0)),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(Color::white())
+            matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
         Object::new(
             "sphere4",
             Shape::Sphere(Sphere::new(6.0)),
-            DEFAULT_ALBEDO,
-            Material::Reflective
+            shiny_white.clone()
         ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
         Object::new(
             "sphere5",
             Shape::Sphere(Sphere::new(2.0)),
-            DEFAULT_ALBEDO,
-            Material::Diffuse(Color::white())
+            matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
 //        Object::new(
 //            "sphere6",
 //            Shape::Sphere(Sphere::new(2.0)),
-//            DEFAULT_ALBEDO,
-//            Material::ReflectiveAndRefractive(IOR_GLASS)
+//            transparent.clone()
 //        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
     ];
 

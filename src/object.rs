@@ -1,25 +1,25 @@
-use material::Material;
 use matrix::Matrix44f;
+use shader::Shader;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
 pub const DEFAULT_ALBEDO: f64 = 0.18;
 
+type ShaderApplication = (f64,Shader);
+
 #[derive(Debug, Clone)]
 pub struct Object {
     pub name: String,
     pub shape: Shape,
-    pub albedo: f64,
-    pub material: Material,
+    pub shaders: Vec<ShaderApplication>,
 }
 
 impl Object {
-    pub fn new(name: &str, shape: Shape, albedo: f64, material: Material) -> Object {
+    pub fn new(name: &str, shape: Shape, shaders: Vec<ShaderApplication>) -> Object {
         Object {
             name: String::from(name),
             shape: shape,
-            albedo: albedo,
-            material: material,
+            shaders: shaders,
         }
     }
 }
@@ -29,14 +29,13 @@ impl Transformable for Object {
         Object {
             name: self.name.clone(),
             shape: self.shape.transform(m),
-            albedo: self.albedo,
-            material: self.material,
+            shaders: self.shaders.clone(),
         }
     }
 }
 
 impl Intersectable for Object {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         self.shape.intersect(ray)
     }
 }

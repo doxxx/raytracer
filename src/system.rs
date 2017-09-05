@@ -12,11 +12,11 @@ use time;
 use color::Color;
 use direction::{Dot, Direction};
 use lights::Light;
-use material::Material;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use scene::Scene;
+use shader::Shader;
 use vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
@@ -70,7 +70,7 @@ pub enum RayKind {
     Shadow,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone)]
 pub struct Ray {
     pub kind: RayKind,
     pub origin: Point,
@@ -98,10 +98,57 @@ impl Ray {
             sign: inverse_direction.sign(),
         }
     }
+
+
+    pub fn cast(&self, context: &RenderContext, depth: u16) -> Color {
+        if depth > context.options.max_depth {
+            return context.options.background_color;
+        }
+
+        match self.trace(&context.scene.objects, f64::MAX) {
+            None => context.options.background_color,
+            Some(hit) => {
+                let surface_point = self.origin + self.direction * hit.i.t;
+                let surface_normal = hit.i.n;
+
+                let mut color = Color::black();
+
+                for &(factor, ref shader) in &hit.object.shaders {
+                    color += factor * shader.shade_point(context, depth, self.direction, hit.object, surface_point, surface_normal);
+                }
+
+                color
+            }
+        }
+    }
+
+    pub fn trace<'a>(&self, objects: &'a [Object], max_distance: f64) -> Option<RayHit<'a>> {
+        let mut nearest_distance = max_distance;
+        let mut nearest: Option<RayHit> = None;
+
+        for object in objects {
+            let intersection = object.intersect(self);
+            if let Some(intersection) = intersection {
+                if intersection.t < nearest_distance {
+                    if self.kind != RayKind::Shadow || !object.shaders.iter().any(|sa| {
+                        match sa {
+                            &(_, Shader::Transparency { .. }) => true,
+                            _ => false,
+                        }
+                    }) {
+                        nearest_distance = intersection.t;
+                        nearest = Some(RayHit::new(&object, intersection));
+                    }
+                }
+            }
+        }
+
+        nearest
+    }
 }
 
 #[derive(Debug)]
-struct RayHit<'a> {
+pub struct RayHit<'a> {
     pub object: &'a Object,
     pub i: Intersection,
 }
@@ -123,151 +170,17 @@ pub struct Intersection {
 }
 
 pub trait Intersectable {
-    fn intersect(&self, ray: Ray) -> Option<Intersection>;
+    fn intersect(&self, ray: &Ray) -> Option<Intersection>;
 }
 
 pub trait Transformable {
     fn transform(&self, m: Matrix44f) -> Self;
 }
 
-fn clamp(lo: f64, hi: f64, val: f64) -> f64 {
-    lo.max(hi.min(val))
-}
-
-fn reflect(incident: Direction, normal: Direction) -> Direction {
-    incident - normal * 2.0 * incident.dot(normal)
-}
-
-fn refract(incident: Direction, normal: Direction, ior: f64) -> Direction {
-    let mut cos_i = clamp(-1.0, 1.0, incident.dot(normal));
-    let mut eta_i = 1.0;
-    let mut eta_t = ior;
-    let mut n = normal;
-    if cos_i < 0.0 {
-        cos_i = -cos_i;
-    } else {
-        mem::swap(&mut eta_i, &mut eta_t);
-        n = -normal;
-    }
-    let eta = eta_i / eta_t;
-    let k = 1.0 - eta * eta * (1.0 - cos_i * cos_i);
-    if k < 0.0 {
-        Direction::zero()
-    } else {
-        incident * eta + n * (eta * cos_i - k.sqrt())
-    }
-}
-
-//// incident, normal, index of reflection -> reflection
-fn fresnel(incident: Direction, normal: Direction, ior: f64) -> f64 {
-    let mut cos_i = clamp(-1.0, 1.0, incident.dot(normal));
-    let mut eta_i = 1.0;
-    let mut eta_t = ior;
-    if cos_i > 0.0 {
-        mem::swap(&mut eta_i, &mut eta_t);
-    }
-    let sin_t = eta_i / eta_t * (1.0 - cos_i * cos_i).max(0.0).sqrt();
-
-    if sin_t >= 1.0 {
-        // total internal reflection
-        1.0
-    } else {
-        let cos_t = (1.0 - sin_t * sin_t).max(0.0).sqrt();
-        cos_i = cos_i.abs();
-        let r_s = ((eta_t * cos_i) - (eta_i * cos_t)) / ((eta_t * cos_i) + (eta_i * cos_t));
-        let r_p = ((eta_i * cos_i) - (eta_t * cos_t)) / ((eta_i * cos_i) + (eta_t * cos_t));
-        (r_s * r_s + r_p * r_p) / 2.0
-    }
-}
-
-fn trace(ray: Ray, objects: &[Object], max_distance: f64) -> Option<RayHit> {
-    let mut nearest_distance = max_distance;
-    let mut nearest: Option<RayHit> = None;
-
-    for object in objects {
-        let intersection = object.intersect(ray);
-        if let Some(intersection) = intersection {
-            if intersection.t < nearest_distance {
-                match (ray.kind, object.material) {
-                    (RayKind::Shadow, Material::ReflectiveAndRefractive(_)) => {}
-                    _ => {
-                        nearest_distance = intersection.t;
-                        nearest = Some(RayHit::new(&object, intersection));
-                    }
-                }
-            }
-        }
-    }
-
-    nearest
-}
-
-fn cast_ray(options: &Options, objects: &[Object], lights: &[Light], ray: Ray, depth: u16) -> Color {
-    if depth > options.max_depth {
-        return options.background_color;
-    }
-
-    match trace(ray, objects, f64::MAX) {
-        None => options.background_color,
-        Some(hit) => {
-            let hit_distance = hit.i.t;
-            let hit_point = ray.origin + ray.direction * hit_distance;
-            let hit_normal = hit.i.n;
-
-            match hit.object.material {
-                Material::Diffuse(color) => {
-                    let mut hit_color = Color::black();
-                    for light in lights {
-                        let (dir, intensity, distance) = light.illuminate(hit_point);
-                        let shadow_ray = Ray::shadow(hit_point + hit_normal * options.bias, -dir);
-                        if trace(shadow_ray, objects, distance).is_none() {
-                            let albedo = hit.object.albedo;
-                            let dot = hit_normal.dot(-dir);
-                            if dot > 0.0 {
-                                hit_color += color * albedo * intensity * dot;
-                            }
-                        }
-                    }
-                    hit_color
-                }
-                Material::Reflective => {
-                    let reflection_ray = Ray::primary(
-                        hit_point + hit_normal * options.bias,
-                        reflect(ray.direction, hit_normal).normalize(),
-                    );
-                    let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
-                    reflection_color * 0.8
-                }
-                Material::ReflectiveAndRefractive(ior) => {
-                    let mut refraction_color = Color::black();
-                    let kr = fresnel(ray.direction, hit_normal, ior);
-                    let outside = ray.direction.dot(hit_normal) < 0.0;
-                    let bias = hit_normal * options.bias;
-                    if kr < 1.0 {
-                        let refraction_ray = Ray::primary(
-                            if outside {
-                                hit_point - bias
-                            } else {
-                                hit_point + bias
-                            },
-                            refract(ray.direction, hit_normal, ior).normalize(),
-                        );
-                        refraction_color = cast_ray(options, objects, lights, refraction_ray, depth + 1);
-                    }
-                    let reflection_ray = Ray::primary(
-                        if outside {
-                            hit_point + bias
-                        } else {
-                            hit_point - bias
-                        },
-                        reflect(ray.direction, hit_normal).normalize(),
-                    );
-                    let reflection_color = cast_ray(options, objects, lights, reflection_ray, depth + 1);
-                    reflection_color * kr + refraction_color * (1.0 - kr)
-                }
-            }
-        }
-    }
+#[derive(Debug, Clone)]
+pub struct RenderContext {
+    pub options: Options,
+    pub scene: Scene,
 }
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {
@@ -288,6 +201,10 @@ pub fn render(
     let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
     results.resize(height as usize, Vec::new());
     let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
+    let context = RenderContext {
+        options: options.clone(),
+        scene: scene.clone(),
+    };
 
     let start_time = time::now();
     let steady_start_time = time::SteadyTime::now();
@@ -303,8 +220,7 @@ pub fn render(
     // spawn threads for rendering rows
     // each thread sends the row index when it finishes rendering
     for _ in 0..options.num_threads {
-        let options = options.clone();
-        let scene = scene.clone();
+        let context = context.clone();
         let rows = rows.clone();
         let results = results.clone();
         let tx = tx.clone();
@@ -315,7 +231,7 @@ pub fn render(
                     Some(y) => {
                         let row = (0..width)
                             .map(|x| {
-                                cast_ray(&options, &scene.objects, &scene.lights, scene.camera.pixel_ray(x, y), 0)
+                                context.scene.camera.pixel_ray(x, y).cast(&context, 0)
                             })
                             .collect();
                         let mut results = results.lock().unwrap();
