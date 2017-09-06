@@ -108,13 +108,16 @@ impl Ray {
         match self.trace(&context.scene.objects, f64::MAX) {
             None => context.options.background_color,
             Some(hit) => {
-                let surface_point = self.origin + self.direction * hit.i.t;
-                let surface_normal = hit.i.n;
+                let si = SurfaceInfo {
+                    point: hit.i.point(self),
+                    n: hit.i.n.clone(),
+                    uv: hit.i.uv.clone(),
+                };
 
                 let mut color = Color::black();
 
                 for &(factor, ref shader) in &hit.object.shaders {
-                    color += factor * shader.shade_point(context, depth, self.direction, hit.object, surface_point, surface_normal);
+                    color += factor * shader.shade_point(context, depth, self.direction, hit.object, &si);
                 }
 
                 color
@@ -169,6 +172,12 @@ pub struct Intersection {
     pub uv: Vector2f,
 }
 
+impl Intersection {
+    pub fn point(&self, ray: &Ray) -> Point {
+        ray.origin + ray.direction * self.t
+    }
+}
+
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<Intersection>;
 }
@@ -181,6 +190,12 @@ pub trait Transformable {
 pub struct RenderContext {
     pub options: Options,
     pub scene: Scene,
+}
+
+pub struct SurfaceInfo {
+    pub point: Point,
+    pub n: Direction,
+    pub uv: Vector2f,
 }
 
 fn color_to_pixel(v: Color) -> image::Rgb<u8> {

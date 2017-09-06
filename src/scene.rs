@@ -12,6 +12,7 @@ use point::Point;
 use shader::{IOR_GLASS, Shader};
 use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
 use system::{Camera, Transformable};
+use texture::{Pattern,Texture};
 
 #[derive(Debug, Clone)]
 pub struct Scene {
@@ -50,32 +51,40 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let matte_white = vec![
         (1.0, Shader::DiffuseSpecular {
             albedo: DEFAULT_ALBEDO,
-            diffuse_color: Color::white(),
-            specular_color: Color::white(),
+            texture: Texture::Solid(Color::white()),
             roughness: 0.0,
             highlight: 0.0,
         })];
 
     let shiny_white = vec![
-        (0.9, Shader::DiffuseSpecular {
+        (0.8, Shader::DiffuseSpecular {
             albedo: DEFAULT_ALBEDO,
-            diffuse_color: Color::white(),
-            specular_color: Color::white(),
+            texture: Texture::Solid(Color::white()),
             roughness: 0.2,
             highlight: 50.0,
         }),
-        (0.1, Shader::Reflection)
+        (0.2, Shader::Reflection)
     ];
 
     let transparent = vec![
         (1.0, Shader::Transparency { ior: IOR_GLASS }),
     ];
 
+    let shiny_black_white_checkboard = vec![
+        (0.8, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.2)),
+            roughness: 0.2,
+            highlight: 50.0,
+        }),
+        (0.2, Shader::Reflection)
+    ];
+
     let objects: Vec<Object> = vec![
         Object::new(
             "plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
-            matte_white.clone()
+            shiny_black_white_checkboard.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
         Object::new(
             "object",

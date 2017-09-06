@@ -4,7 +4,8 @@ use color::Color;
 use direction::{Direction, Dot};
 use object::Object;
 use point::Point;
-use system::{RenderContext, Ray};
+use system::{RenderContext, Ray, SurfaceInfo};
+use texture::{ColorSource,Texture};
 
 pub const IOR_WATER: f64 = 1.3;
 pub const IOR_GLASS: f64 = 1.5;
@@ -14,8 +15,7 @@ pub const IOR_DIAMOND: f64 = 1.8;
 pub enum Shader {
     DiffuseSpecular {
         albedo: f64,
-        diffuse_color: Color,
-        specular_color: Color,
+        texture: Texture,
         roughness: f64,
         highlight: f64,
     },
@@ -26,21 +26,21 @@ pub enum Shader {
 }
 
 impl Shader {
-    pub fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, point: Point, normal: Direction) -> Color {
+    pub fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, si: &SurfaceInfo) -> Color {
         match self {
-            &Shader::DiffuseSpecular { albedo, diffuse_color, specular_color, roughness, highlight } => {
+            &Shader::DiffuseSpecular { albedo, ref texture, roughness, highlight } => {
                 let mut c1 = Color::black();
                 let mut c2 = Color::black();
                 for light in &context.scene.lights {
-                    let (dir, intensity, distance) = light.illuminate(point);
-                    let shadow_ray = Ray::shadow(point + normal * context.options.bias, -dir);
+                    let (dir, intensity, distance) = light.illuminate(si.point);
+                    let shadow_ray = Ray::shadow(si.point + si.n * context.options.bias, -dir);
 
                     if shadow_ray.trace(&context.scene.objects, distance).is_none() {
-                        let dot = normal.dot(-dir).max(0.0);
+                        let dot = si.n.dot(-dir).max(0.0);
                         if dot > 0.0 {
-                            c1 += diffuse_color * albedo * intensity * dot;
+                            c1 += texture.color_at_uv(si.uv) * albedo * intensity * dot;
                         }
-                        let r = reflect(dir, normal);
+                        let r = reflect(dir, si.n);
                         c2 += intensity * r.dot(-dir).max(0.0).powf(highlight); // todo: specular color
                     }
                 }
@@ -49,34 +49,34 @@ impl Shader {
             },
             &Shader::Reflection => {
                 let reflection_ray = Ray::primary(
-                    point + normal * context.options.bias,
-                    reflect(view, normal).normalize(),
+                    si.point + si.n * context.options.bias,
+                    reflect(view, si.n).normalize(),
                 );
                 reflection_ray.cast(context, depth + 1)
             },
             &Shader::Transparency { ior } => {
                 let mut refraction_color = Color::black();
-                let kr = fresnel(view, normal, ior);
-                let outside = view.dot(normal) < 0.0;
-                let bias = normal * context.options.bias;
+                let kr = fresnel(view, si.n, ior);
+                let outside = view.dot(si.n) < 0.0;
+                let bias = si.n * context.options.bias;
                 if kr < 1.0 {
                     let refraction_ray = Ray::primary(
                         if outside {
-                            point - bias
+                            si.point - bias
                         } else {
-                            point + bias
+                            si.point + bias
                         },
-                        refract(view, normal, ior).normalize(),
+                        refract(view, si.n, ior).normalize(),
                     );
                     refraction_color = refraction_ray.cast(context, depth + 1);
                 }
                 let reflection_ray = Ray::primary(
                     if outside {
-                        point + bias
+                        si.point + bias
                     } else {
-                        point - bias
+                        si.point - bias
                     },
-                    reflect(view, normal).normalize(),
+                    reflect(view, si.n).normalize(),
                 );
                 let reflection_color = reflection_ray.cast(context, depth + 1);
                 reflection_color * kr * 0.8 + refraction_color * (1.0 - kr)
