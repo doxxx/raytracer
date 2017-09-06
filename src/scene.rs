@@ -1,10 +1,12 @@
+use std::io::prelude::*;
+use std::io::BufReader;
 use std::fs::File;
-use std::io::Read;
 
 use wavefront_obj;
 
 use color::Color;
 use direction::Direction;
+use image;
 use lights::Light;
 use matrix::Matrix44f;
 use object::{DEFAULT_ALBEDO, Object};
@@ -28,9 +30,10 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 //    camera.transform(Matrix44f::translation(Direction::new(3.0, 3.0, 0.0)));
 
     let lights: Vec<Light> = vec![
-        Light::Distant { color: Color::white(), intensity: 2.0, direction: Direction::new(-1.0, -1.0, -1.0).normalize() },
-        Light::Point { color: Color::blue(), intensity: 5000.0, origin: Point::new(-10.0, 10.0, -15.0) },
-        Light::Point { color: Color::red(), intensity: 5000.0, origin: Point::new(10.0, 10.0, -15.0) },
+        Light::Point { color: Color::white(), intensity: 10000.0, origin: Point::new(10.0, 10.0, -10.0) },
+        Light::Point { color: Color::white(), intensity: 8000.0, origin: Point::new(-10.0, 0.0, -5.0) },
+        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(10.0, 10.0, -15.0) },
+        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-10.0, 0.0, -30.0) },
     ];
 
     let obj = {
@@ -56,6 +59,22 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
             highlight: 0.0,
         })];
 
+    let matte_blue = vec![
+        (1.0, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Solid(Color::blue()),
+            roughness: 0.0,
+            highlight: 0.0,
+        })];
+
+    let matte_red = vec![
+        (1.0, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Solid(Color::red()),
+            roughness: 0.0,
+            highlight: 0.0,
+        })];
+
     let shiny_white = vec![
         (0.8, Shader::DiffuseSpecular {
             albedo: DEFAULT_ALBEDO,
@@ -70,6 +89,15 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         (1.0, Shader::Transparency { ior: IOR_GLASS }),
     ];
 
+    let matte_black_white_checkboard = vec![
+        (1.0, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 3.0)),
+            roughness: 0.0,
+            highlight: 0.0,
+        })
+    ];
+
     let shiny_black_white_checkboard = vec![
         (0.8, Shader::DiffuseSpecular {
             albedo: DEFAULT_ALBEDO,
@@ -80,39 +108,83 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         (0.2, Shader::Reflection)
     ];
 
+    let earth_image = {
+        let f = File::open("earth.jpg").expect("could not open earth.jpg");
+        let r = BufReader::new(f);
+        image::load(r, image::JPEG).expect("could not decode earth.jpg")
+    };
+
+    let earth = vec![
+        (1.0, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Image(earth_image, 1.0),
+            roughness: 0.0,
+            highlight: 0.0,
+        })
+    ];
+
     let objects: Vec<Object> = vec![
         Object::new(
-            "plane",
+            "bottm plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
             shiny_black_white_checkboard.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
+
         Object::new(
-            "object",
+            "back plane",
+            Shape::Plane(Plane::new(Direction::new(0.0, 0.0, 1.0))),
+            matte_white.clone()
+        ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, -35.0))),
+
+        Object::new(
+            "left plane",
+            Shape::Plane(Plane::new(Direction::new(1.0, 0.0, 0.0))),
+            matte_white.clone()
+        ).transform(Matrix44f::translation(Direction::new(-15.0, 0.0, 0.0))),
+
+        Object::new(
+            "right plane",
+            Shape::Plane(Plane::new(Direction::new(-1.0, 0.0, 0.0))),
+            matte_white.clone()
+        ).transform(Matrix44f::translation(Direction::new(15.0, 0.0, 0.0))),
+
+        Object::new(
+            "top plane",
+            Shape::Plane(Plane::new(Direction::new(0.0, -1.0, 0.0))),
+            matte_white.clone()
+        ).transform(Matrix44f::translation(Direction::new(0.0, 12.0, 0.0))),
+
+        Object::new(
+            "linked torus",
             Shape::Composite(obj),
             matte_white.clone()
-        )/*.transform(Matrix44f::rotation_y(20.0))*/.transform(Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5))).transform(Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
+        ).transform(
+            Matrix44f::rotation_y(20.0) *
+            Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5)) *
+            Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
+
         Object::new(
-            "sphere2",
+            "sphere1",
             Shape::Sphere(Sphere::new(2.0)),
-            matte_white.clone()
+            matte_red.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
         Object::new(
-            "sphere3",
+            "sphere2",
             Shape::Sphere(Sphere::new(4.0)),
-            matte_white.clone()
+            shiny_white.clone()
         ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
         Object::new(
-            "sphere4",
-            Shape::Sphere(Sphere::new(6.0)),
-            shiny_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(4.0, -4.0, -25.0))),
+            "earth",
+            Shape::Sphere(Sphere::new(5.0)),
+            earth.clone()
+        ).transform(Matrix44f::translation(Direction::new(4.0, 0.0, -25.0))),
         Object::new(
-            "sphere5",
+            "sphere4",
             Shape::Sphere(Sphere::new(2.0)),
-            matte_white.clone()
+            matte_blue.clone()
         ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
 //        Object::new(
-//            "sphere6",
+//            "sphere5",
 //            Shape::Sphere(Sphere::new(2.0)),
 //            transparent.clone()
 //        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
