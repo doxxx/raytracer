@@ -138,11 +138,13 @@ impl Intersectable for Sphere {
 
             let p = ray.origin + ray.direction * t0;
             let n = (p - self.center).normalize();
+            let u = (1.0 + n.z.atan2(n.x) / f64::consts::PI) * 0.5;
+            let v = n.y.acos() / f64::consts::PI;
 
             Some(Intersection {
                 t: t0,
                 n: n,
-                uv: Vector2f(0.0, 0.0),
+                uv: Vector2f(u, v),
             })
         } else {
             None
