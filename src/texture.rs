@@ -1,6 +1,7 @@
 use std::f64;
+use std::fmt;
 
-use image::{Pixel,RgbImage};
+use image::{Pixel,DynamicImage,GenericImage};
 
 use color::Color;
 use vector::Vector2f;
@@ -9,19 +10,49 @@ pub trait ColorSource {
     fn color_at_uv(&self, uv: Vector2f) -> Color;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Texture {
     Solid(Color),
     Pattern(Pattern),
-    Image(RgbImage),
+    Image(DynamicImage, f64),
+}
+
+
+impl fmt::Debug for Texture {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Texture::Solid(ref c) =>
+                f.debug_tuple("Texture::Solid")
+                    .field(c)
+                    .finish(),
+            &Texture::Pattern(ref p) =>
+                f.debug_tuple("Texture::Pattern")
+                    .field(p)
+                    .finish(),
+            &Texture::Image(ref i, s) =>
+                f.debug_struct("Texture::Image")
+                    .field("width", &i.width())
+                    .field("height", &i.height())
+                    .field("scale", &s)
+                    .finish(),
+        }
+    }
 }
 
 impl ColorSource for Texture {
     fn color_at_uv(&self, uv: Vector2f) -> Color {
         match self {
-            &Texture::Solid(c) => c,
-            &Texture::Pattern(ref p) => p.color_at_uv(uv),
-            &Texture::Image(ref i) => i.color_at_uv(uv),
+            &Texture::Solid(color) => color,
+            &Texture::Pattern(ref pattern) => pattern.color_at_uv(uv),
+            &Texture::Image(ref image, scale) => {
+                let max_x = (image.width() - 1) as f64;
+                let max_y = (image.height() - 1) as f64;
+                let x = ((uv.0 * scale * max_x) as u32) % image.width();
+                let y = ((uv.1 * scale * max_y) as u32) % image.height();
+                let p = image.get_pixel(x, y);
+                let c = p.channels();
+                Color::new((c[0] as f64) / 255.0, (c[1] as f64) / 255.0, (c[2] as f64) / 255.0)
+            },
         }
     }
 }
@@ -43,16 +74,6 @@ impl ColorSource for Pattern {
                 mix(color1, color2, pattern)
             }
         }
-    }
-}
-
-impl ColorSource for RgbImage {
-    fn color_at_uv(&self, uv: Vector2f) -> Color {
-        let x = (uv.0 * (self.width() as f64)) as u32;
-        let y = (uv.1 * (self.height() as f64)) as u32;
-        let p = self.get_pixel(x, y);
-        let c = p.channels();
-        Color::new((c[0] as f64) / 255.0, (c[1] as f64) / 255.0, (c[2] as f64) / 255.0)
     }
 }
 
