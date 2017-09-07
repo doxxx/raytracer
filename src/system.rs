@@ -215,13 +215,9 @@ pub fn render(
     options: Options,
     scene: Scene,
 ) -> image::RgbImage {
-    let mut imgbuf = image::RgbImage::new(options.width, options.height);
     let width = options.width;
     let height = options.height;
-    let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
-    let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
-    results.resize(height as usize, Vec::new());
-    let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
+
     let context = RenderContext {
         options: options.clone(),
         scene: scene.clone(),
@@ -234,42 +230,57 @@ pub fn render(
 
     // start progress bar update task
     let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
-    let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
-
     pb.message(&format!("Rendering (x{}): ", options.num_threads));
 
-    // spawn threads for rendering rows
-    // each thread sends the row index when it finishes rendering
-    for _ in 0..options.num_threads {
-        let context = context.clone();
-        let rows = rows.clone();
-        let results = results.clone();
-        let tx = tx.clone();
-        spawn(move || {
-            loop {
-                let y = { rows.lock().unwrap().pop() };
-                match y {
-                    Some(y) => {
-                        let row = (0..width)
-                            .map(|x| {
-                                context.scene.camera.pixel_ray(x, y).cast(&context, 0)
-                            })
-                            .collect();
-                        let mut results = results.lock().unwrap();
-                        results[y as usize] = row;
-                        let _ = tx.send(y);
-                    }
-                    None => break
-                }
-            }
-        });
-    }
+    let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    results.resize(height as usize, Vec::new());
+    let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
 
-    // wait for all the rows to be rendered,
-    // updating progress as each row is finished
-    for _ in 0..pb.total {
-        let _ = rx.recv();
-        pb.inc();
+    if options.num_threads > 1 {
+        let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
+        let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
+
+        // spawn threads for rendering rows
+        // each thread sends the row index when it finishes rendering
+        for _ in 0..options.num_threads {
+            let context = context.clone();
+            let rows = rows.clone();
+            let results = results.clone();
+            let tx = tx.clone();
+            spawn(move || {
+                loop {
+                    let y = { rows.lock().unwrap().pop() };
+                    match y {
+                        Some(y) => {
+                            let row = (0..width)
+                                .map(|x| {
+                                    context.scene.camera.pixel_ray(x, y).cast(&context, 0)
+                                })
+                                .collect();
+                            let mut results = results.lock().unwrap();
+                            results[y as usize] = row;
+                            let _ = tx.send(y);
+                        }
+                        None => break
+                    }
+                }
+            });
+        }
+
+        // wait for all the rows to be rendered,
+        // updating progress as each row is finished
+        for _ in 0..pb.total {
+            let _ = rx.recv();
+            pb.inc();
+        }
+    } else {
+        for y in 0..height {
+            let row = (0..width).map(|x| {
+                context.scene.camera.pixel_ray(x, y).cast(&context, 0)
+            }).collect();
+            let mut results = results.lock().unwrap();
+            results[y as usize] = row;
+        }
     }
 
     let end_time = time::now();
@@ -280,6 +291,7 @@ pub fn render(
     println!("Elapsed time: {}", elapsed);
 
     let results = results.lock().unwrap();
+    let mut imgbuf = image::RgbImage::new(options.width, options.height);
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         *pixel = color_to_pixel(results[y as usize][x as usize]);
     }
