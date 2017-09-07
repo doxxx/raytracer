@@ -150,6 +150,12 @@ impl Ray {
     }
 }
 
+impl Transformable for Ray {
+    fn transform(&self, m: Matrix44f) -> Self {
+        Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed())
+    }
+}
+
 #[derive(Debug)]
 pub struct RayHit<'a> {
     pub object: &'a Object,

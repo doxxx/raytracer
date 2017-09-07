@@ -4,7 +4,7 @@ use std::mem;
 use direction::{Dot, Direction};
 use matrix::Matrix44f;
 use point::Point;
-use system::{Transformable, Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
 #[derive(Debug, Clone)]
@@ -22,17 +22,6 @@ impl Intersectable for Shape {
             &Shape::Plane(ref s) => s.intersect(ray),
             &Shape::Mesh(ref s) => s.intersect(ray),
             &Shape::Composite(ref s) => s.intersect(ray),
-        }
-    }
-}
-
-impl Transformable for Shape {
-    fn transform(&self, m: Matrix44f) -> Self {
-        match self {
-            &Shape::Sphere(ref s) => Shape::Sphere(s.transform(m)),
-            &Shape::Plane(ref s) => Shape::Plane(s.transform(m)),
-            &Shape::Mesh(ref s) => Shape::Mesh(s.transform(m)),
-            &Shape::Composite(ref s) => Shape::Composite(s.transform(m)),
         }
     }
 }
@@ -78,12 +67,6 @@ impl BoundingBox {
         // }
 
         return true;
-    }
-}
-
-impl Transformable for BoundingBox {
-    fn transform(&self, m: Matrix44f) -> Self {
-        BoundingBox::new(self.bounds[0] * m, self.bounds[1] * m)
     }
 }
 
@@ -152,17 +135,6 @@ impl Intersectable for Sphere {
     }
 }
 
-impl Transformable for Sphere {
-    fn transform(&self, m: Matrix44f) -> Self {
-        let center = self.center * m;
-        let radius_point = (self.center + Direction::new(self.radius_squared.sqrt(), 0.0, 0.0)) * m;
-        Sphere {
-            center: center,
-            radius_squared: (radius_point - center).length_squared(),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Plane {
     point: Point,
@@ -209,16 +181,6 @@ impl Intersectable for Plane {
             n: self.normal,
             uv: uv,
         })
-    }
-}
-
-impl Transformable for Plane {
-    fn transform(&self, m: Matrix44f) -> Self {
-        let mut p = Plane::new(
-            self.normal * m.inverse().transposed()
-        );
-        p.point = self.point * m;
-        p
     }
 }
 
@@ -332,19 +294,6 @@ impl Intersectable for Mesh {
     }
 }
 
-impl Transformable for Mesh {
-    fn transform(&self, m: Matrix44f) -> Self {
-        let mit = m.inverse().transposed();
-        Mesh {
-            vertices: self.vertices.iter().map(|v| (*v) * m).collect(),
-            normals: self.normals.iter().map(|n| (*n) * mit).collect(),
-            triangles: self.triangles.clone(),
-            bounding_box: self.bounding_box.clone().transform(m),
-            smooth_shading: self.smooth_shading,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Composite {
     shapes: Vec<Shape>,
@@ -364,13 +313,5 @@ impl Intersectable for Composite {
             .map(|s| s.intersect(ray))
             .find(|i| i.is_some())
             .unwrap_or_default()
-    }
-}
-
-impl Transformable for Composite {
-    fn transform(&self, m: Matrix44f) -> Self {
-        Composite {
-            shapes: self.shapes.iter().map(|s| s.transform(m)).collect()
-        }
     }
 }
