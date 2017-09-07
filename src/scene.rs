@@ -25,15 +25,21 @@ pub struct Scene {
 
 pub fn setup_scene(w: u32, h: u32) -> Scene {
     let mut camera = Camera::new(w, h, 60.0);
+    camera.transform(Matrix44f::rotation_x(-20.0));
+    camera.transform(Matrix44f::rotation_y(20.0));
+    camera.transform(Matrix44f::translation(Direction::new(2.0, 5.0, 10.0)));
 //    camera.transform(Matrix44f::rotation_x(-10.0));
 //    camera.transform(Matrix44f::rotation_y(10.0));
 //    camera.transform(Matrix44f::translation(Direction::new(3.0, 3.0, 0.0)));
 
     let lights: Vec<Light> = vec![
-        Light::Point { color: Color::white(), intensity: 10000.0, origin: Point::new(10.0, 10.0, -10.0) },
-        Light::Point { color: Color::white(), intensity: 8000.0, origin: Point::new(-10.0, 0.0, -5.0) },
-        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(10.0, 10.0, -15.0) },
-        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-10.0, 0.0, -30.0) },
+        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-3.0, 8.0, 10.0) },
+        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(4.0, 8.0, 10.0) },
+//        Light::Distant { color: Color::white(), intensity: 1.0, direction: Direction::new(0.0, 0.0, -1.0) },
+//        Light::Point { color: Color::white(), intensity: 10000.0, origin: Point::new(10.0, 10.0, -10.0) },
+//        Light::Point { color: Color::white(), intensity: 8000.0, origin: Point::new(-10.0, 0.0, -5.0) },
+//        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(10.0, 10.0, -15.0) },
+//        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-10.0, 0.0, -30.0) },
     ];
 
     let obj = {
@@ -85,6 +91,36 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         (0.2, Shader::Reflection)
     ];
 
+    let shiny_red = vec![
+        (0.8, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Solid(Color::red()),
+            roughness: 0.2,
+            highlight: 50.0,
+        }),
+        (0.2, Shader::Reflection)
+    ];
+
+    let shiny_green = vec![
+        (0.8, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Solid(Color::green()),
+            roughness: 0.2,
+            highlight: 50.0,
+        }),
+        (0.2, Shader::Reflection)
+    ];
+
+    let shiny_blue = vec![
+        (0.8, Shader::DiffuseSpecular {
+            albedo: DEFAULT_ALBEDO,
+            texture: Texture::Solid(Color::blue()),
+            roughness: 0.2,
+            highlight: 50.0,
+        }),
+        (0.2, Shader::Reflection)
+    ];
+
     let transparent = vec![
         (1.0, Shader::Transparency { ior: IOR_GLASS }),
     ];
@@ -101,7 +137,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let shiny_black_white_checkboard = vec![
         (0.8, Shader::DiffuseSpecular {
             albedo: DEFAULT_ALBEDO,
-            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.2)),
+            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.5)),
             roughness: 0.2,
             highlight: 50.0,
         }),
@@ -125,64 +161,82 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
     let objects: Vec<Object> = vec![
         Object::new(
-            "bottm plane",
+            "bottom plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
             shiny_black_white_checkboard.clone()
-        ).transform(Matrix44f::translation(Direction::new(0.0, -5.0, 0.0))),
+        ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, 0.0))),
 
         Object::new(
             "back plane",
             Shape::Plane(Plane::new(Direction::new(0.0, 0.0, 1.0))),
             matte_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, -35.0))),
+        ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, -5.0))),
 
         Object::new(
             "left plane",
             Shape::Plane(Plane::new(Direction::new(1.0, 0.0, 0.0))),
             matte_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(-15.0, 0.0, 0.0))),
+        ).transform(Matrix44f::translation(Direction::new(-5.0, 0.0, 0.0))),
 
         Object::new(
             "right plane",
             Shape::Plane(Plane::new(Direction::new(-1.0, 0.0, 0.0))),
             matte_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(15.0, 0.0, 0.0))),
+        ).transform(Matrix44f::translation(Direction::new(5.0, 0.0, 0.0))),
 
         Object::new(
             "top plane",
             Shape::Plane(Plane::new(Direction::new(0.0, -1.0, 0.0))),
             matte_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(0.0, 12.0, 0.0))),
+        ).transform(Matrix44f::translation(Direction::new(0.0, 10.0, 0.0))),
 
         Object::new(
             "linked torus",
             Shape::Composite(obj),
             matte_white.clone()
         ).transform(
-            Matrix44f::rotation_y(20.0) *
-            Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5)) *
-            Matrix44f::translation(Direction::new(6.0, -2.0, -15.0))),
+            Matrix44f::rotation_y(-30.0) *
+//            Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5)) *
+            Matrix44f::translation(Direction::new(-3.0, 1.0, 4.0))
+        ),
+
+        Object::new(
+            "earth",
+            Shape::Sphere(Sphere::new(2.0)),
+            earth.clone()
+        ).transform(
+            Matrix44f::rotation_y(-90.0) *
+            Matrix44f::translation(Direction::new(0.0, 2.0, 0.0))
+        ),
 
         Object::new(
             "sphere1",
-            Shape::Sphere(Sphere::new(2.0)),
-            matte_red.clone()
-        ).transform(Matrix44f::translation(Direction::new(0.0, 6.0, -24.0))),
+            Shape::Sphere(Sphere::new(1.0)),
+            shiny_red.clone()
+        ).transform(
+            Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
+            Matrix44f::rotation_z(45.0) *
+            Matrix44f::translation(Direction::new(0.0, 2.0, 0.0))
+        ),
+
         Object::new(
             "sphere2",
-            Shape::Sphere(Sphere::new(4.0)),
-            shiny_white.clone()
-        ).transform(Matrix44f::translation(Direction::new(-4.0, 4.0, -25.0))),
+            Shape::Sphere(Sphere::new(1.0)),
+            shiny_green.clone()
+        ).transform(
+            Matrix44f::translation(Direction::new(0.0, 5.0, 0.0))
+        ),
+
         Object::new(
-            "earth",
-            Shape::Sphere(Sphere::new(5.0)),
-            earth.clone()
-        ).transform(Matrix44f::translation(Direction::new(4.0, 0.0, -25.0))),
-        Object::new(
-            "sphere4",
-            Shape::Sphere(Sphere::new(2.0)),
-            matte_blue.clone()
-        ).transform(Matrix44f::translation(Direction::new(-6.0, -3.0, -20.0))),
+            "sphere3",
+            Shape::Sphere(Sphere::new(1.0)),
+            shiny_blue.clone()
+        ).transform(
+            Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
+            Matrix44f::rotation_z(-45.0) *
+            Matrix44f::translation(Direction::new(0.0, 2.0, 0.0))
+        ),
+
 //        Object::new(
 //            "sphere5",
 //            Shape::Sphere(Sphere::new(2.0)),
