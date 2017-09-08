@@ -27,14 +27,14 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let mut camera = Camera::new(w, h, 60.0);
     camera.transform(Matrix44f::rotation_x(-20.0));
     camera.transform(Matrix44f::rotation_y(20.0));
-    camera.transform(Matrix44f::translation(Direction::new(2.0, 5.0, 10.0)));
+    camera.transform(Matrix44f::translation(Direction::new(2.0, 5.0, 9.0)));
 //    camera.transform(Matrix44f::rotation_x(-10.0));
 //    camera.transform(Matrix44f::rotation_y(10.0));
 //    camera.transform(Matrix44f::translation(Direction::new(3.0, 3.0, 0.0)));
 
     let lights: Vec<Light> = vec![
-        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-3.0, 8.0, 10.0) },
-        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(4.0, 8.0, 10.0) },
+        Light::Point { color: Color::white(), intensity: 3000.0, origin: Point::new(-3.0, 8.0, 9.0) },
+        Light::Point { color: Color::white(), intensity: 3000.0, origin: Point::new(4.0, 8.0, 9.0) },
 //        Light::Distant { color: Color::white(), intensity: 1.0, direction: Direction::new(0.0, 0.0, -1.0) },
 //        Light::Point { color: Color::white(), intensity: 10000.0, origin: Point::new(10.0, 10.0, -10.0) },
 //        Light::Point { color: Color::white(), intensity: 8000.0, origin: Point::new(-10.0, 0.0, -5.0) },
@@ -189,6 +189,12 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
             Shape::Plane(Plane::new(Direction::new(0.0, -1.0, 0.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 10.0, 0.0))),
+
+        Object::new(
+            "front plane",
+            Shape::Plane(Plane::new(Direction::new(0.0, 0.0, -1.0))),
+            matte_white.clone()
+        ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, 10.0))),
 
         Object::new(
             "linked torus",
