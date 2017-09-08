@@ -203,7 +203,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
         ).transform(
             Matrix44f::rotation_y(-30.0) *
 //            Matrix44f::scaling(Direction::new(1.5, 1.5, 1.5)) *
-            Matrix44f::translation(Direction::new(-3.0, 1.0, 4.0))
+            Matrix44f::translation(Direction::new(-3.0, 1.5, 4.0))
         ),
 
         Object::new(
