@@ -27,6 +27,7 @@ pub struct Options {
     pub background_color: Color,
     pub bias: f64,
     pub max_depth: u16,
+    pub antialiasing: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -53,14 +54,24 @@ impl Camera {
         self.camera_to_world = self.camera_to_world * m;
     }
 
-    fn pixel_ray(&self, x: u32, y: u32) -> Ray {
-        let ndcx = (x as f64 + 0.5) / self.width;
-        let ndcy = (y as f64 + 0.5) / self.height;
+    fn pixel_ray(&self, x: f64, y: f64) -> Ray {
+        let ndcx = x / self.width;
+        let ndcy = y / self.height;
         let cx = (2.0 * ndcx - 1.0) * self.fov_factor * self.aspect_ratio;
-        let cy = (1.0 - 2f64 * ndcy) * self.fov_factor;
+        let cy = (1.0 - 2.0 * ndcy) * self.fov_factor;
         let origin = Point::zero() * self.camera_to_world;
         let dir_point = Point::new(cx, cy, -1.0) * self.camera_to_world;
         Ray::primary(origin, (dir_point - origin).normalize())
+    }
+
+    fn pixel_ray_bundle(&self, x: u32, y: u32) -> [Ray; 5] {
+        [
+            self.pixel_ray(x as f64, y as f64),
+            self.pixel_ray(x as f64 + 1.0, y as f64),
+            self.pixel_ray(x as f64 + 1.0, y as f64 + 1.0),
+            self.pixel_ray(x as f64, y as f64 + 1.0),
+            self.pixel_ray(x as f64 + 0.5, y as f64 + 0.5),
+        ]
     }
 }
 
@@ -204,11 +215,25 @@ pub struct SurfaceInfo {
     pub uv: Vector2f,
 }
 
-fn color_to_pixel(v: Color) -> image::Rgb<u8> {
+fn color_to_rgb(v: Color) -> image::Rgb<u8> {
     let r = (v.r * 255.0).min(255.0) as u8;
     let g = (v.g * 255.0).min(255.0) as u8;
     let b = (v.b * 255.0).min(255.0) as u8;
     image::Rgb([r, g, b])
+}
+
+fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
+    if context.options.antialiasing {
+        let rays = context.scene.camera.pixel_ray_bundle(x, y);
+        let mut color = Color::black();
+        for ray in rays.iter() {
+            color += ray.cast(&context, 0);
+        }
+        color / (rays.len() as f64)
+    }
+    else {
+        context.scene.camera.pixel_ray(x as f64 + 0.5, y as f64 + 0.5).cast(&context, 0)
+    }
 }
 
 pub fn render(
@@ -252,11 +277,7 @@ pub fn render(
                     let y = { rows.lock().unwrap().pop() };
                     match y {
                         Some(y) => {
-                            let row = (0..width)
-                                .map(|x| {
-                                    context.scene.camera.pixel_ray(x, y).cast(&context, 0)
-                                })
-                                .collect();
+                            let row = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
                             let mut results = results.lock().unwrap();
                             results[y as usize] = row;
                             let _ = tx.send(y);
@@ -275,9 +296,7 @@ pub fn render(
         }
     } else {
         for y in 0..height {
-            let row = (0..width).map(|x| {
-                context.scene.camera.pixel_ray(x, y).cast(&context, 0)
-            }).collect();
+            let row = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
             let mut results = results.lock().unwrap();
             results[y as usize] = row;
         }
@@ -293,7 +312,7 @@ pub fn render(
     let results = results.lock().unwrap();
     let mut imgbuf = image::RgbImage::new(options.width, options.height);
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        *pixel = color_to_pixel(results[y as usize][x as usize]);
+        *pixel = color_to_rgb(results[y as usize][x as usize]);
     }
 
     imgbuf

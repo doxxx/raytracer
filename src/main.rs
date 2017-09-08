@@ -62,6 +62,11 @@ fn main() {
                 .takes_value(true)
                 .validator(number_validator)
                 .default_value(&default_cpus)
+        )
+        .arg(
+            Arg::with_name("antialiasing")
+                .short("a")
+                .help("Apply antialiasing")
         );
     let options = app.get_matches();
 
@@ -87,6 +92,7 @@ fn main() {
         background_color: Color::new(0.1, 0.1, 0.5),
         bias: 1e-4,
         max_depth: 5,
+        antialiasing: options.is_present("antialiasing"),
     };
 
     let scene = scene::setup_scene(w, h);
