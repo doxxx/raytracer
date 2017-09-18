@@ -14,7 +14,7 @@ use direction::Direction;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
-use scene::Scene;
+use sdl::Scene;
 use vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]

@@ -12,13 +12,18 @@ mod materials;
 mod matrix;
 mod object;
 mod point;
-mod scene;
+mod sdl;
 mod shaders;
 mod shapes;
 mod system;
 mod texture;
 mod vector;
 
+mod sdl_grammar {
+    include!(concat!(env!("OUT_DIR"), "/sdl_grammar.rs"));
+}
+
+use std::io::prelude::*;
 use std::fs::File;
 
 use clap::{App, Arg};
@@ -73,23 +78,35 @@ fn main() {
             Arg::with_name("antialiasing")
                 .short("a")
                 .help("Apply antialiasing")
+        )
+        .arg(
+            Arg::with_name("scene")
+                .value_name("FILE")
+                .help("The file describing the scene to render")
+                .required(true)
+                .index(1)
         );
-    let options = app.get_matches();
+    let args = app.get_matches();
 
-    let w: u32 = options.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
-    let h: u32 = options.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
+    let w: u32 = args.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
+    let h: u32 = args.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
 
     let options = Options {
-        num_threads: options.value_of("num_threads").unwrap().parse().unwrap(),
+        num_threads: args.value_of("num_threads").unwrap().parse().unwrap(),
         width: w,
         height: h,
         background_color: Color::new(0.1, 0.1, 0.5),
         bias: 1e-4,
         max_depth: 5,
-        antialiasing: options.is_present("antialiasing"),
+        antialiasing: args.is_present("antialiasing"),
     };
 
-    let scene = scene::setup_scene(w, h);
+    let scene = {
+        let mut f = File::open(args.value_of("scene").unwrap()).expect("could not open scene file");
+        let mut text = String::new();
+        f.read_to_string(&mut text).expect("could not read scene file");
+        sdl::parse(&text).expect("could not parse scene file")
+    };
 
     let imgbuf = system::render(options, scene);
 

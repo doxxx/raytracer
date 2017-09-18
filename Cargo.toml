@@ -2,6 +2,10 @@
 name = "raytracer"
 version = "0.1.0"
 authors = ["Gordon Tyler <gordon@doxxx.net>"]
+build = "build.rs"
+
+[build-dependencies]
+peg = "0.5"
 
 [dependencies]
 image = "0.14.0"
