@@ -5,7 +5,7 @@ use color::Color;
 use direction::Direction;
 use point::Point;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Light {
     Distant {
         color: Color,

@@ -7,7 +7,7 @@ use point::Point;
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
@@ -26,7 +26,7 @@ impl Intersectable for Shape {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct BoundingBox {
     bounds: [Point; 2],
 }
@@ -70,7 +70,7 @@ impl BoundingBox {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sphere {
     center: Point,
     radius_squared: f64,
@@ -135,7 +135,7 @@ impl Intersectable for Sphere {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Plane {
     point: Point,
     normal: Direction,
@@ -184,7 +184,7 @@ impl Intersectable for Plane {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Mesh {
     pub vertices: Vec<Point>,
     pub normals: Vec<Direction>,
@@ -193,7 +193,7 @@ pub struct Mesh {
     pub smooth_shading: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MeshTriangle {
     pub vertex_indices: [usize; 3],
     pub normal_indices: [usize; 3],
@@ -294,7 +294,7 @@ impl Intersectable for Mesh {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Composite {
     shapes: Vec<Shape>,
 }

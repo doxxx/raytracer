@@ -39,6 +39,27 @@ impl fmt::Debug for Texture {
     }
 }
 
+impl PartialEq for Texture {
+    fn eq(&self, other: &Texture) -> bool {
+        if let &Texture::Solid(ref c1) = self {
+            if let &Texture::Solid(ref c2) = other {
+                return c1 == c2;
+            }
+        }
+        else if let &Texture::Pattern(ref p1) = self {
+            if let &Texture::Pattern(ref p2) = other{
+                return p1 == p2;
+            }
+        }
+        else if let &Texture::Image(ref i1, ref s1) = self {
+            if let &Texture::Image(ref i2, ref s2) = other{
+                return i1.pixels().eq(i2.pixels()) && s1 == s2;
+            }
+        }
+        return false;
+    }
+}
+
 impl ColorSource for Texture {
     fn color_at_uv(&self, uv: Vector2f) -> Color {
         match self {
@@ -57,7 +78,7 @@ impl ColorSource for Texture {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Pattern {
     Checkerboard(Color, Color, f64),
 }

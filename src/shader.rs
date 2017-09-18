@@ -7,11 +7,13 @@ use point::Point;
 use system::{RenderContext, Ray, SurfaceInfo};
 use texture::{ColorSource,Texture};
 
+pub const DEFAULT_ALBEDO: f64 = 0.18;
+
 pub const IOR_WATER: f64 = 1.3;
 pub const IOR_GLASS: f64 = 1.5;
 pub const IOR_DIAMOND: f64 = 1.8;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Shader {
     DiffuseSpecular {
         albedo: f64,

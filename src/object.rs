@@ -3,11 +3,9 @@ use shader::Shader;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
-pub const DEFAULT_ALBEDO: f64 = 0.18;
-
 type ShaderApplication = (f64,Shader);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Object {
     pub name: String,
     pub shape: Shape,
