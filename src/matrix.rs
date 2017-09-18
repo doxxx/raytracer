@@ -6,7 +6,7 @@ use direction::Direction;
 use point::Point;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Matrix44f([[f64; 4]; 4]);
+pub struct Matrix44f(pub [[f64; 4]; 4]);
 
 impl Matrix44f {
     pub fn zero() -> Matrix44f {

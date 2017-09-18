@@ -30,47 +30,68 @@ pub struct Options {
     pub antialiasing: bool,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Camera {
-    pub width: f64,
-    pub height: f64,
-    aspect_ratio: f64,
+    location: Point,
     fov_factor: f64,
     camera_to_world: Matrix44f,
 }
 
 impl Camera {
-    pub fn new(width: u32, height: u32, fov: f64) -> Camera {
+    pub fn new(location: Point, fov: f64) -> Camera {
         Camera {
-            width: width as f64,
-            height: height as f64,
-            aspect_ratio: width as f64 / height as f64,
+            location,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world: Matrix44f::identity(),
         }
     }
 
-    pub fn transform(&mut self, m: Matrix44f) {
-        self.camera_to_world = self.camera_to_world * m;
+    pub fn look_at(&self, p: Point) -> Camera {
+        let forward = (self.location - p).normalize();
+        let right = Direction::new(0.0, 1.0, 0.0).normalize().cross(forward);
+        let up = forward.cross(right);
+        Camera {
+            location: self.location,
+            fov_factor: self.fov_factor,
+            camera_to_world: Matrix44f(
+                [
+                    [right.x, right.y, right.z, 0.0],
+                    [up.x, up.y, up.z, 0.0],
+                    [forward.x, forward.y, forward.z, 0.0],
+                    [self.location.x, self.location.y, self.location.z, 1.0],
+                ]
+            ),
+        }
     }
 
-    fn pixel_ray(&self, x: f64, y: f64) -> Ray {
-        let ndcx = x / self.width;
-        let ndcy = y / self.height;
-        let cx = (2.0 * ndcx - 1.0) * self.fov_factor * self.aspect_ratio;
+    pub fn transform(&self, m: Matrix44f) -> Camera {
+        Camera {
+            location: self.location * m,
+            fov_factor: self.fov_factor,
+            camera_to_world: self.camera_to_world * m,
+        }
+    }
+
+    fn pixel_ray(&self, width: u32, height: u32, x: f64, y: f64) -> Ray {
+        let w = width as f64;
+        let h = height as f64;
+        let aspect_ratio = w / h;
+        let ndcx = x / w;
+        let ndcy = y / h;
+        let cx = (2.0 * ndcx - 1.0) * self.fov_factor * aspect_ratio;
         let cy = (1.0 - 2.0 * ndcy) * self.fov_factor;
         let origin = Point::zero() * self.camera_to_world;
         let dir_point = Point::new(cx, cy, -1.0) * self.camera_to_world;
         Ray::primary(origin, (dir_point - origin).normalize())
     }
 
-    fn pixel_ray_bundle(&self, x: u32, y: u32) -> [Ray; 5] {
+    fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 5] {
         [
-            self.pixel_ray(x as f64, y as f64),
-            self.pixel_ray(x as f64 + 1.0, y as f64),
-            self.pixel_ray(x as f64 + 1.0, y as f64 + 1.0),
-            self.pixel_ray(x as f64, y as f64 + 1.0),
-            self.pixel_ray(x as f64 + 0.5, y as f64 + 0.5),
+            self.pixel_ray(width, height, x as f64, y as f64),
+            self.pixel_ray(width, height, x as f64 + 1.0, y as f64),
+            self.pixel_ray(width, height, x as f64 + 1.0, y as f64 + 1.0),
+            self.pixel_ray(width, height, x as f64, y as f64 + 1.0),
+            self.pixel_ray(width, height, x as f64 + 0.5, y as f64 + 0.5),
         ]
     }
 }
@@ -175,10 +196,7 @@ pub struct RayHit<'a> {
 
 impl<'a> RayHit<'a> {
     pub fn new(object: &Object, i: Intersection) -> RayHit {
-        RayHit {
-            object: object,
-            i: i,
-        }
+        RayHit { object, i }
     }
 }
 
@@ -224,7 +242,7 @@ fn color_to_rgb(v: Color) -> image::Rgb<u8> {
 
 fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
     if context.options.antialiasing {
-        let rays = context.scene.camera.pixel_ray_bundle(x, y);
+        let rays = context.scene.camera.pixel_ray_bundle(context.options.width, context.options.height, x, y);
         let mut color = Color::black();
         for ray in rays.iter() {
             color += ray.cast(&context, 0);
@@ -232,7 +250,7 @@ fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
         color / (rays.len() as f64)
     }
     else {
-        context.scene.camera.pixel_ray(x as f64 + 0.5, y as f64 + 0.5).cast(&context, 0)
+        context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context, 0)
     }
 }
 
