@@ -85,13 +85,12 @@ impl Camera {
         Ray::primary(origin, (dir_point - origin).normalize())
     }
 
-    fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 5] {
+    fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 4] {
         [
-            self.pixel_ray(width, height, x as f64, y as f64),
-            self.pixel_ray(width, height, x as f64 + 1.0, y as f64),
-            self.pixel_ray(width, height, x as f64 + 1.0, y as f64 + 1.0),
-            self.pixel_ray(width, height, x as f64, y as f64 + 1.0),
-            self.pixel_ray(width, height, x as f64 + 0.5, y as f64 + 0.5),
+            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.25),
+            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.25),
+            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.75),
+            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.75),
         ]
     }
 }
