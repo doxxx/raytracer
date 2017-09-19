@@ -24,8 +24,7 @@ pub struct Scene {
 }
 
 pub fn setup_scene(w: u32, h: u32) -> Scene {
-    let mut camera = Camera::new(Point::new(2.0, 5.0, 9.0), 60.0);
-    camera.look_at(Point::new(-1.0, 2.0, 0.0));
+    let camera = Camera::new(Point::new(2.0, 5.0, 9.0), 60.0).look_at(Point::new(-1.0, 2.0, 0.0));
 
     let lights: Vec<Light> = vec![
         Light::Point { color: Color::white(), intensity: 3000.0, origin: Point::new(-3.0, 8.0, 9.0) },
