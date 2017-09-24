@@ -1,17 +1,16 @@
 use std::f64;
-use std::mem;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::spawn;
 use std::io::Stdout;
+use std::ops::Deref;
 
 use image;
 use pbr::ProgressBar;
 use time;
 
 use color::Color;
-use direction::{Dot, Direction};
-use lights::Light;
+use direction::Direction;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -122,10 +121,10 @@ impl Ray {
     fn new(kind: RayKind, origin: Point, direction: Direction) -> Ray {
         let inverse_direction = 1.0 / direction;
         Ray {
-            kind: kind,
-            origin: origin,
-            direction: direction,
-            inverse_direction: inverse_direction,
+            kind,
+            origin,
+            direction,
+            inverse_direction,
             sign: inverse_direction.sign(),
         }
     }
@@ -182,12 +181,11 @@ impl Ray {
 }
 
 impl Transformable for Ray {
-    fn transform(&self, m: Matrix44f) -> Self {
+    fn transform(self, m: Matrix44f) -> Self {
         Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed())
     }
 }
 
-#[derive(Debug)]
 pub struct RayHit<'a> {
     pub object: &'a Object,
     pub i: Intersection,
@@ -217,10 +215,9 @@ pub trait Intersectable {
 }
 
 pub trait Transformable {
-    fn transform(&self, m: Matrix44f) -> Self;
+    fn transform(self, m: Matrix44f) -> Self;
 }
 
-#[derive(Debug, Clone)]
 pub struct RenderContext {
     pub options: Options,
     pub scene: Scene,
@@ -261,8 +258,8 @@ pub fn render(
     let height = options.height;
 
     let context = RenderContext {
-        options: options.clone(),
-        scene: scene.clone(),
+        options,
+        scene,
     };
 
     let start_time = time::now();
@@ -279,6 +276,7 @@ pub fn render(
     let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
 
     if options.num_threads > 1 {
+        let context = Arc::new(context);
         let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
         let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
 
@@ -294,7 +292,10 @@ pub fn render(
                     let y = { rows.lock().unwrap().pop() };
                     match y {
                         Some(y) => {
-                            let row = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
+                            let row = (0..width).map(|x| {
+                                let context = context.deref();
+                                color_at_pixel(&context, x, y)
+                            }).collect();
                             let mut results = results.lock().unwrap();
                             results[y as usize] = row;
                             let _ = tx.send(y);

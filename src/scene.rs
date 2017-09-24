@@ -12,18 +12,22 @@ use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use shader::{DEFAULT_ALBEDO, IOR_GLASS, Shader};
-use shapes::{Composite, Mesh, MeshTriangle, Plane, Shape, Sphere};
-use system::{Camera, Transformable};
+use shapes::Shape;
+use shapes::sphere::Sphere;
+use shapes::plane::Plane;
+use shapes::composite::Composite;
+use shapes::bounding_box::BoundingBox;
+use shapes::mesh::{Mesh,MeshTriangle};
+use system::{Camera, Transformable, Intersectable};
 use texture::{Pattern,Texture};
 
-#[derive(Debug, Clone)]
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
     pub objects: Vec<Object>,
 }
 
-pub fn setup_scene(w: u32, h: u32) -> Scene {
+pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
     let camera = Camera::new(Point::new(2.0, 5.0, 9.0), 60.0).look_at(Point::new(-1.0, 2.0, 0.0));
 
     let lights: Vec<Light> = vec![
@@ -36,7 +40,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 //        Light::Point { color: Color::white(), intensity: 5000.0, origin: Point::new(-10.0, 0.0, -30.0) },
     ];
 
-    let obj = {
+    let obj: Box<Shape> = {
         print!("Loading object file...");
         let mut obj_file_contents = String::new();
         let mut obj_file = File::open("LinkedTorus.obj").expect("could not open object file");
@@ -156,43 +160,43 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     let objects: Vec<Object> = vec![
         Object::new(
             "bottom plane",
-            Shape::Plane(Plane::new(Direction::new(0.0, 1.0, 0.0))),
+            Box::new(Plane::new(Direction::new(0.0, 1.0, 0.0))),
             shiny_black_white_checkboard.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, 0.0))),
 
         Object::new(
             "back plane",
-            Shape::Plane(Plane::new(Direction::new(0.0, 0.0, 1.0))),
+            Box::new(Plane::new(Direction::new(0.0, 0.0, 1.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, -5.0))),
 
         Object::new(
             "left plane",
-            Shape::Plane(Plane::new(Direction::new(1.0, 0.0, 0.0))),
+            Box::new(Plane::new(Direction::new(1.0, 0.0, 0.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(-5.0, 0.0, 0.0))),
 
         Object::new(
             "right plane",
-            Shape::Plane(Plane::new(Direction::new(-1.0, 0.0, 0.0))),
+            Box::new(Plane::new(Direction::new(-1.0, 0.0, 0.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(5.0, 0.0, 0.0))),
 
         Object::new(
             "top plane",
-            Shape::Plane(Plane::new(Direction::new(0.0, -1.0, 0.0))),
+            Box::new(Plane::new(Direction::new(0.0, -1.0, 0.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 10.0, 0.0))),
 
         Object::new(
             "front plane",
-            Shape::Plane(Plane::new(Direction::new(0.0, 0.0, -1.0))),
+            Box::new(Plane::new(Direction::new(0.0, 0.0, -1.0))),
             matte_white.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, 10.0))),
 
         Object::new(
             "linked torus",
-            Shape::Composite(obj),
+            obj,
             matte_white.clone()
         ).transform(
             Matrix44f::rotation_y(-30.0) *
@@ -202,7 +206,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
         Object::new(
             "earth",
-            Shape::Sphere(Sphere::new(2.0)),
+            Box::new(Sphere::new(2.0)),
             earth.clone()
         ).transform(
             Matrix44f::rotation_y(-90.0) *
@@ -211,7 +215,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
         Object::new(
             "sphere1",
-            Shape::Sphere(Sphere::new(1.0)),
+            Box::new(Sphere::new(1.0)),
             shiny_red.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
@@ -221,7 +225,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
         Object::new(
             "sphere2",
-            Shape::Sphere(Sphere::new(1.0)),
+            Box::new(Sphere::new(1.0)),
             shiny_green.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 5.0, 0.0))
@@ -229,7 +233,7 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
 
         Object::new(
             "sphere3",
-            Shape::Sphere(Sphere::new(1.0)),
+            Box::new(Sphere::new(1.0)),
             shiny_blue.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
@@ -245,14 +249,14 @@ pub fn setup_scene(w: u32, h: u32) -> Scene {
     ];
 
     Scene {
-        camera: camera,
-        lights: lights,
-        objects: objects,
+        camera,
+        lights,
+        objects,
     }
 }
 
-fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Composite {
-    Composite::new(objs.objects.iter().map(|o| {
+fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Box<Shape> {
+    let shapes: Vec<Mesh> = objs.objects.iter().map(|o| {
         let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
         let normals = o.normals.iter().map(|n| Direction::new(n.x, n.y, n.z)).collect();
         let triangles = o.geometry
@@ -267,6 +271,10 @@ fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Composite {
             })
             .collect();
 
-        Shape::Mesh(Mesh::new(vertices, normals, triangles, true))
-    }).collect())
+        Mesh::new(vertices, normals, triangles, true)
+    }).collect();
+
+    let shapes: Vec<Box<Shape>> = shapes.into_iter().map(|m| Box::new(m) as Box<Shape>).collect();
+
+    Box::new(Composite::new(shapes))
 }
