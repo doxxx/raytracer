@@ -16,10 +16,10 @@ pub struct Transparency {
 }
 
 impl Shader for Transparency {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
         let mut refraction_color = Color::black();
-        let kr = fresnel(view, si.n, self.ior);
-        let outside = view.dot(si.n) < 0.0;
+        let kr = fresnel(si.incident, si.n, self.ior);
+        let outside = si.incident.dot(si.n) < 0.0;
         let bias = si.n * context.options.bias;
         if kr < 1.0 {
             let refraction_ray = Ray::primary(
@@ -28,7 +28,7 @@ impl Shader for Transparency {
                 } else {
                     si.point + bias
                 },
-                refract(view, si.n, self.ior).normalize(),
+                refract(si.incident, si.n, self.ior).normalize(),
             );
             refraction_color = refraction_ray.cast(context, depth + 1);
         }
@@ -38,7 +38,7 @@ impl Shader for Transparency {
             } else {
                 si.point - bias
             },
-            view.reflect(si.n).normalize(),
+            si.incident.reflect(si.n).normalize(),
         );
         let reflection_color = reflection_ray.cast(context, depth + 1);
         reflection_color * kr * 0.8 + refraction_color * (1.0 - kr)

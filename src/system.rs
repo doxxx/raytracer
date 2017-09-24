@@ -138,12 +138,13 @@ impl Ray {
             None => context.options.background_color,
             Some(hit) => {
                 let si = SurfaceInfo {
+                    incident: self.direction,
                     point: hit.i.point(self),
                     n: hit.i.n.clone(),
                     uv: hit.i.uv.clone(),
                 };
 
-                hit.object.material.color(context, depth, self.direction, &si)
+                hit.object.material.color(context, depth, &si)
             }
         }
     }
@@ -213,6 +214,7 @@ pub struct RenderContext {
 }
 
 pub struct SurfaceInfo {
+    pub incident: Direction,
     pub point: Point,
     pub n: Direction,
     pub uv: Vector2f,

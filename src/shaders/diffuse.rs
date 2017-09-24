@@ -1,7 +1,7 @@
 use shaders::Shader;
 
 use color::Color;
-use direction::{Direction, Dot};
+use direction::Dot;
 use system::{RenderContext, Ray, SurfaceInfo};
 use texture::{ColorSource,Texture};
 
@@ -16,7 +16,7 @@ pub struct Diffuse {
 }
 
 impl Shader for Diffuse {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
         let mut c1 = Color::black();
         let mut c2 = Color::black();
 

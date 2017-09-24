@@ -20,8 +20,8 @@ impl Glass {
 }
 
 impl Material for Glass {
-    fn color(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
-        self.transparency.shade_point(context, depth, view, si)
+    fn color(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
+        self.transparency.shade_point(context, depth, si)
     }
 
     fn has_transparency(&self) -> bool {

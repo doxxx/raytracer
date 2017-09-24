@@ -1,9 +1,8 @@
 use color::Color;
-use direction::Direction;
 use system::{RenderContext, SurfaceInfo};
 
 pub trait Shader: Send + Sync {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color;
+    fn shade_point(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color;
     fn has_transparency(&self) -> bool { false }
     fn box_clone(&self) -> Box<Shader>;
 }

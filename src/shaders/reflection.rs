@@ -8,10 +8,10 @@ use system::{RenderContext, Ray, SurfaceInfo};
 pub struct Reflection {}
 
 impl Shader for Reflection {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
         let reflection_ray = Ray::primary(
             si.point + si.n * context.options.bias,
-            view.reflect(si.n).normalize(),
+            si.incident.reflect(si.n).normalize(),
         );
         reflection_ray.cast(context, depth + 1)
     }

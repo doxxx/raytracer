@@ -29,9 +29,9 @@ impl Plastic {
 }
 
 impl Material for Plastic {
-    fn color(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
-        let dc = self.diffuse.shade_point(context, depth, view, si);
-        let rc = self.reflection.shade_point(context, depth, view, si);
+    fn color(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
+        let dc = self.diffuse.shade_point(context, depth, si);
+        let rc = self.reflection.shade_point(context, depth, si);
         (0.8 * dc) + (0.2 * rc)
     }
 

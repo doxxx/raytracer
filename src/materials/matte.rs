@@ -26,8 +26,8 @@ impl Matte {
 }
 
 impl Material for Matte {
-    fn color(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
-        self.diffuse.shade_point(context, depth, view, si)
+    fn color(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
+        self.diffuse.shade_point(context, depth, si)
     }
 
     fn box_clone(&self) -> Box<Material> {
