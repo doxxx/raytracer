@@ -12,7 +12,7 @@ mod matrix;
 mod object;
 mod point;
 mod scene;
-mod shader;
+mod shaders;
 mod shapes;
 mod system;
 mod texture;

@@ -12,12 +12,12 @@ pub struct Direction {
 impl Direction {
     pub fn new(x: f64, y: f64, z: f64) -> Direction {
         Direction {
-            x: x,
-            y: y,
-            z: z,
+            x,
+            y,
+            z,
         }
     }
-    
+
     pub fn zero() -> Direction {
         Direction::new(0.0, 0.0, 0.0)
     }
@@ -50,6 +50,10 @@ impl Direction {
             if self.y < 0.0 { 1 } else { 0 },
             if self.z < 0.0 { 1 } else { 0 },
         ]
+    }
+
+    pub fn reflect(self, normal: Direction) -> Direction {
+        self - normal * 2.0 * self.dot(normal)
     }
 }
 

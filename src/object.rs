@@ -1,11 +1,7 @@
-use std::sync::Arc;
-
 use matrix::Matrix44f;
-use shader::Shader;
+use shaders::ShaderApplication;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
-
-type ShaderApplication = (f64,Shader);
 
 pub struct Object {
     pub name: String,
@@ -24,6 +20,12 @@ impl Object {
             object_to_world: Matrix44f::identity(),
             world_to_object: Matrix44f::identity(),
         }
+    }
+
+    pub fn has_transparency(&self) -> bool {
+        self.shaders.iter().any(|sa| {
+            sa.has_transparency()
+        })
     }
 }
 

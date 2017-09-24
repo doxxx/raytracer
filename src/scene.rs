@@ -12,14 +12,17 @@ use lights::omni::Omni;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
-use shader::{DEFAULT_ALBEDO, IOR_GLASS, Shader};
+use shaders::ShaderApplication;
+use shaders::diffuse::{DEFAULT_ALBEDO,Diffuse};
+use shaders::reflection::Reflection;
+use shaders::transparency::{Transparency,IOR_GLASS};
 use shapes::Shape;
 use shapes::sphere::Sphere;
 use shapes::plane::Plane;
 use shapes::composite::Composite;
 use shapes::bounding_box::BoundingBox;
 use shapes::mesh::{Mesh,MeshTriangle};
-use system::{Camera, Transformable, Intersectable};
+use system::{Camera, Transformable};
 use texture::{Pattern,Texture};
 
 pub struct Scene {
@@ -57,90 +60,90 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
     };
 
     let matte_white = vec![
-        (1.0, Shader::DiffuseSpecular {
+        ShaderApplication(1.0, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::white()),
             roughness: 0.0,
             highlight: 0.0,
-        })];
+        }))];
 
     let matte_blue = vec![
-        (1.0, Shader::DiffuseSpecular {
+        ShaderApplication(1.0, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::blue()),
             roughness: 0.0,
             highlight: 0.0,
-        })];
+        }))];
 
     let matte_red = vec![
-        (1.0, Shader::DiffuseSpecular {
+        ShaderApplication(1.0, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::red()),
             roughness: 0.0,
             highlight: 0.0,
-        })];
+        }))];
 
     let shiny_white = vec![
-        (0.8, Shader::DiffuseSpecular {
+        ShaderApplication(0.8, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::white()),
             roughness: 0.2,
             highlight: 50.0,
-        }),
-        (0.2, Shader::Reflection)
+        })),
+        ShaderApplication(0.2, Box::new(Reflection {}))
     ];
 
     let shiny_red = vec![
-        (0.8, Shader::DiffuseSpecular {
+        ShaderApplication(0.8, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::red()),
             roughness: 0.2,
             highlight: 50.0,
-        }),
-        (0.2, Shader::Reflection)
+        })),
+        ShaderApplication(0.2, Box::new(Reflection {}))
     ];
 
     let shiny_green = vec![
-        (0.8, Shader::DiffuseSpecular {
+        ShaderApplication(0.8, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::green()),
             roughness: 0.2,
             highlight: 50.0,
-        }),
-        (0.2, Shader::Reflection)
+        })),
+        ShaderApplication(0.2, Box::new(Reflection {}))
     ];
 
     let shiny_blue = vec![
-        (0.8, Shader::DiffuseSpecular {
+        ShaderApplication(0.8, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Solid(Color::blue()),
             roughness: 0.2,
             highlight: 50.0,
-        }),
-        (0.2, Shader::Reflection)
+        })),
+        ShaderApplication(0.2, Box::new(Reflection {}))
     ];
 
     let transparent = vec![
-        (1.0, Shader::Transparency { ior: IOR_GLASS }),
+        ShaderApplication(1.0, Box::new(Transparency { ior: IOR_GLASS })),
     ];
 
     let matte_black_white_checkboard = vec![
-        (1.0, Shader::DiffuseSpecular {
+        ShaderApplication(1.0, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 3.0)),
             roughness: 0.0,
             highlight: 0.0,
-        })
+        }))
     ];
 
     let shiny_black_white_checkboard = vec![
-        (0.8, Shader::DiffuseSpecular {
+        ShaderApplication(0.8, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.5)),
             roughness: 0.2,
             highlight: 50.0,
-        }),
-        (0.2, Shader::Reflection)
+        })),
+        ShaderApplication(0.2, Box::new(Reflection {}))
     ];
 
     let earth_image = {
@@ -150,12 +153,12 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
     };
 
     let earth = vec![
-        (1.0, Shader::DiffuseSpecular {
+        ShaderApplication(1.0, Box::new(Diffuse {
             albedo: DEFAULT_ALBEDO,
             texture: Texture::Image(earth_image, 1.0),
             roughness: 0.0,
             highlight: 0.0,
-        })
+        }))
     ];
 
     let objects: Vec<Object> = vec![
@@ -242,11 +245,11 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
             Matrix44f::translation(Direction::new(0.0, 2.0, 0.0))
         ),
 
-//        Object::new(
-//            "sphere5",
-//            Shape::Sphere(Sphere::new(2.0)),
-//            transparent.clone()
-//        ).transform(Matrix44f::translation(Direction::new(-1.0, -1.0, -10.0))),
+        Object::new(
+            "sphere5",
+            Box::new(Sphere::new(1.0)),
+            transparent.clone()
+        ).transform(Matrix44f::translation(Direction::new(0.0, 1.0, 3.0))),
     ];
 
     Scene {

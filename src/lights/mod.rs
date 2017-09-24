@@ -1,5 +1,4 @@
 use std::f64;
-use std::f64::consts::PI;
 
 use color::Color;
 use direction::Direction;
