@@ -1,31 +1,25 @@
+use materials::Material;
 use matrix::Matrix44f;
-use shaders::ShaderApplication;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
 pub struct Object {
     pub name: String,
     pub shape: Box<Shape>,
-    pub shaders: Vec<ShaderApplication>,
+    pub material: Box<Material>,
     object_to_world: Matrix44f,
     world_to_object: Matrix44f,
 }
 
 impl Object {
-    pub fn new(name: &str, shape: Box<Shape>, shaders: Vec<ShaderApplication>) -> Object {
+    pub fn new(name: &str, shape: Box<Shape>, material: Box<Material>) -> Object {
         Object {
             name: String::from(name),
             shape,
-            shaders,
+            material,
             object_to_world: Matrix44f::identity(),
             world_to_object: Matrix44f::identity(),
         }
-    }
-
-    pub fn has_transparency(&self) -> bool {
-        self.shaders.iter().any(|sa| {
-            sa.has_transparency()
-        })
     }
 }
 
@@ -35,7 +29,7 @@ impl Transformable for Object {
         Object {
             name: self.name,
             shape: self.shape,
-            shaders: self.shaders,
+            material: self.material,
             object_to_world,
             world_to_object: object_to_world.inverse()
         }

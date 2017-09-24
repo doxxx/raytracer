@@ -15,7 +15,6 @@ use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use scene::Scene;
-use shaders::ShaderApplication;
 use vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
@@ -144,13 +143,7 @@ impl Ray {
                     uv: hit.i.uv.clone(),
                 };
 
-                let mut color = Color::black();
-
-                for &ShaderApplication(factor, ref shader) in &hit.object.shaders {
-                    color += factor * shader.shade_point(context, depth, self.direction, hit.object, &si);
-                }
-
-                color
+                hit.object.material.color(context, depth, self.direction, hit.object, &si)
             }
         }
     }
@@ -164,7 +157,7 @@ impl Ray {
             if let Some(intersection) = intersection {
                 if intersection.t < nearest_distance {
                     // HACK: transparent objects don't cast shadows
-                    if self.kind == RayKind::Shadow && object.has_transparency() { continue }
+                    if self.kind == RayKind::Shadow && object.material.has_transparency() { continue }
 
                     nearest_distance = intersection.t;
                     nearest = Some(RayHit::new(&object, intersection));

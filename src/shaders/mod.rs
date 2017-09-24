@@ -15,15 +15,6 @@ impl Clone for Box<Shader> {
     }
 }
 
-#[derive(Clone)]
-pub struct ShaderApplication(pub f64, pub Box<Shader>);
-
-impl ShaderApplication {
-    pub fn has_transparency(&self) -> bool {
-        self.1.has_transparency()
-    }
-}
-
 pub mod diffuse;
 pub mod reflection;
 pub mod transparency;

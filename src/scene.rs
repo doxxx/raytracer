@@ -9,18 +9,16 @@ use direction::Direction;
 use image;
 use lights::Light;
 use lights::omni::Omni;
+use materials::glass::Glass;
+use materials::matte::Matte;
+use materials::plastic::Plastic;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
-use shaders::ShaderApplication;
-use shaders::diffuse::{DEFAULT_ALBEDO,Diffuse};
-use shaders::reflection::Reflection;
-use shaders::transparency::{Transparency,IOR_GLASS};
 use shapes::Shape;
 use shapes::sphere::Sphere;
 use shapes::plane::Plane;
 use shapes::composite::Composite;
-use shapes::bounding_box::BoundingBox;
 use shapes::mesh::{Mesh,MeshTriangle};
 use system::{Camera, Transformable};
 use texture::{Pattern,Texture};
@@ -59,92 +57,18 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         obj
     };
 
-    let matte_white = vec![
-        ShaderApplication(1.0, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::white()),
-            roughness: 0.0,
-            highlight: 0.0,
-        }))];
+    let matte_white = Box::new(Matte::new(Texture::Solid(Color::white())));
+//    let matte_blue = Box::new(Matte::new(Texture::Solid(Color::blue())));
+//    let matte_red = Box::new(Matte::new(Texture::Solid(Color::red())));
 
-    let matte_blue = vec![
-        ShaderApplication(1.0, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::blue()),
-            roughness: 0.0,
-            highlight: 0.0,
-        }))];
+//    let plastic_white = Box::new(Plastic::new(Texture::Solid(Color::white())));
+    let plastic_red = Box::new(Plastic::new(Texture::Solid(Color::red())));
+    let plastic_green = Box::new(Plastic::new(Texture::Solid(Color::green())));
+    let plastic_blue = Box::new(Plastic::new(Texture::Solid(Color::blue())));
 
-    let matte_red = vec![
-        ShaderApplication(1.0, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::red()),
-            roughness: 0.0,
-            highlight: 0.0,
-        }))];
+    let glass = Box::new(Glass::new());
 
-    let shiny_white = vec![
-        ShaderApplication(0.8, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::white()),
-            roughness: 0.2,
-            highlight: 50.0,
-        })),
-        ShaderApplication(0.2, Box::new(Reflection {}))
-    ];
-
-    let shiny_red = vec![
-        ShaderApplication(0.8, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::red()),
-            roughness: 0.2,
-            highlight: 50.0,
-        })),
-        ShaderApplication(0.2, Box::new(Reflection {}))
-    ];
-
-    let shiny_green = vec![
-        ShaderApplication(0.8, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::green()),
-            roughness: 0.2,
-            highlight: 50.0,
-        })),
-        ShaderApplication(0.2, Box::new(Reflection {}))
-    ];
-
-    let shiny_blue = vec![
-        ShaderApplication(0.8, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Solid(Color::blue()),
-            roughness: 0.2,
-            highlight: 50.0,
-        })),
-        ShaderApplication(0.2, Box::new(Reflection {}))
-    ];
-
-    let transparent = vec![
-        ShaderApplication(1.0, Box::new(Transparency { ior: IOR_GLASS })),
-    ];
-
-    let matte_black_white_checkboard = vec![
-        ShaderApplication(1.0, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 3.0)),
-            roughness: 0.0,
-            highlight: 0.0,
-        }))
-    ];
-
-    let shiny_black_white_checkboard = vec![
-        ShaderApplication(0.8, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.5)),
-            roughness: 0.2,
-            highlight: 50.0,
-        })),
-        ShaderApplication(0.2, Box::new(Reflection {}))
-    ];
+    let plastic_checkerboard = Box::new(Plastic::new(Texture::Pattern(Pattern::Checkerboard(Color::black(), Color::white(), 0.5))));
 
     let earth_image = {
         let f = File::open("earth.jpg").expect("could not open earth.jpg");
@@ -152,20 +76,13 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         image::load(r, image::JPEG).expect("could not decode earth.jpg")
     };
 
-    let earth = vec![
-        ShaderApplication(1.0, Box::new(Diffuse {
-            albedo: DEFAULT_ALBEDO,
-            texture: Texture::Image(earth_image, 1.0),
-            roughness: 0.0,
-            highlight: 0.0,
-        }))
-    ];
+    let earth = Box::new(Matte::new(Texture::Image(earth_image, 1.0)));
 
     let objects: Vec<Object> = vec![
         Object::new(
             "bottom plane",
             Box::new(Plane::new(Direction::new(0.0, 1.0, 0.0))),
-            shiny_black_white_checkboard.clone()
+            plastic_checkerboard
         ).transform(Matrix44f::translation(Direction::new(0.0, 0.0, 0.0))),
 
         Object::new(
@@ -220,7 +137,7 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         Object::new(
             "sphere1",
             Box::new(Sphere::new(1.0)),
-            shiny_red.clone()
+            plastic_red.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
             Matrix44f::rotation_z(45.0) *
@@ -230,7 +147,7 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         Object::new(
             "sphere2",
             Box::new(Sphere::new(1.0)),
-            shiny_green.clone()
+            plastic_green.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 5.0, 0.0))
         ),
@@ -238,7 +155,7 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         Object::new(
             "sphere3",
             Box::new(Sphere::new(1.0)),
-            shiny_blue.clone()
+            plastic_blue.clone()
         ).transform(
             Matrix44f::translation(Direction::new(0.0, 3.0, 0.0)) *
             Matrix44f::rotation_z(-45.0) *
@@ -248,7 +165,7 @@ pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
         Object::new(
             "sphere5",
             Box::new(Sphere::new(1.0)),
-            transparent.clone()
+            glass.clone()
         ).transform(Matrix44f::translation(Direction::new(0.0, 1.0, 3.0))),
     ];
 

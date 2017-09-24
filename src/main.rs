@@ -8,6 +8,7 @@ extern crate time;
 mod color;
 mod direction;
 mod lights;
+mod materials;
 mod matrix;
 mod object;
 mod point;
