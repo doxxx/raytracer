@@ -80,7 +80,7 @@ impl Camera {
         let cy = (1.0 - 2.0 * ndcy) * self.fov_factor;
         let origin = Point::zero() * self.camera_to_world;
         let dir_point = Point::new(cx, cy, -1.0) * self.camera_to_world;
-        Ray::primary(origin, (dir_point - origin).normalize())
+        Ray::primary(origin, (dir_point - origin).normalize(), 0)
     }
 
     fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 4] {
@@ -104,33 +104,35 @@ pub struct Ray {
     pub kind: RayKind,
     pub origin: Point,
     pub direction: Direction,
+    pub depth: u16,
     pub inverse_direction: Direction,
     pub sign: [usize; 3],
 }
 
 impl Ray {
-    pub fn primary(origin: Point, direction: Direction) -> Ray {
-        Ray::new(RayKind::Normal, origin, direction)
+    pub fn primary(origin: Point, direction: Direction, depth: u16) -> Ray {
+        Ray::new(RayKind::Normal, origin, direction, depth)
     }
 
-    pub fn shadow(origin: Point, direction: Direction) -> Ray {
-        Ray::new(RayKind::Shadow, origin, direction)
+    pub fn shadow(origin: Point, direction: Direction, depth: u16) -> Ray {
+        Ray::new(RayKind::Shadow, origin, direction, depth)
     }
 
-    fn new(kind: RayKind, origin: Point, direction: Direction) -> Ray {
+    fn new(kind: RayKind, origin: Point, direction: Direction, depth: u16) -> Ray {
         let inverse_direction = 1.0 / direction;
         Ray {
             kind,
             origin,
             direction,
+            depth,
             inverse_direction,
             sign: inverse_direction.sign(),
         }
     }
 
 
-    pub fn cast(&self, context: &RenderContext, depth: u16) -> Color {
-        if depth > context.options.max_depth {
+    pub fn cast(&self, context: &RenderContext) -> Color {
+        if self.depth > context.options.max_depth {
             return context.options.background_color;
         }
 
@@ -138,13 +140,13 @@ impl Ray {
             None => context.options.background_color,
             Some(hit) => {
                 let si = SurfaceInfo {
-                    incident: self.direction,
+                    incident: *self,
                     point: hit.i.point(self),
                     n: hit.i.n.clone(),
                     uv: hit.i.uv.clone(),
                 };
 
-                hit.object.material.color(context, depth, &si)
+                hit.object.material.color(context, &si)
             }
         }
     }
@@ -172,7 +174,7 @@ impl Ray {
 
 impl Transformable for Ray {
     fn transform(self, m: Matrix44f) -> Self {
-        Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed())
+        Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed(), self.depth)
     }
 }
 
@@ -214,7 +216,7 @@ pub struct RenderContext {
 }
 
 pub struct SurfaceInfo {
-    pub incident: Direction,
+    pub incident: Ray,
     pub point: Point,
     pub n: Direction,
     pub uv: Vector2f,
@@ -232,12 +234,12 @@ fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
         let rays = context.scene.camera.pixel_ray_bundle(context.options.width, context.options.height, x, y);
         let mut color = Color::black();
         for ray in rays.iter() {
-            color += ray.cast(&context, 0);
+            color += ray.cast(&context);
         }
         color / (rays.len() as f64)
     }
     else {
-        context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context, 0)
+        context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context)
     }
 }
 

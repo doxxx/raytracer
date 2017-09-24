@@ -1,5 +1,4 @@
 use color::Color;
-use direction::Direction;
 use shaders::Shader;
 use shaders::diffuse::{Diffuse,DEFAULT_ALBEDO};
 use shaders::reflection::Reflection;
@@ -29,9 +28,9 @@ impl Plastic {
 }
 
 impl Material for Plastic {
-    fn color(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
-        let dc = self.diffuse.shade_point(context, depth, si);
-        let rc = self.reflection.shade_point(context, depth, si);
+    fn color(&self, context: &RenderContext, si: &SurfaceInfo) -> Color {
+        let dc = self.diffuse.shade_point(context, si);
+        let rc = self.reflection.shade_point(context, si);
         (0.8 * dc) + (0.2 * rc)
     }
 

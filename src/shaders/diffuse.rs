@@ -16,13 +16,13 @@ pub struct Diffuse {
 }
 
 impl Shader for Diffuse {
-    fn shade_point(&self, context: &RenderContext, depth: u16, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, si: &SurfaceInfo) -> Color {
         let mut c1 = Color::black();
         let mut c2 = Color::black();
 
         for light in &context.scene.lights {
             let (dir, intensity, distance) = light.illuminate(si.point);
-            let shadow_ray = Ray::shadow(si.point + si.n * context.options.bias, -dir);
+            let shadow_ray = Ray::shadow(si.point + si.n * context.options.bias, -dir, 0);
 
             if shadow_ray.trace(&context.scene.objects, distance).is_none() {
                 let dot = si.n.dot(-dir).max(0.0);
