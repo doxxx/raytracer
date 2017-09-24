@@ -8,6 +8,7 @@ use color::Color;
 use direction::Direction;
 use image;
 use lights::Light;
+use lights::omni::Omni;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -23,16 +24,16 @@ use texture::{Pattern,Texture};
 
 pub struct Scene {
     pub camera: Camera,
-    pub lights: Vec<Light>,
+    pub lights: Vec<Box<Light>>,
     pub objects: Vec<Object>,
 }
 
 pub fn setup_scene<'a>(w: u32, h: u32) -> Scene {
     let camera = Camera::new(Point::new(2.0, 5.0, 9.0), 60.0).look_at(Point::new(-1.0, 2.0, 0.0));
 
-    let lights: Vec<Light> = vec![
-        Light::Point { color: Color::white(), intensity: 3000.0, origin: Point::new(-3.0, 8.0, 9.0) },
-        Light::Point { color: Color::white(), intensity: 3000.0, origin: Point::new(4.0, 8.0, 9.0) },
+    let lights: Vec<Box<Light>> = vec![
+        Box::new(Omni { color: Color::white(), intensity: 3000.0, origin: Point::new(-3.0, 8.0, 9.0) }),
+        Box::new(Omni { color: Color::white(), intensity: 3000.0, origin: Point::new(4.0, 8.0, 9.0) }),
 //        Light::Distant { color: Color::white(), intensity: 1.0, direction: Direction::new(0.0, 0.0, -1.0) },
 //        Light::Point { color: Color::white(), intensity: 10000.0, origin: Point::new(10.0, 10.0, -10.0) },
 //        Light::Point { color: Color::white(), intensity: 8000.0, origin: Point::new(-10.0, 0.0, -5.0) },
