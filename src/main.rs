@@ -25,7 +25,12 @@ use clap::{App, Arg};
 use color::Color;
 use system::Options;
 
-fn number_validator(s: String) -> Result<(), String> {
+fn u32_validator(s: String) -> Result<(), String> {
+    if s.parse::<u32>().is_ok() { return Ok(()); }
+    Err(String::from("The value must be a number."))
+}
+
+fn usize_validator(s: String) -> Result<(), String> {
     if s.parse::<usize>().is_ok() { return Ok(()); }
     Err(String::from("The value must be a number."))
 }
@@ -42,7 +47,7 @@ fn main() {
                 .value_name("WIDTH")
                 .help("Image width")
                 .takes_value(true)
-                .validator(number_validator)
+                .validator(u32_validator)
                 .default_value("1024"),
         )
         .arg(
@@ -51,7 +56,7 @@ fn main() {
                 .value_name("HEIGHT")
                 .help("Image height")
                 .takes_value(true)
-                .validator(number_validator)
+                .validator(u32_validator)
                 .default_value("768"),
         )
         .arg(
@@ -60,7 +65,7 @@ fn main() {
                 .value_name("THREADS")
                 .help("Number of render threads")
                 .takes_value(true)
-                .validator(number_validator)
+                .validator(usize_validator)
                 .default_value(&default_cpus)
         )
         .arg(
@@ -70,20 +75,8 @@ fn main() {
         );
     let options = app.get_matches();
 
-    let w: u32 = match options.value_of("width").unwrap().parse() {
-        Ok(n) => n,
-        Err(_) => {
-            println!("ERROR: Bad width!");
-            return;
-        }
-    };
-    let h: u32 = match options.value_of("height").unwrap().parse() {
-        Ok(n) => n,
-        Err(_) => {
-            println!("ERROR: Bad height!");
-            return;
-        }
-    };
+    let w: u32 = options.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
+    let h: u32 = options.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
 
     let options = Options {
         num_threads: options.value_of("num_threads").unwrap().parse().unwrap(),
