@@ -143,7 +143,7 @@ impl Ray {
                     uv: hit.i.uv.clone(),
                 };
 
-                hit.object.material.color(context, depth, self.direction, hit.object, &si)
+                hit.object.material.color(context, depth, self.direction, &si)
             }
         }
     }

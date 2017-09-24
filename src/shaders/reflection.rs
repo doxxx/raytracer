@@ -2,14 +2,13 @@ use shaders::Shader;
 
 use color::Color;
 use direction::Direction;
-use object::Object;
 use system::{RenderContext, Ray, SurfaceInfo};
 
 #[derive(Clone)]
 pub struct Reflection {}
 
 impl Shader for Reflection {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
         let reflection_ray = Ray::primary(
             si.point + si.n * context.options.bias,
             view.reflect(si.n).normalize(),

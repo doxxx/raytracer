@@ -1,6 +1,5 @@
 use color::Color;
 use direction::Direction;
-use object::Object;
 use shaders::Shader;
 use shaders::diffuse::{Diffuse,DEFAULT_ALBEDO};
 use system::{RenderContext,SurfaceInfo};
@@ -27,8 +26,8 @@ impl Matte {
 }
 
 impl Material for Matte {
-    fn color(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, si: &SurfaceInfo) -> Color {
-        self.diffuse.shade_point(context, depth, view, object, si)
+    fn color(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
+        self.diffuse.shade_point(context, depth, view, si)
     }
 
     fn box_clone(&self) -> Box<Material> {

@@ -4,7 +4,6 @@ use shaders::Shader;
 
 use color::Color;
 use direction::{Direction, Dot};
-use object::Object;
 use system::{RenderContext, Ray, SurfaceInfo};
 
 pub const IOR_WATER: f64 = 1.3;
@@ -17,7 +16,7 @@ pub struct Transparency {
 }
 
 impl Shader for Transparency {
-    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, si: &SurfaceInfo) -> Color {
+    fn shade_point(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
         let mut refraction_color = Color::black();
         let kr = fresnel(view, si.n, self.ior);
         let outside = view.dot(si.n) < 0.0;

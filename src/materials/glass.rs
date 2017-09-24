@@ -1,6 +1,5 @@
 use color::Color;
 use direction::Direction;
-use object::Object;
 use shaders::Shader;
 use shaders::transparency::{Transparency,IOR_GLASS};
 use system::{RenderContext,SurfaceInfo};
@@ -21,8 +20,8 @@ impl Glass {
 }
 
 impl Material for Glass {
-    fn color(&self, context: &RenderContext, depth: u16, view: Direction, object: &Object, si: &SurfaceInfo) -> Color {
-        self.transparency.shade_point(context, depth, view, object, si)
+    fn color(&self, context: &RenderContext, depth: u16, view: Direction, si: &SurfaceInfo) -> Color {
+        self.transparency.shade_point(context, depth, view, si)
     }
 
     fn has_transparency(&self) -> bool {
