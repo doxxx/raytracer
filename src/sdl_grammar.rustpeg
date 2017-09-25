@@ -21,7 +21,7 @@ use system::Camera;
 use texture::{Pattern,Texture};
 
 pub scene -> Scene
-  = ws* camera:camera ws+ lights:lights ws+ objects:objects ws* {
+  = camera:camera lights:lights objects:object+ {
     Scene {
       camera,
       lights,
@@ -30,30 +30,27 @@ pub scene -> Scene
   }
 
 pub camera -> Camera
-  = "camera" ws* "{" ws* loc:location ws+ p:camera_lookat ws* "}" {
+  = T<"camera"> OPEN_BRACE loc:location p:camera_lookat CLOSE_BRACE {
     Camera::new(loc, 60.0).look_at(p)
   }
 
 location -> Point
-  = "location" ws+ p:point { p }
+  = T<"location"> p:point { p }
 
 camera_lookat -> Point
-  = "look_at" ws+ p:point { p }
+  = T<"look_at"> p:point { p }
 
 lights -> Vec<Box<Light>>
-  = "lights" ws* "{" lights:(light_ws+) "}" {
+  = T<"lights"> OPEN_BRACE lights:light+ CLOSE_BRACE {
       lights
   }
-
-light_ws -> Box<Light>
-  = ws* light:light ws* { light }
 
 light -> Box<Light>
   = omni_light
   / distant_light
 
 pub omni_light -> Box<Light>
-  = "omni" ws* "{" ws* origin:point ws+ color:color ws+ intensity:light_intensity ws* "}" {
+  = T<"omni"> OPEN_BRACE origin:point color:color intensity:light_intensity CLOSE_BRACE {
     Box::new(Omni {
       color,
       intensity,
@@ -62,7 +59,7 @@ pub omni_light -> Box<Light>
   }
 
 pub distant_light -> Box<Light>
-  = "distant" ws* "{" ws* direction:direction ws+ color:color ws+ intensity:light_intensity ws* "}" {
+  = T<"distant"> OPEN_BRACE direction:direction color:color intensity:light_intensity CLOSE_BRACE {
     Box::new(Distant {
       color,
       intensity,
@@ -71,19 +68,16 @@ pub distant_light -> Box<Light>
   }
 
 light_intensity -> f64
-  = "intensity" ws* i:float { i }
-
-pub objects -> Vec<Object>
-  = object ++ (ws+)
+  = T<"intensity"> i:FLOAT { i }
 
 pub object -> Object
-  = "object"
-    ws* "{" ws*
+  = T<"object">
+    OPEN_BRACE
     loc:location
-    ws+ shape:object_shape
-    ws+ material:object_material
-    transform:object_transform_ws?
-    ws* "}"
+    shape:object_shape
+    material:object_material
+    transform:object_transform?
+    CLOSE_BRACE
   {
     sdl::new_object(loc, shape, material, transform)
   }
@@ -94,31 +88,31 @@ object_shape -> Box<Shape>
   / mesh
 
 sphere -> Box<Shape>
-  = "sphere" ws* "{" ws* r:sphere_radius ws* "}" {
+  = T<"sphere"> OPEN_BRACE r:sphere_radius CLOSE_BRACE {
     Box::new(Sphere::new(r))
   }
 
 sphere_radius -> f64
-  = "radius" ws+ r:float { r }
+  = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = "plane" ws* "{" ws* n:plane_normal ws* "}" {
+  = T<"plane"> OPEN_BRACE n:plane_normal CLOSE_BRACE {
     Box::new(Plane::new(n))
   }
 
 plane_normal -> Direction
-  = "normal" ws+ n:direction { n }
+  = T<"normal"> n:direction { n }
 
 mesh -> Box<Shape>
-  = "mesh" ws* "{" ws* p:mesh_file ws* "}" {
+  = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
     sdl::load_mesh_file(&p)
   }
 
 mesh_file -> String
-  = "file" ws+ p:path { p }
+  = T<"file"> p:path { p }
 
 object_material -> Box<Material>
-  = "material" ws* "{" ws* material:material ws* "}" {
+  = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {
     material
   }
 
@@ -128,30 +122,24 @@ material -> Box<Material>
   / glass
 
 matte -> Box<Material>
-  = "matte" ws+ texture:texture {
+  = T<"matte"> texture:texture {
     Box::new(Matte::new(texture))
   }
 
 plastic -> Box<Material>
-  = "plastic" ws+ texture:texture {
+  = T<"plastic"> texture:texture {
     Box::new(Plastic::new(texture))
   }
 
 glass -> Box<Material>
-  = "glass" {
+  = T<"glass"> {
     Box::new(Glass::new())
   }
 
-object_transform_ws -> Matrix44f
-  = ws+ t:object_transform { t }
-
 object_transform -> Matrix44f
-  = "transform" ws* "{" transforms:transform_ws+ "}" {
+  = T<"transform"> OPEN_BRACE transforms:transform+ CLOSE_BRACE {
     sdl::combine_transforms(transforms)
   }
-
-transform_ws -> Matrix44f
-  = ws* t:transform ws* { t }
 
 transform -> Matrix44f
   = translate
@@ -159,7 +147,7 @@ transform -> Matrix44f
   / scale
 
 translate -> Matrix44f
-  = "translate" ws+ d:direction {
+  = T<"translate"> d:direction {
     Matrix44f::translation(d)
   }
 
@@ -169,28 +157,28 @@ rotate -> Matrix44f
   / rotate_z
 
 rotate_x -> Matrix44f
-  = "rotate_x" ws+ n:float {
+  = T<"rotate_x"> n:FLOAT {
     Matrix44f::rotation_x(n)
   }
 
 rotate_y -> Matrix44f
-  = "rotate_y" ws+ n:float {
+  = T<"rotate_y"> n:FLOAT {
     Matrix44f::rotation_y(n)
   }
 
 rotate_z -> Matrix44f
-  = "rotate_z" ws+ n:float {
+  = T<"rotate_z"> n:FLOAT {
     Matrix44f::rotation_z(n)
   }
 
 scale -> Matrix44f
-  = "scale" ws+ d:direction {
+  = T<"scale"> d:direction {
     Matrix44f::scaling(d)
   }
 
 /*
 object_shader -> (f64, Shader)
-  = f:float ws+ t:shader_type { (f, t) }
+  = f:FLOAT WS+ t:shader_type { (f, t) }
 
 shader_type -> Shader
   = diffuse_specular
@@ -198,7 +186,7 @@ shader_type -> Shader
   / transparency
 
 diffuse_specular -> Shader
-  = "diffuse_specular" ws* "{" ws* texture:texture ws+ roughness:roughness ws+ highlight:highlight ws* "}" {
+  = "diffuse_specular" WS* "{" WS* texture:texture WS+ roughness:roughness WS+ highlight:highlight WS* "}" {
     Shader::DiffuseSpecular {
       albedo: DEFAULT_ALBEDO,
       texture,
@@ -213,43 +201,43 @@ reflection -> Shader
   }
 
 transparency -> Shader
-  = "transparency" ws* "{" ws* ior:ior ws* "}" {
+  = "transparency" WS* "{" WS* ior:ior WS* "}" {
     Shader::Transparency { ior }
   }
 
 ior -> f64
-  = "ior" ws+ n:float { n }
+  = "ior" WS+ n:FLOAT { n }
 */
 
 texture -> Texture
-  = "texture" ws* "{" ws* t:(texture_solid / texture_pattern / texture_image) ws* "}" { t }
+  = T<"texture"> OPEN_BRACE t:(texture_solid / texture_pattern / texture_image) CLOSE_BRACE { t }
 
 texture_solid -> Texture
-  = "solid" ws+ c:color {
+  = T<"solid"> c:color {
     Texture::Solid(c)
   }
 
 texture_pattern -> Texture
-  = "pattern" ws* "{" ws* p:pattern_checkerboard ws* "}" { Texture::Pattern(p) }
+  = T<"pattern"> OPEN_BRACE p:pattern_checkerboard CLOSE_BRACE { Texture::Pattern(p) }
 
 pattern_checkerboard -> Pattern
-  = "checkerboard" ws+ c1:color ws+ c2:color ws+ s:float {
+  = T<"checkerboard"> c1:color c2:color s:FLOAT {
     Pattern::Checkerboard(c1, c2, s)
   }
 
 texture_image -> Texture
-  = "image" ws+ p:path ws+ s:float {
+  = T<"image"> p:path s:FLOAT {
     Texture::Image(sdl::load_image(&p), s)
   }
 
 path -> String
-  = "\"" s:$([^"]*) "\"" { String::from_str(s).unwrap() }
+  = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
 
 roughness -> f64
-  = "roughness" ws+ n:float { n }
+  = T<"roughness"> n:FLOAT { n }
 
 highlight -> f64
-  = "highlight" ws+ n:float { n }
+  = T<"highlight"> n:FLOAT { n }
 
 pub point -> Point
   = v:vec3 { Point::new(v.0, v.1, v.2) }
@@ -258,33 +246,31 @@ pub direction -> Direction
   = v:vec3 { Direction::new(v.0, v.1, v.2) }
 
 pub color -> Color
-  = ("color"/"colour") ws* c:(std_color / rgb_color) { Color::new(c.0, c.1, c.2) }
+  = T<("color"/"colour")> c:(std_color / rgb_color) { Color::new(c.0, c.1, c.2) }
 
 std_color -> (f64, f64, f64)
-  = "white"   { (1.0, 1.0, 1.0) }
-  / "black"   { (0.0, 0.0, 0.0) }
-  / "red"     { (1.0, 0.0, 0.0) }
-  / "green"   { (0.0, 1.0, 0.0) }
-  / "blue"    { (0.0, 0.0, 1.0) }
-  / "yellow"  { (1.0, 1.0, 0.0) }
-  / "cyan"    { (0.0, 1.0, 1.0) }
-  / "magenta" { (1.0, 0.0, 1.0) }
+  = T<"white">   { (1.0, 1.0, 1.0) }
+  / T<"black">   { (0.0, 0.0, 0.0) }
+  / T<"red">     { (1.0, 0.0, 0.0) }
+  / T<"green">   { (0.0, 1.0, 0.0) }
+  / T<"blue">    { (0.0, 0.0, 1.0) }
+  / T<"yellow">  { (1.0, 1.0, 0.0) }
+  / T<"cyan">    { (0.0, 1.0, 1.0) }
+  / T<"magenta"> { (1.0, 0.0, 1.0) }
 
 rgb_color -> (f64, f64, f64)
-  = "rgb" ws* v:vec3 { v }
+  = T<"rgb"> WS* v:vec3 { v }
 
 pub vec3 -> (f64, f64, f64)
-  = "<" ws* a:float ws* "," ws* b:float ws* "," ws* c: float ws* ">" { (a, b, c) }
+  = T<"<"> a:FLOAT T<","> b:FLOAT T<","> c: FLOAT T<">"> { (a, b, c) }
 
-pub float -> f64
-  = #quiet<s:$("-"?([0-9]+)("."[0-9]+([eE][0-9]+)?)?) { f64::from_str(s).unwrap() }>
-  / #expected("float")
+pub FLOAT -> f64
+  = #quiet<s:$("-"?([0-9]+)("."[0-9]+([eE][0-9]+)?)?) WS* { f64::from_str(s).unwrap() }>
+  / #expected("FLOAT")
 
-pub uint -> u64
-  = #quiet<s:$([0-9]+) { u64::from_str(s).unwrap() }>
-  / #expected("int")
+OPEN_BRACE = T<"{">
+CLOSE_BRACE = T<"}">
 
-comma_sep
-  = ws* "," ws*
+T<E> = WS* E WS*
 
-ws = #quiet<[ \n\r\t]>
+WS = #quiet<[ \n\r\t]> / #expected("whitespace")
