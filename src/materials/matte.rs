@@ -17,7 +17,8 @@ impl Matte {
             diffuse: Diffuse {
                 albedo: DEFAULT_ALBEDO,
                 texture,
-                roughness: 0.0,
+                diffuse_factor: 1.0,
+                specular_factor: 0.0,
                 highlight: 0.0,
             }
         }

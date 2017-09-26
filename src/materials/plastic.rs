@@ -19,7 +19,8 @@ impl Plastic {
             diffuse: Diffuse {
                 albedo: DEFAULT_ALBEDO,
                 texture,
-                roughness: 0.2,
+                diffuse_factor: 0.8,
+                specular_factor: 0.15,
                 highlight: 50.0,
             },
             reflection: Reflection {},

@@ -11,14 +11,15 @@ pub const DEFAULT_ALBEDO: f64 = 0.18;
 pub struct Diffuse {
     pub albedo: f64,
     pub texture: Texture,
-    pub roughness: f64,
+    pub diffuse_factor: f64,
+    pub specular_factor: f64,
     pub highlight: f64,
 }
 
 impl Shader for Diffuse {
     fn shade_point(&self, context: &RenderContext, si: &SurfaceInfo) -> Color {
-        let mut c1 = Color::black();
-        let mut c2 = Color::black();
+        let mut lambertian = Color::black();
+        let mut specular = Color::black();
 
         for light in &context.scene.lights {
             let (dir, intensity, distance) = light.illuminate(si.point);
@@ -27,14 +28,14 @@ impl Shader for Diffuse {
             if shadow_ray.trace(&context.scene.objects, distance).is_none() {
                 let dot = si.n.dot(-dir).max(0.0);
                 if dot > 0.0 {
-                    c1 += self.texture.color_at_uv(si.uv) * self.albedo * intensity * dot;
+                    lambertian += self.texture.color_at_uv(si.uv) * self.albedo * intensity * dot;
                 }
                 let r = dir.reflect(si.n);
-                c2 += intensity * r.dot(-dir).max(0.0).powf(self.highlight); // todo: specular color
+                specular += intensity * r.dot(-dir).max(0.0).powf(self.highlight); // todo: specular color
             }
         }
 
-        c1 + c2 * self.roughness
+        lambertian * self.diffuse_factor + specular * self.specular_factor
     }
 
     fn box_clone(&self) -> Box<Shader> {
