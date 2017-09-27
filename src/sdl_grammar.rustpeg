@@ -271,6 +271,10 @@ pub FLOAT -> f64
 OPEN_BRACE = T<"{">
 CLOSE_BRACE = T<"}">
 
-T<E> = WS* E WS*
+T<E> = HIDDEN* E HIDDEN*
+
+HIDDEN = WS / LINE_COMMENT
+
+LINE_COMMENT = "//" [^\n]*
 
 WS = #quiet<[ \n\r\t]> / #expected("whitespace")
