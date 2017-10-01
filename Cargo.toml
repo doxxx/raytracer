@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Gordon Tyler <gordon@doxxx.net>"]
 build = "build.rs"
 
+[features]
+benchmarks = []
+
 [build-dependencies]
 peg = "0.5"
 
@@ -14,3 +17,4 @@ wavefront_obj = "5.1.0"
 pbr = "1.0.0"
 num_cpus = "1.0"
 time = "0.1"
+rand = "0.3"

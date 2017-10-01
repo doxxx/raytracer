@@ -4,9 +4,11 @@ extern crate wavefront_obj;
 extern crate pbr;
 extern crate num_cpus;
 extern crate time;
+extern crate rand;
 
 mod color;
 mod direction;
+mod kdtree;
 mod lights;
 mod materials;
 mod matrix;
