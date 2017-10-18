@@ -25,8 +25,8 @@ mod sdl_grammar {
     include!(concat!(env!("OUT_DIR"), "/sdl_grammar.rs"));
 }
 
-use std::io::prelude::*;
 use std::fs::File;
+use std::io::prelude::*;
 
 use clap::{App, Arg};
 
@@ -34,12 +34,16 @@ use color::Color;
 use system::Options;
 
 fn u32_validator(s: String) -> Result<(), String> {
-    if s.parse::<u32>().is_ok() { return Ok(()); }
+    if s.parse::<u32>().is_ok() {
+        return Ok(());
+    }
     Err(String::from("The value must be a number."))
 }
 
 fn usize_validator(s: String) -> Result<(), String> {
-    if s.parse::<usize>().is_ok() { return Ok(()); }
+    if s.parse::<usize>().is_ok() {
+        return Ok(());
+    }
     Err(String::from("The value must be a number."))
 }
 
@@ -74,24 +78,26 @@ fn main() {
                 .help("Number of render threads")
                 .takes_value(true)
                 .validator(usize_validator)
-                .default_value(&default_cpus)
+                .default_value(&default_cpus),
         )
-        .arg(
-            Arg::with_name("antialiasing")
-                .short("a")
-                .help("Apply antialiasing")
-        )
+        .arg(Arg::with_name("antialiasing").short("a").help(
+            "Apply antialiasing",
+        ))
         .arg(
             Arg::with_name("scene")
                 .value_name("FILE")
                 .help("The file describing the scene to render")
                 .required(true)
-                .index(1)
+                .index(1),
         );
     let args = app.get_matches();
 
-    let w: u32 = args.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
-    let h: u32 = args.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
+    let w: u32 = args.value_of("width").unwrap().parse().expect(
+        "ERROR: Bad width!",
+    );
+    let h: u32 = args.value_of("height").unwrap().parse().expect(
+        "ERROR: Bad height!",
+    );
 
     let options = Options {
         num_threads: args.value_of("num_threads").unwrap().parse().unwrap(),
@@ -106,7 +112,9 @@ fn main() {
     let scene = {
         let mut f = File::open(args.value_of("scene").unwrap()).expect("could not open scene file");
         let mut text = String::new();
-        f.read_to_string(&mut text).expect("could not read scene file");
+        f.read_to_string(&mut text).expect(
+            "could not read scene file",
+        );
         sdl::parse(&text).expect("could not parse scene file")
     };
 

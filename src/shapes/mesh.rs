@@ -1,6 +1,7 @@
 use std::f64;
 
 use direction::{Dot, Direction};
+use matrix::Matrix44f;
 use point::Point;
 use shapes::Shape;
 use shapes::bounding_box::BoundingBox;
@@ -115,4 +116,9 @@ impl Intersectable for Mesh {
     }
 }
 
-impl Shape for Mesh {}
+impl Shape for Mesh {
+    fn bounding_box(&self, m: Matrix44f) -> BoundingBox {
+        // strictly speaking, not the tightest bounding box, but good enough
+        self.bounding_box.transform(m)
+    }
+}

@@ -6,4 +6,9 @@ pub mod mesh;
 pub mod plane;
 pub mod sphere;
 
-pub trait Shape: Intersectable + Send + Sync {}
+use matrix::Matrix44f;
+use shapes::bounding_box::BoundingBox;
+
+pub trait Shape: Intersectable + Send + Sync {
+    fn bounding_box(&self, m: Matrix44f) -> BoundingBox;
+}

@@ -1,6 +1,7 @@
 use materials::Material;
 use matrix::Matrix44f;
 use shapes::Shape;
+use shapes::bounding_box::BoundingBox;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
 pub struct Object {
@@ -20,6 +21,10 @@ impl Object {
             object_to_world: Matrix44f::identity(),
             world_to_object: Matrix44f::identity(),
         }
+    }
+
+    pub fn bounding_box(&self) -> BoundingBox {
+        self.shape.bounding_box(self.object_to_world)
     }
 }
 

@@ -1,4 +1,5 @@
 use std::f64;
+use std::f64::consts::PI;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::spawn;
@@ -7,14 +8,18 @@ use std::ops::Deref;
 
 use image;
 use pbr::ProgressBar;
+use rand;
 use time;
 
 use color::Color;
-use direction::Direction;
+use direction::{Direction, Dot};
+use kdtree;
+use lights::Light;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use sdl::Scene;
+use shapes::bounding_box::BoundingBox;
 use vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
@@ -213,6 +218,7 @@ pub trait Transformable {
 pub struct RenderContext {
     pub options: Options,
     pub scene: Scene,
+    pub photon_map: Option<PhotonMap>,
 }
 
 pub struct SurfaceInfo {
@@ -221,6 +227,15 @@ pub struct SurfaceInfo {
     pub n: Direction,
     pub uv: Vector2f,
 }
+
+#[derive(Clone, Copy)]
+pub struct PhotonData {
+    pub power: Color,
+    pub incident: Direction,
+}
+
+type PhotonMap = Box<kdtree::Tree<PhotonData>>;
+type PhotonNode = kdtree::Data<PhotonData>;
 
 fn color_to_rgb(v: Color) -> image::Rgb<u8> {
     let r = (v.r * 255.0).min(255.0) as u8;
@@ -237,28 +252,157 @@ fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
             color += ray.cast(&context);
         }
         color / (rays.len() as f64)
-    }
-    else {
+    } else {
         context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context)
     }
 }
 
-pub fn render(
-    options: Options,
-    scene: Scene,
-) -> image::RgbImage {
-    let width = options.width;
-    let height = options.height;
+pub fn render(options: Options, scene: Scene) -> image::RgbImage {
+    let photon_map = generate_photon_map(options, &scene);
 
-    let context = RenderContext {
-        options,
-        scene,
-    };
+    render_image(options, scene, photon_map)
+}
 
+fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
+    let start_time = time::now();
+    let steady_start_time = time::SteadyTime::now();
+
+    let photons_per_light = 100000;
+    let total_photon_count = scene.lights.len() * photons_per_light;
+
+//    let mut pb: ProgressBar<Stdout> = ProgressBar::new(total_photon_count as u64);
+//    pb.message(&format!("Photon mapping (x{}): ", 1)); // todo: options.num_threads
+
+    println!("Generating {} photons...", total_photon_count);
+
+    let mut photons: Vec<PhotonNode> = Vec::with_capacity(total_photon_count);
+
+    let bb = BoundingBox::new(Point::new(-10.0, -10.0, -10.0), Point::new(10.0, 10.0, 10.0));
+//    let bb = scene.bounding_box();
+
+    let photon_power = 1.0 / photons_per_light as f64;
+
+    for light in &scene.lights {
+        let init = photons.len();
+        let mut last_print = steady_start_time;
+        loop {
+            let p = bb.random_point();
+            let ray = Ray::new(RayKind::Normal, light.origin(), (p - light.origin()).normalize(), 0);
+            trace_photon(options, scene, light, ray, light.power() * photon_power, &mut photons);
+            let now = time::SteadyTime::now();
+            if (now - last_print).num_seconds() > 5 {
+                println!("Generated {} photons.", photons.len());
+                last_print = now;
+            }
+            if photons.len() - init >= photons_per_light {
+                break;
+            }
+//            pb.inc();
+        }
+    }
+
+    println!("Generated {} photons.", photons.len());
+
+    let tree = kdtree::Tree::new(&photons);
+
+    let end_time = time::now();
+    let elapsed = time::SteadyTime::now() - steady_start_time;
+
+//    pb.finish_println(&format!("Finished photon mapping at: {}\n", end_time.rfc822()));
+    println!("Elapsed time: {}", elapsed);
+
+    tree
+}
+
+const DIFFUSE_REFLECTION_PB: f64 = 0.5;
+const SPECULAR_REFLECTION_PB: f64 = 0.2;
+
+fn trace_photon(options: Options, scene: &Scene, light: &Box<Light>, ray: Ray, power: Color, photons: &mut Vec<PhotonNode>) {
+    if ray.depth > options.max_depth {
+        return;
+    }
+
+    if let Some(hit) = ray.trace(&scene.objects, f64::MAX) {
+        let ip = hit.i.point(&ray);
+        let si = SurfaceInfo {
+            incident: ray,
+            point: ip,
+            n: hit.i.n,
+            uv: hit.i.uv,
+        };
+
+//        let albedo = 0.18;
+//        let lambertian = si.n.dot(-ray.direction).max(0.0) * albedo;
+//        let irradiance = power * lambertian;
+
+        let rr: f64 = rand::random();
+        if rr < DIFFUSE_REFLECTION_PB {
+            // diffuse reflection
+
+            if ray.depth > 0 {
+                photons.push(kdtree::Data::new(ip, PhotonData {
+                    power,
+                    incident: ray.direction,
+                }));
+            }
+
+            let surface_color = hit.object.material.surface_color(&si);
+            let reflected_power = surface_color * power;
+
+            let reflected_dir = ray.direction.reflect(hit.i.n); // perfect reflection
+
+            // random reflection (diffuse) -- loops until doesn't intersect current object
+//            let mut reflected_dir: Direction = Direction::zero();
+//            loop {
+//                let bb = BoundingBox::new(Point::new(-10.0, -10.0, -10.0), Point::new(10.0, 10.0, 10.0));
+//                let p = bb.random_point();
+//
+//                reflected_dir = (p - ip).normalize();
+//
+//                if hit.object.intersect(&Ray::new(RayKind::Normal, ip, reflected_dir, 0)).is_none() {
+//                    break;
+//                }
+//            }
+
+            let reflected_ray = Ray::new(
+                RayKind::Normal,
+                ip + options.bias * hit.i.n,
+                reflected_dir,
+                ray.depth + 1
+            );
+            trace_photon(options, scene, light, reflected_ray, reflected_power, photons)
+        }
+        else if rr < DIFFUSE_REFLECTION_PB + SPECULAR_REFLECTION_PB {
+            // todo: specular reflection
+        }
+        else {
+            // absorption
+
+            // todo: store only if surface is diffuse
+            if ray.depth > 0 {
+                photons.push(kdtree::Data::new(ip, PhotonData {
+                    power,
+                    incident: ray.direction,
+                }));
+            }
+        }
+    }
+}
+
+fn render_image(options: Options, scene: Scene, photon_map: Option<PhotonMap>) -> image::RgbImage {
     let start_time = time::now();
     let steady_start_time = time::SteadyTime::now();
 
     println!("Started rendering at: {}", start_time.rfc822());
+
+    let context = RenderContext {
+        options,
+        scene,
+        photon_map,
+    };
+
+    let width = options.width;
+    let height = options.height;
 
     // start progress bar update task
     let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
@@ -301,7 +445,7 @@ pub fn render(
 
         // wait for all the rows to be rendered,
         // updating progress as each row is finished
-        for _ in 0..pb.total {
+        for _ in 0..height {
             let _ = rx.recv();
             pb.inc();
         }
@@ -310,6 +454,7 @@ pub fn render(
             let row = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
             let mut results = results.lock().unwrap();
             results[y as usize] = row;
+            pb.inc();
         }
     }
 

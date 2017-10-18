@@ -3,6 +3,7 @@ use system::{RenderContext,SurfaceInfo};
 
 pub trait Material: Send + Sync {
     fn color(&self, context: &RenderContext, si: &SurfaceInfo) -> Color;
+    fn surface_color(&self, si: &SurfaceInfo) -> Color;
     fn has_transparency(&self) -> bool { false }
     fn box_clone(&self) -> Box<Material>;
 }

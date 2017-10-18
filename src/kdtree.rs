@@ -96,6 +96,42 @@ impl<T: Clone> Tree<T> {
         nearest
     }
 
+    pub fn find_nearest_n(&self, origin: Point, n: usize) -> Vec<Data<T>> {
+        let mut r: Vec<Nearest<T>> = Vec::with_capacity(n+1);
+        self.find_nearest_n_(origin, n, &mut r, 0);
+        r.into_iter().map(|n| Data::new(n.1.point, n.1.value)).collect()
+    }
+
+    fn find_nearest_n_(&self, origin: Point, n: usize, r: &mut Vec<Nearest<T>>, depth: usize) {
+        let axis = depth % 3;
+
+        let mut nearest = Nearest((origin - self.data.point).length_squared(), self.data.clone());
+        self.add_if_nearest(origin, n, r, nearest);
+
+        let left = match axis {
+            0 => origin.x < self.data.point.x,
+            1 => origin.y < self.data.point.y,
+            2 => origin.z < self.data.point.z,
+            _ => panic!()
+        };
+
+        let branch = if left { &self.left } else { &self.right };
+        if let &Some(ref branch) = branch {
+            branch.find_nearest_n_(origin, n, r, depth + 1);
+        }
+
+        let other_branch = if left { &self.right } else { &self.left };
+        if let &Some(ref other_branch) = other_branch {
+            other_branch.find_nearest_n_(origin, n, r, depth + 1);
+        }
+    }
+
+    fn add_if_nearest(&self, origin: Point, n: usize, r: &mut Vec<Nearest<T>>, nearest: Nearest<T>) {
+        r.push(nearest);
+        r.sort_unstable_by(|a,b| a.0.partial_cmp(&b.0).unwrap());
+        r.truncate(n);
+    }
+
     pub fn find_within_radius(&self, point: Point, radius: f64) -> Vec<Data<T>> {
         let mut r: Vec<Data<T>> = Vec::new();
         self.find_within_radius_(point, radius.powi(2), &mut r, 0);
@@ -208,6 +244,30 @@ mod tests {
 
         let nearest = tree.find_nearest(Point::new(2.0, 4.0, 1.0));
         assert_eq!(nearest.value, "dog");
+    }
+
+    #[test]
+    fn find_nearest_n() {
+        let data = vec![
+            Data::new(Point::new(2.0, 3.0, 1.0), "dog"),
+            Data::new(Point::new(5.0, 2.0, 6.0), "cat"),
+            Data::new(Point::new(1.0, 9.0, 2.0), "rat"),
+            Data::new(Point::new(4.0, 1.0, 5.0), "mog"),
+        ];
+
+        let tree = Tree::new(&data).unwrap();
+
+        let nearest = tree.find_nearest_n(Point::new(2.0, 3.0, 1.0), 1).into_iter().map(|a| a.value).collect::<Vec<_>>();
+        assert_eq!(nearest, vec!["dog"]);
+
+        let nearest = tree.find_nearest_n(Point::new(2.0, 3.0, 1.0), 2).into_iter().map(|a| a.value).collect::<Vec<_>>();
+        assert_eq!(nearest, vec!["dog", "mog"]);
+
+        let nearest = tree.find_nearest_n(Point::new(2.0, 3.0, 1.0), 3).into_iter().map(|a| a.value).collect::<Vec<_>>();
+        assert_eq!(nearest, vec!["dog", "mog", "cat"]);
+
+        let nearest = tree.find_nearest_n(Point::new(2.0, 3.0, 1.0), 4).into_iter().map(|a| a.value).collect::<Vec<_>>();
+        assert_eq!(nearest, vec!["dog", "mog", "cat", "rat"]);
     }
 
     #[test]

@@ -1,6 +1,8 @@
 use direction::{Dot, Direction};
+use matrix::Matrix44f;
 use point::Point;
 use shapes::Shape;
+use shapes::bounding_box::BoundingBox;
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -52,4 +54,10 @@ impl Intersectable for Plane {
     }
 }
 
-impl Shape for Plane {}
+impl Shape for Plane {
+    fn bounding_box(&self, m: Matrix44f) -> BoundingBox {
+        // todo: what is the bounding box of an infinite plane?
+        let p = self.point * m;
+        BoundingBox::new(p, p)
+    }
+}

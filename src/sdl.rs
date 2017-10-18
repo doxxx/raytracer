@@ -13,6 +13,7 @@ use object::Object;
 use point::Point;
 use sdl_grammar;
 use shapes::Shape;
+use shapes::bounding_box::BoundingBox;
 use shapes::composite::Composite;
 use shapes::mesh::{Mesh,MeshTriangle};
 use system::{Camera,Transformable};
@@ -21,6 +22,12 @@ pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Box<Light>>,
     pub objects: Vec<Object>,
+}
+
+impl Scene {
+    pub fn bounding_box(&self) -> BoundingBox {
+        self.objects.iter().fold(BoundingBox::zero(), |acc, ref obj| acc.extend(&obj.bounding_box()))
+    }
 }
 
 pub fn parse(s: &str) -> sdl_grammar::ParseResult<Scene> {

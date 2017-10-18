@@ -11,15 +11,39 @@ pub struct Point {
 
 impl Point {
     pub fn new(x: f64, y: f64, z: f64) -> Point {
+        Point { x, y, z }
+    }
+
+    pub fn from_array(a: [f64; 3]) -> Point {
         Point {
-            x: x,
-            y: y,
-            z: z,
+            x: a[0],
+            y: a[1],
+            z: a[2],
         }
     }
 
     pub fn zero() -> Point {
         Point::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn as_array(self) -> [f64; 3] {
+        [self.x, self.y, self.z]
+    }
+
+    pub fn min(self, other: Point) -> Point {
+        Point::new(
+            self.x.min(other.x),
+            self.y.min(other.y),
+            self.z.min(other.z),
+        )
+    }
+
+    pub fn max(self, other: Point) -> Point {
+        Point::new(
+            self.x.max(other.x),
+            self.y.max(other.y),
+            self.z.max(other.z),
+        )
     }
 }
 

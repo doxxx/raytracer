@@ -4,7 +4,7 @@ use shaders::Shader;
 
 use color::Color;
 use direction::{Direction, Dot};
-use system::{RenderContext, Ray, SurfaceInfo};
+use system::{RenderContext, Ray, PhotonData, SurfaceInfo};
 use texture::{ColorSource, Texture};
 
 pub const DEFAULT_ALBEDO: f64 = 0.18;
@@ -34,18 +34,35 @@ impl Shader for Diffuse {
         let mut diffuse = Color::black();
         let mut specular = Color::black();
 
+        let surface_color = self.texture.color_at_uv(si.uv);
+
         for light in &context.scene.lights {
             let (dir, intensity, distance) = light.illuminate(si.point);
             let shadow_ray = Ray::shadow(si.point + si.n * context.options.bias, -dir, 0);
 
             if shadow_ray.trace(&context.scene.objects, distance).is_none() {
-                let surface_color = self.texture.color_at_uv(si.uv);
                 diffuse += surface_color * intensity * self.lambertian(dir, si);
                 specular += intensity * self.phong(dir, si);
             }
         }
 
-        diffuse * self.diffuse_factor + specular * self.specular_factor
+        let indirect_illumination = match context.photon_map {
+            Some(ref m) => {
+                let photons: Vec<PhotonData> = m.find_nearest_n(si.point, 50).iter().map(|d| d.value).collect();
+                photons.iter()
+                    .map(|pd| surface_color * pd.power * self.lambertian(pd.incident, si))
+                    .fold(Color::black(), |a,b| a + b)
+            },
+            None => Color::black()
+        };
+
+//        if indirect_illumination != Color::black() {
+//            println!("indirect_illumination: {:?}", indirect_illumination);
+//        }
+
+        diffuse * self.diffuse_factor + specular * self.specular_factor + indirect_illumination
+//        indirect_illumination
+
     }
 
     fn box_clone(&self) -> Box<Shader> {

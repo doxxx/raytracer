@@ -14,6 +14,14 @@ pub struct Omni {
 }
 
 impl Light for Omni {
+    fn origin(&self) -> Point {
+        self.origin
+    }
+
+    fn power(&self) -> Color {
+        self.intensity * self.color
+    }
+
     fn illuminate(&self, point: Point) -> (Direction, Color, f64) {
         let mut dir = point - self.origin;
         let r2 = dir.length_squared();

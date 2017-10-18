@@ -1,6 +1,10 @@
+use rand;
+
+use matrix::Matrix44f;
 use point::Point;
 use system::Ray;
 
+#[derive(Copy, Clone)]
 pub struct BoundingBox {
     bounds: [Point; 2],
 }
@@ -8,6 +12,68 @@ pub struct BoundingBox {
 impl BoundingBox {
     pub fn new(min: Point, max: Point) -> BoundingBox {
         BoundingBox { bounds: [min, max] }
+    }
+
+    pub fn zero() -> BoundingBox {
+        BoundingBox::new(Point::zero(), Point::zero())
+    }
+
+    pub fn min(&self) -> Point {
+        self.bounds[0]
+    }
+
+    pub fn max(&self) -> Point {
+        self.bounds[1]
+    }
+
+    pub fn x_range(&self) -> (f64,f64) {
+        (self.min().x, self.max().x)
+    }
+
+    pub fn y_range(&self) -> (f64,f64) {
+        (self.min().y, self.max().y)
+    }
+
+    pub fn z_range(&self) -> (f64,f64) {
+        (self.min().z, self.max().z)
+    }
+
+    pub fn random_point(&self) -> Point {
+        let xr = self.max().x - self.min().x;
+        let yr = self.max().y - self.min().y;
+        let zr = self.max().z - self.min().z;
+        let x = rand::random::<f64>() * xr + self.min().x;
+        let y = rand::random::<f64>() * yr + self.min().y;
+        let z = rand::random::<f64>() * zr + self.min().z;
+        Point::new(x, y, z)
+    }
+
+    pub fn transform(self, m: Matrix44f) -> BoundingBox {
+        let a_min = self.min().as_array();
+        let a_max = self.max().as_array();
+
+        let mut b_min = (Point::zero() + m.translation_direction()).as_array();
+        let mut b_max = b_min.clone();
+
+        for i in 0..3 {
+            for j in 0..3 {
+                let a = m[i][j] * a_min[j];
+                let b = m[i][j] * a_max[j];
+                if a < b {
+                    b_min[i] += a;
+                    b_max[i] += b;
+                } else {
+                    b_min[i] += b;
+                    b_max[i] += a;
+                }
+            }
+        }
+
+        BoundingBox::new(Point::from_array(b_min), Point::from_array(b_max))
+    }
+
+    pub fn extend(self, other: &BoundingBox) -> BoundingBox {
+        BoundingBox::new(self.min().min(other.min()), self.max().max(other.max()))
     }
 
     pub fn intersect(&self, ray: &Ray) -> bool {

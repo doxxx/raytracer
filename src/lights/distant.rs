@@ -13,6 +13,14 @@ pub struct Distant {
 }
 
 impl Light for Distant {
+    fn origin(&self) -> Point {
+        Point::zero() + self.direction * f64::MAX
+    }
+
+    fn power(&self) -> Color {
+        self.intensity * self.color
+    }
+
     fn illuminate(&self, point: Point) -> (Direction, Color, f64) {
         (self.direction, self.color * self.intensity, f64::MAX)
     }

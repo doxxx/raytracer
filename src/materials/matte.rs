@@ -2,7 +2,7 @@ use color::Color;
 use shaders::Shader;
 use shaders::diffuse::{Diffuse,DEFAULT_ALBEDO};
 use system::{RenderContext,SurfaceInfo};
-use texture::Texture;
+use texture::{ColorSource, Texture};
 
 use materials::Material;
 
@@ -32,5 +32,9 @@ impl Material for Matte {
 
     fn box_clone(&self) -> Box<Material> {
         Box::new(self.clone())
+    }
+
+    fn surface_color(&self, si: &SurfaceInfo) -> Color {
+        self.diffuse.texture.color_at_uv(si.uv)
     }
 }

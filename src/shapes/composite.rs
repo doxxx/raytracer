@@ -1,4 +1,6 @@
+use matrix::Matrix44f;
 use shapes::Shape;
+use shapes::bounding_box::BoundingBox;
 use system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
@@ -22,4 +24,8 @@ impl Intersectable for Composite {
     }
 }
 
-impl Shape for Composite {}
+impl Shape for Composite {
+    fn bounding_box(&self, m: Matrix44f) -> BoundingBox {
+        self.shapes.iter().fold(BoundingBox::zero(), |acc, shape| acc.extend(&shape.bounding_box(m)))
+    }
+}

@@ -30,4 +30,8 @@ impl Material for Glass {
     fn box_clone(&self) -> Box<Material> {
         Box::new(self.clone())
     }
+
+    fn surface_color(&self, si: &SurfaceInfo) -> Color {
+        Color::white()
+    }
 }

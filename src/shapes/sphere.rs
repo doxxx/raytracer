@@ -1,9 +1,11 @@
 use std::f64;
 use std::mem;
 
-use direction::Dot;
+use direction::{Direction,Dot};
+use matrix::Matrix44f;
 use point::Point;
 use shapes::Shape;
+use shapes::bounding_box::BoundingBox;
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -71,4 +73,16 @@ impl Intersectable for Sphere {
     }
 }
 
-impl Shape for Sphere {}
+impl Shape for Sphere {
+    fn bounding_box(&self, m: Matrix44f) -> BoundingBox {
+        let d = Direction::new(
+            (m[0][0].powi(2) + m[0][1].powi(2) + m[0][2].powi(2)).sqrt(),
+            (m[1][0].powi(2) + m[1][1].powi(2) + m[1][2].powi(2)).sqrt(),
+            (m[2][0].powi(2) + m[2][1].powi(2) + m[2][2].powi(2)).sqrt()
+        );
+        BoundingBox::new(
+            self.center + m.translation_direction() + d,
+            self.center + m.translation_direction() - d
+        )
+    }
+}
