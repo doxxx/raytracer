@@ -1,4 +1,6 @@
+use std::cmp::Ordering;
 use std::fmt::Debug;
+use std::f64;
 
 use point::Point;
 
@@ -27,7 +29,7 @@ pub struct Tree<T: Clone> {
     pub right: Option<Box<Tree<T>>>,
 }
 
-struct Nearest<T: Clone>(f64, Data<T>);
+struct SearchElement<T: Clone>(f64, Data<T>);
 
 impl<T: Clone> Tree<T> {
     pub fn new(data: &[Data<T>]) -> Option<Box<Tree<T>>> {
@@ -59,55 +61,17 @@ impl<T: Clone> Tree<T> {
     }
 
     pub fn find_nearest(&self, point: Point) -> Data<T> {
-        self.find_nearest_(point, 0).1
-    }
-
-    fn find_nearest_(&self, point: Point, depth: usize) -> Nearest<T> {
-        let axis = depth % 3;
-
-        let mut nearest = Nearest((point - self.data.point).length_squared(), self.data.clone());
-
-        let left = match axis {
-            0 => point.x < self.data.point.x,
-            1 => point.y < self.data.point.y,
-            2 => point.z < self.data.point.z,
-            _ => panic!()
-        };
-
-        let branch = if left { &self.left } else { &self.right };
-        if let &Some(ref branch) = branch {
-            let branch_nearest = branch.find_nearest_(point, depth + 1);
-            if branch_nearest.0 < nearest.0 {
-                nearest = branch_nearest;
-            }
-        }
-
-        let other_branch = if left { &self.right } else { &self.left };
-        if let &Some(ref other_branch) = other_branch {
-            let other_distance = (point - other_branch.data.point).length_squared();
-            if other_distance < nearest.0 {
-                let other_nearest = other_branch.find_nearest_(point, depth + 1);
-                if other_nearest.0 < nearest.0 {
-                    nearest = other_nearest;
-                }
-            }
-        }
-
-        nearest
+        self.find_nearest_n(point, 1).pop().unwrap()
     }
 
     pub fn find_nearest_n(&self, origin: Point, n: usize) -> Vec<Data<T>> {
-        let mut r: Vec<Nearest<T>> = Vec::with_capacity(n+1);
+        let mut r: Vec<SearchElement<T>> = Vec::with_capacity(n+1);
         self.find_nearest_n_(origin, n, &mut r, 0);
         r.into_iter().map(|n| Data::new(n.1.point, n.1.value)).collect()
     }
 
-    fn find_nearest_n_(&self, origin: Point, n: usize, r: &mut Vec<Nearest<T>>, depth: usize) {
+    fn find_nearest_n_(&self, origin: Point, n: usize, r: &mut Vec<SearchElement<T>>, depth: usize) {
         let axis = depth % 3;
-
-        let mut nearest = Nearest((origin - self.data.point).length_squared(), self.data.clone());
-        self.add_if_nearest(origin, n, r, nearest);
-
         let left = match axis {
             0 => origin.x < self.data.point.x,
             1 => origin.y < self.data.point.y,
@@ -115,21 +79,51 @@ impl<T: Clone> Tree<T> {
             _ => panic!()
         };
 
-        let branch = if left { &self.left } else { &self.right };
-        if let &Some(ref branch) = branch {
-            branch.find_nearest_n_(origin, n, r, depth + 1);
+        let (first, second) = if left {
+            (&self.left, &self.right)
+        } else {
+            (&self.right, &self.left)
+        };
+
+        let max_distance = r.last().map(|e| e.0).unwrap_or(f64::MAX);
+
+        if let &Some(ref branch) = first {
+            let d = (origin - branch.data.point).length_squared();
+            if r.len() < n || d < max_distance {
+                branch.find_nearest_n_(origin, n, r, depth + 1);
+            }
         }
 
-        let other_branch = if left { &self.right } else { &self.left };
-        if let &Some(ref other_branch) = other_branch {
-            other_branch.find_nearest_n_(origin, n, r, depth + 1);
+        if let &Some(ref branch) = second {
+            let d = (origin - branch.data.point).length_squared();
+            if r.len() < n || d < max_distance {
+                branch.find_nearest_n_(origin, n, r, depth + 1);
+            }
         }
+
+        let current_distance = (origin - self.data.point).length_squared();
+        let element = SearchElement(current_distance, self.data.clone());
+        let max_distance = Tree::add_if_nearest(origin, n, r, element);
     }
 
-    fn add_if_nearest(&self, origin: Point, n: usize, r: &mut Vec<Nearest<T>>, nearest: Nearest<T>) {
-        r.push(nearest);
-        r.sort_unstable_by(|a,b| a.0.partial_cmp(&b.0).unwrap());
-        r.truncate(n);
+    /// insertion sort, returns max distance in vec after insertion
+    fn add_if_nearest(origin: Point, n: usize, r: &mut Vec<SearchElement<T>>, element: SearchElement<T>) {
+        let mut index = None;
+        for i in 0..r.len() {
+            if let Some(order) = (&element.0).partial_cmp(&r[i].0) {
+                if order == Ordering::Less {
+                    index = Some(i);
+                    break;
+                }
+            }
+        }
+
+        if let Some(i) = index {
+            r.insert(i, element);
+            r.truncate(n);
+        } else if r.len() < n {
+            r.push(element);
+        }
     }
 
     pub fn find_within_radius(&self, point: Point, radius: f64) -> Vec<Data<T>> {
@@ -171,6 +165,27 @@ impl<T: Clone> Tree<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn add_if_nearest() {
+        let mut r = vec![
+            SearchElement(1.0, Data::new(Point::new(1.0, 0.0, 0.0), 1)),
+            SearchElement(2.0, Data::new(Point::new(2.0, 0.0, 0.0), 2)),
+            SearchElement(3.0, Data::new(Point::new(3.0, 0.0, 0.0), 3)),
+        ];
+
+        Tree::add_if_nearest(Point::zero(), 4, &mut r, SearchElement(4.0, Data::new(Point::new(4.0, 0.0, 0.0), 4)));
+        let values: Vec<_> = r.iter().map(|e| e.1.value).collect();
+        assert_eq!(values, vec![1, 2, 3, 4]);
+
+        Tree::add_if_nearest(Point::zero(), 4, &mut r, SearchElement(1.5, Data::new(Point::new(1.5, 0.0, 0.0), 5)));
+        let values: Vec<_> = r.iter().map(|e| e.1.value).collect();
+        assert_eq!(values, vec![1, 5, 2, 3]);
+
+        Tree::add_if_nearest(Point::zero(), 4, &mut r, SearchElement(0.5, Data::new(Point::new(0.5, 0.0, 0.0), 6)));
+        let values: Vec<_> = r.iter().map(|e| e.1.value).collect();
+        assert_eq!(values, vec![6, 1, 5, 2]);
+    }
 
     #[test]
     fn construction() {
