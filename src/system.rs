@@ -270,7 +270,7 @@ fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
     let bb = scene.bounding_box();
     println!("Scene bounding box: {:?}", bb);
 
-    let photons_per_light = 100000;
+    let photons_per_light = 1000000;
     let total_photon_count = scene.lights.len() * photons_per_light;
 
 //    let mut pb: ProgressBar<Stdout> = ProgressBar::new(total_photon_count as u64);
