@@ -81,8 +81,22 @@ impl Shape for Sphere {
             (m[2][0].powi(2) + m[2][1].powi(2) + m[2][2].powi(2)).sqrt()
         );
         BoundingBox::new(
-            self.center + m.translation_direction() + d,
-            self.center + m.translation_direction() - d
+            self.center + m.translation_direction() - d,
+            self.center + m.translation_direction() + d
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bounding_box() {
+        let s = Sphere::new(1.0);
+        let bb = s.bounding_box(Matrix44f::identity());
+        assert_eq!(bb, BoundingBox::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0)));
+        let bb = s.bounding_box(Matrix44f::translation(Direction::new(1.0, 0.0, 0.0)));
+        assert_eq!(bb, BoundingBox::new(Point::new(0.0, -1.0, -1.0), Point::new(2.0, 1.0, 1.0)));
     }
 }

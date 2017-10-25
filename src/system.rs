@@ -267,6 +267,9 @@ fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
     let start_time = time::now();
     let steady_start_time = time::SteadyTime::now();
 
+    let bb = scene.bounding_box();
+    println!("Scene bounding box: {:?}", bb);
+
     let photons_per_light = 100000;
     let total_photon_count = scene.lights.len() * photons_per_light;
 
@@ -276,9 +279,6 @@ fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
     println!("Generating {} photons...", total_photon_count);
 
     let mut photons: Vec<PhotonNode> = Vec::with_capacity(total_photon_count);
-
-    let bb = BoundingBox::new(Point::new(-10.0, -10.0, -10.0), Point::new(10.0, 10.0, 10.0));
-//    let bb = scene.bounding_box();
 
     let photon_power = 1.0 / photons_per_light as f64;
 

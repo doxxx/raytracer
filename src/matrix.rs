@@ -77,9 +77,9 @@ impl Matrix44f {
 
     pub fn translation_direction(&self) -> Direction {
         Direction::new(
-            self[0][3],
-            self[1][3],
-            self[2][3],
+            self[3][0],
+            self[3][1],
+            self[3][2],
         )
     }
 

@@ -15,8 +15,8 @@ use sdl_grammar;
 use shapes::Shape;
 use shapes::bounding_box::BoundingBox;
 use shapes::composite::Composite;
-use shapes::mesh::{Mesh,MeshTriangle};
-use system::{Camera,Transformable};
+use shapes::mesh::{Mesh, MeshTriangle};
+use system::{Camera, Transformable};
 
 pub struct Scene {
     pub camera: Camera,
@@ -80,4 +80,32 @@ fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Box<Shape> {
 
 pub fn combine_transforms(transforms: Vec<Matrix44f>) -> Matrix44f {
     transforms.iter().fold(Matrix44f::identity(), |acc, &m| acc * m)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scene_bounding_box() {
+        let s = Scene {
+            camera: Camera::new(Point::zero(), 60.0),
+            lights: Vec::new(),
+            objects: vec![
+                Object::new(
+                    "sphere",
+                    Box::new(::shapes::sphere::Sphere::new(1.0)),
+                    Box::new(::materials::matte::Matte::new(::texture::Texture::Solid(::color::Color::white())))
+                ).transform(Matrix44f::translation(Direction::new(1.5, 0.0, 0.0))),
+                Object::new(
+                    "sphere",
+                    Box::new(::shapes::sphere::Sphere::new(1.0)),
+                    Box::new(::materials::matte::Matte::new(::texture::Texture::Solid(::color::Color::white())))
+                ).transform(Matrix44f::translation(Direction::new(-1.5, 0.0, 0.0))),
+            ],
+        };
+
+        let bb = s.bounding_box();
+        assert_eq!(bb, BoundingBox::new(Point::new(-2.5, -1.0, -1.0), Point::new(2.5, 1.0, 1.0)));
+    }
 }

@@ -4,7 +4,7 @@ use matrix::Matrix44f;
 use point::Point;
 use system::Ray;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct BoundingBox {
     bounds: [Point; 2],
 }
@@ -107,5 +107,21 @@ impl BoundingBox {
         // }
 
         return true;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extend() {
+        let a = BoundingBox::new(Point::zero(), Point::zero());
+        let b = BoundingBox::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
+        let c = a.extend(&b);
+        assert_eq!(c, BoundingBox::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0)));
+        let d = BoundingBox::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 0.0, 2.0));
+        let e = c.extend(&d);
+        assert_eq!(e, BoundingBox::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 2.0)));
     }
 }
