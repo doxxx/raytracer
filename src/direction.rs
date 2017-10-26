@@ -1,5 +1,8 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+use rand;
+use rand::Rng;
+
 use point::Point;
 
 #[derive(Debug, Copy, Clone)]
@@ -20,6 +23,19 @@ impl Direction {
 
     pub fn zero() -> Direction {
         Direction::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn uniform_sphere_distribution() -> Direction {
+        let mut rng = rand::thread_rng();
+        loop {
+            let x = rng.next_f64() * 2.0 - 1.0;
+            let y = rng.next_f64() * 2.0 - 1.0;
+            let z = rng.next_f64() * 2.0 - 1.0;
+            let d = (x.powi(2) + y.powi(2) + z.powi(2)).sqrt();
+            if d <= 1.0 {
+                return Direction::new(x/d, y/d, z/d)
+            }
+        }
     }
 
     pub fn cross(&self, rhs: Direction) -> Direction {

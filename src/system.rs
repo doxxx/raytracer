@@ -317,6 +317,8 @@ fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
 const DIFFUSE_REFLECTION_PB: f64 = 0.5;
 const SPECULAR_REFLECTION_PB: f64 = 0.2;
 
+type PhotonReflection = (Direction, Color);
+
 fn trace_photon(options: Options, scene: &Scene, light: &Box<Light>, ray: Ray, power: Color, photons: &mut Vec<PhotonNode>) {
     if ray.depth > options.max_depth {
         return;
@@ -324,69 +326,62 @@ fn trace_photon(options: Options, scene: &Scene, light: &Box<Light>, ray: Ray, p
 
     if let Some(hit) = ray.trace(&scene.objects, f64::MAX) {
         let ip = hit.i.point(&ray);
-        let si = SurfaceInfo {
-            incident: ray,
-            point: ip,
-            n: hit.i.n,
-            uv: hit.i.uv,
-        };
 
-//        let albedo = 0.18;
-//        let lambertian = si.n.dot(-ray.direction).max(0.0) * albedo;
-//        let irradiance = power * lambertian;
+        if ray.depth > 0 {
+            photons.push(kdtree::Data::new(ip, PhotonData {
+                power,
+                incident: ray.direction,
+            }));
+        }
 
-        let rr: f64 = rand::random();
-        if rr < DIFFUSE_REFLECTION_PB {
-            // diffuse reflection
-
-            if ray.depth > 0 {
-                photons.push(kdtree::Data::new(ip, PhotonData {
-                    power,
-                    incident: ray.direction,
-                }));
-            }
-
-            let surface_color = hit.object.material.surface_color(&si);
-            let reflected_power = surface_color * power;
-
-            let reflected_dir = ray.direction.reflect(hit.i.n); // perfect reflection
-
-            // random reflection (diffuse) -- loops until doesn't intersect current object
-//            let mut reflected_dir: Direction = Direction::zero();
-//            loop {
-//                let bb = BoundingBox::new(Point::new(-10.0, -10.0, -10.0), Point::new(10.0, 10.0, 10.0));
-//                let p = bb.random_point();
-//
-//                reflected_dir = (p - ip).normalize();
-//
-//                if hit.object.intersect(&Ray::new(RayKind::Normal, ip, reflected_dir, 0)).is_none() {
-//                    break;
-//                }
-//            }
-
+        if let Some((reflected_dir, reflected_power)) = reflect_photon(&ray, &hit, power, photons) {
             let reflected_ray = Ray::new(
                 RayKind::Normal,
                 ip + options.bias * hit.i.n,
                 reflected_dir,
                 ray.depth + 1
             );
+
             trace_photon(options, scene, light, reflected_ray, reflected_power, photons)
         }
-        else if rr < DIFFUSE_REFLECTION_PB + SPECULAR_REFLECTION_PB {
-            // todo: specular reflection
-        }
-        else {
-            // absorption
-
-            // todo: store only if surface is diffuse
-            if ray.depth > 0 {
-                photons.push(kdtree::Data::new(ip, PhotonData {
-                    power,
-                    incident: ray.direction,
-                }));
-            }
-        }
     }
+}
+
+fn reflect_photon(ray: &Ray, hit: &RayHit, power: Color, photons: &mut Vec<PhotonNode>) -> Option<PhotonReflection> {
+    let rr: f64 = rand::random();
+    if rr < DIFFUSE_REFLECTION_PB {
+        // diffuse reflection
+        let ip = hit.i.point(ray);
+        let si = SurfaceInfo {
+            incident: *ray,
+            point: ip,
+            n: hit.i.n,
+            uv: hit.i.uv,
+        };
+        let surface_color = hit.object.material.surface_color(&si);
+        let reflected_power = surface_color * power;
+
+        // random reflection (diffuse)
+        let mut reflected_dir = Direction::uniform_sphere_distribution();
+        if reflected_dir.dot(hit.i.n) < 0.0 {
+            // if it's not in the hemisphere oriented around the surface normal, invert
+            reflected_dir *= -1.0;
+        }
+
+        return Some((reflected_dir, reflected_power));
+    } else if rr < DIFFUSE_REFLECTION_PB + SPECULAR_REFLECTION_PB {
+        // specular reflection
+        let surface_color = Color::white();
+        let reflected_power = surface_color * power;
+
+        // perfect reflection
+        let reflected_dir = ray.direction.reflect(hit.i.n);
+
+        return Some((reflected_dir, reflected_power));
+    }
+
+    // absorption
+    None
 }
 
 fn render_image(options: Options, scene: Scene, photon_map: Option<PhotonMap>) -> image::RgbImage {
