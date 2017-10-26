@@ -1,10 +1,9 @@
-use std::f64::consts::PI;
-
 use shaders::Shader;
 
 use color::Color;
 use direction::{Direction, Dot};
-use system::{RenderContext, Ray, PhotonData, SurfaceInfo};
+use photon::PhotonData;
+use system::{RenderContext, Ray, SurfaceInfo};
 use texture::{ColorSource, Texture};
 
 pub const DEFAULT_ALBEDO: f64 = 0.18;

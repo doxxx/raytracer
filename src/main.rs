@@ -13,6 +13,7 @@ mod lights;
 mod materials;
 mod matrix;
 mod object;
+mod photon;
 mod point;
 mod sdl;
 mod shaders;

@@ -1,12 +1,7 @@
 use std::cmp::Ordering;
-use std::fmt::Debug;
 use std::f64;
 
 use point::Point;
-
-macro_rules! debug_print {
-    ($($arg:tt)*) => (if cfg!(debug_assertions) { eprintln!($($arg)*); })
-}
 
 #[derive(Clone)]
 pub struct Data<T: Clone> {
@@ -103,11 +98,11 @@ impl<T: Clone> Tree<T> {
 
         let current_distance = (origin - self.data.point).length_squared();
         let element = SearchElement(current_distance, self.data.clone());
-        let max_distance = Tree::add_if_nearest(origin, n, r, element);
+        Tree::add_if_nearest(n, r, element);
     }
 
     /// insertion sort, returns max distance in vec after insertion
-    fn add_if_nearest(origin: Point, n: usize, r: &mut Vec<SearchElement<T>>, element: SearchElement<T>) {
+    fn add_if_nearest(n: usize, r: &mut Vec<SearchElement<T>>, element: SearchElement<T>) {
         let mut index = None;
         for i in 0..r.len() {
             if let Some(order) = (&element.0).partial_cmp(&r[i].0) {
