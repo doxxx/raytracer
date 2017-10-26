@@ -3,7 +3,9 @@ use std::f64::consts::PI;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::spawn;
+use std::io;
 use std::io::Stdout;
+use std::io::Write;
 use std::ops::Deref;
 
 use image;
@@ -267,49 +269,51 @@ fn generate_photon_map(options: Options, scene: &Scene) -> Option<PhotonMap> {
     let start_time = time::now();
     let steady_start_time = time::SteadyTime::now();
 
+    println!("Started photon mapping at: {}", start_time.rfc822());
+
     let bb = scene.bounding_box();
-    println!("Scene bounding box: {:?}", bb);
 
     let photons_per_light = 1000000;
     let total_photon_count = scene.lights.len() * photons_per_light;
 
-//    let mut pb: ProgressBar<Stdout> = ProgressBar::new(total_photon_count as u64);
-//    pb.message(&format!("Photon mapping (x{}): ", 1)); // todo: options.num_threads
-
-    println!("Generating {} photons...", total_photon_count);
+    let mut pb: ProgressBar<Stdout> = ProgressBar::new(total_photon_count as u64);
+    pb.message(&format!("Photon mapping (x{}): ", 1)); // todo: options.num_threads
 
     let mut photons: Vec<PhotonNode> = Vec::with_capacity(total_photon_count);
 
     let photon_power = 1.0 / photons_per_light as f64;
 
+    let mut last_pb_update_time = steady_start_time;
+    let mut last_pb_update_amount = 0;
+
     for light in &scene.lights {
         let init = photons.len();
-        let mut last_print = steady_start_time;
         loop {
             let p = bb.random_point();
             let ray = Ray::new(RayKind::Normal, light.origin(), (p - light.origin()).normalize(), 0);
             trace_photon(options, scene, light, ray, light.power() * photon_power, &mut photons);
             let now = time::SteadyTime::now();
-            if (now - last_print).num_seconds() > 5 {
-                println!("Generated {} photons.", photons.len());
-                last_print = now;
+            if (now - last_pb_update_time).num_milliseconds() >= 100 {
+                last_pb_update_time = now;
+                pb.add(photons.len() as u64 - last_pb_update_amount);
+                last_pb_update_amount = photons.len() as u64;
             }
             if photons.len() - init >= photons_per_light {
                 break;
             }
-//            pb.inc();
         }
     }
-
-    println!("Generated {} photons.", photons.len());
-
-    let tree = kdtree::Tree::new(&photons);
 
     let end_time = time::now();
     let elapsed = time::SteadyTime::now() - steady_start_time;
 
-//    pb.finish_println(&format!("Finished photon mapping at: {}\n", end_time.rfc822()));
+    pb.finish_println(&format!("Finished photon mapping at: {}\n", end_time.rfc822()));
     println!("Elapsed time: {}", elapsed);
+
+    print!("Creating kd-tree... ");
+    io::stdout().flush();
+    let tree = kdtree::Tree::new(&photons);
+    println!("done.");
 
     tree
 }
