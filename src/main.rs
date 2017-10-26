@@ -104,7 +104,7 @@ fn main() {
         num_threads: args.value_of("num_threads").unwrap().parse().unwrap(),
         width: w,
         height: h,
-        background_color: Color::new(0.1, 0.1, 0.5),
+        background_color: Color::black(),
         bias: 1e-4,
         max_depth: 5,
         antialiasing: args.is_present("antialiasing"),
