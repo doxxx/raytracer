@@ -8,6 +8,8 @@ use std::ops::Deref;
 use image;
 use pbr::ProgressBar;
 use time;
+use rand;
+use rand::Rng;
 
 use color::Color;
 use direction::Direction;
@@ -25,7 +27,7 @@ pub struct Options {
     pub background_color: Color,
     pub bias: f64,
     pub max_depth: u16,
-    pub antialiasing: bool,
+    pub samples: u16,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -83,13 +85,13 @@ impl Camera {
         Ray::primary(origin, (dir_point - origin).normalize(), 0)
     }
 
-    fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 4] {
-        [
-            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.25),
-            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.25),
-            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.75),
-            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.75),
-        ]
+    fn pixel_rays(&self, count: u16, width: u32, height: u32, x: u32, y: u32) -> Vec<Ray> {
+        let mut rng = rand::thread_rng();
+        let mut rays = Vec::new();
+        for _ in 0..count {
+            rays.push(self.pixel_ray(width, height, x as f64 + rng.next_f64(), y as f64 + rng.next_f64()));
+        }
+        rays
     }
 }
 
@@ -230,17 +232,12 @@ fn color_to_rgb(v: Color) -> image::Rgb<u8> {
 }
 
 fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
-    if context.options.antialiasing {
-        let rays = context.scene.camera.pixel_ray_bundle(context.options.width, context.options.height, x, y);
-        let mut color = Color::black();
-        for ray in rays.iter() {
-            color += ray.cast(&context);
-        }
-        color / (rays.len() as f64)
+    let rays = context.scene.camera.pixel_rays(context.options.samples, context.options.width, context.options.height, x, y);
+    let mut color = Color::black();
+    for ray in rays.iter() {
+        color += ray.cast(&context);
     }
-    else {
-        context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context)
-    }
+    color / (rays.len() as f64)
 }
 
 pub fn render(
@@ -254,6 +251,8 @@ pub fn render(
         options,
         scene,
     };
+
+    println!("Rendering {}x{}, {} samples per pixel.", width, height, options.samples);
 
     let start_time = time::now();
     let steady_start_time = time::SteadyTime::now();

@@ -4,6 +4,7 @@ extern crate wavefront_obj;
 extern crate pbr;
 extern crate num_cpus;
 extern crate time;
+extern crate rand;
 
 mod color;
 mod direction;
@@ -31,14 +32,19 @@ use clap::{App, Arg};
 use color::Color;
 use system::Options;
 
+fn u16_validator(s: String) -> Result<(), String> {
+    if s.parse::<u16>().is_ok() { return Ok(()); }
+    Err(String::from("The value must be a positive number."))
+}
+
 fn u32_validator(s: String) -> Result<(), String> {
     if s.parse::<u32>().is_ok() { return Ok(()); }
-    Err(String::from("The value must be a number."))
+    Err(String::from("The value must be a positive number."))
 }
 
 fn usize_validator(s: String) -> Result<(), String> {
     if s.parse::<usize>().is_ok() { return Ok(()); }
-    Err(String::from("The value must be a number."))
+    Err(String::from("The value must be a positive number."))
 }
 
 fn main() {
@@ -75,9 +81,12 @@ fn main() {
                 .default_value(&default_cpus)
         )
         .arg(
-            Arg::with_name("antialiasing")
-                .short("a")
-                .help("Apply antialiasing")
+            Arg::with_name("samples")
+                .short("s")
+                .help("Number of samples per camera pixel")
+                .takes_value(true)
+                .validator(u16_validator)
+                .default_value("1")
         )
         .arg(
             Arg::with_name("scene")
@@ -90,6 +99,7 @@ fn main() {
 
     let w: u32 = args.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
     let h: u32 = args.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
+    let samples: u16 = args.value_of("samples").unwrap().parse().expect("ERROR: Bad samples!");
 
     let options = Options {
         num_threads: args.value_of("num_threads").unwrap().parse().unwrap(),
@@ -98,7 +108,7 @@ fn main() {
         background_color: Color::new(0.1, 0.1, 0.5),
         bias: 1e-4,
         max_depth: 5,
-        antialiasing: args.is_present("antialiasing"),
+        samples: samples,
     };
 
     let scene = {
