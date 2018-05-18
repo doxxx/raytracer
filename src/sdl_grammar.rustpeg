@@ -6,9 +6,9 @@ use lights::Light;
 use lights::distant::Distant;
 use lights::omni::Omni;
 use materials::Material;
-use materials::glass::Glass;
-use materials::matte::Matte;
-use materials::plastic::Plastic;
+use materials::Lambertian;
+use materials::Metal;
+use materials::Dielectric;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -117,24 +117,30 @@ object_material -> Box<Material>
   }
 
 material -> Box<Material>
-  = matte
-  / plastic
-  / glass
+  = lambertian
+    / metal
+    / dielectric
 
-matte -> Box<Material>
-  = T<"matte"> texture:texture {
-    Box::new(Matte::new(texture))
+lambertian -> Box<Material>
+  = T<"lambertian"> texture:texture {
+    Box::new(Lambertian::new(texture))
   }
 
-plastic -> Box<Material>
-  = T<"plastic"> texture:texture {
-    Box::new(Plastic::new(texture))
+metal -> Box<Material>
+  = T<"metal"> fuzz:fuzz texture:texture {
+    Box::new(Metal::new(fuzz, texture))
   }
 
-glass -> Box<Material>
-  = T<"glass"> {
-    Box::new(Glass::new())
+fuzz -> f64
+  = T<"fuzz"> n:FLOAT { n }
+
+dielectric -> Box<Material>
+  = T<"dielectric"> ior:ior {
+    Box::new(Dielectric::new(ior))
   }
+
+ior -> f64
+  = "ior" WS+ n:FLOAT { n }
 
 object_transform -> Matrix44f
   = T<"transform"> OPEN_BRACE transforms:transform+ CLOSE_BRACE {
@@ -175,39 +181,6 @@ scale -> Matrix44f
   = T<"scale"> d:direction {
     Matrix44f::scaling(d)
   }
-
-/*
-object_shader -> (f64, Shader)
-  = f:FLOAT WS+ t:shader_type { (f, t) }
-
-shader_type -> Shader
-  = diffuse_specular
-  / reflection
-  / transparency
-
-diffuse_specular -> Shader
-  = "diffuse_specular" WS* "{" WS* texture:texture WS+ roughness:roughness WS+ highlight:highlight WS* "}" {
-    Shader::DiffuseSpecular {
-      albedo: DEFAULT_ALBEDO,
-      texture,
-      roughness,
-      highlight,
-    }
-  }
-
-reflection -> Shader
-  = "reflection" {
-    Shader::Reflection
-  }
-
-transparency -> Shader
-  = "transparency" WS* "{" WS* ior:ior WS* "}" {
-    Shader::Transparency { ior }
-  }
-
-ior -> f64
-  = "ior" WS+ n:FLOAT { n }
-*/
 
 texture -> Texture
   = T<"texture"> OPEN_BRACE t:(texture_solid / texture_pattern / texture_image) CLOSE_BRACE { t }

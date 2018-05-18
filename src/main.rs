@@ -14,7 +14,6 @@ mod matrix;
 mod object;
 mod point;
 mod sdl;
-mod shaders;
 mod shapes;
 mod system;
 mod texture;
@@ -107,7 +106,7 @@ fn main() {
         height: h,
         background_color: Color::new(0.1, 0.1, 0.5),
         bias: 1e-4,
-        max_depth: 5,
+        max_depth: 50,
         samples: samples,
     };
 

@@ -134,12 +134,13 @@ impl Ray {
 
 
     pub fn cast(&self, context: &RenderContext) -> Color {
-        if self.depth > context.options.max_depth {
-            return context.options.background_color;
-        }
-
         match self.trace(&context.scene.objects, f64::MAX) {
-            None => context.options.background_color,
+            None => {
+                // "sky" color
+                let unit_dir = self.direction;
+                let t = 0.5 * (unit_dir.y + 1.0);
+                (1.0 - t) * Color::white() + t * Color::new(0.5, 0.7, 1.0)
+            },
             Some(hit) => {
                 let si = SurfaceInfo {
                     incident: *self,
@@ -148,7 +149,12 @@ impl Ray {
                     uv: hit.i.uv.clone(),
                 };
 
-                hit.object.material.color(context, &si)
+                let i = hit.object.material.interact(context, &si);
+                if self.depth < context.options.max_depth && !i.absorbed {
+                    i.attenuation * i.scattered.cast(context)
+                } else {
+                    Color::black()
+                }
             }
         }
     }
@@ -161,9 +167,6 @@ impl Ray {
             let intersection = object.intersect(self);
             if let Some(intersection) = intersection {
                 if intersection.t < nearest_distance {
-                    // HACK: transparent objects don't cast shadows
-                    if self.kind == RayKind::Shadow && object.material.has_transparency() { continue }
-
                     nearest_distance = intersection.t;
                     nearest = Some(RayHit::new(&object, intersection));
                 }
@@ -237,7 +240,12 @@ fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
     for ray in rays.iter() {
         color += ray.cast(&context);
     }
-    color / (rays.len() as f64)
+    color = color / (rays.len() as f64);
+
+    // gamma 2 correction
+    color = Color::new(color.r.sqrt(), color.g.sqrt(), color.b.sqrt());
+
+    color
 }
 
 pub fn render(

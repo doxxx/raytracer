@@ -1,0 +1,179 @@
+camera {
+  location <2.0, 5.0, 9.0>
+  look_at <-1.0, 2.0, 0.0>
+}
+
+lights {
+  omni {
+    <-3.0, 8.0, 9.0>
+    color white
+    intensity 3000.0
+  }
+
+  omni {
+    <4.0, 8.0, 9.0>
+    color white
+    intensity 3000.0
+  }
+}
+
+object {
+  location <0.0, 0.0, 0.0>
+  plane {
+    normal <0.0, 1.0, 0.0>
+  }
+  material {
+    plastic texture {
+      pattern {
+        checkerboard
+        color black
+        color white
+        0.5
+      }
+    }
+  }
+}
+
+object {
+  location <0.0, 0.0, -5.0>
+  plane {
+    normal <0.0, 0.0, 1.0>
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+}
+
+object {
+  location <-5.0, 0.0, 0.0>
+  plane {
+    normal <1.0, 0.0, 0.0>
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+}
+
+object {
+  location <5.0, 0.0, 0.0>
+  plane {
+    normal <-1.0, 0.0, 0.0>
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+}
+
+object {
+  location <0.0, 10.0, 0.0>
+  plane {
+    normal <0.0, -1.0, 0.0>
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+}
+
+object {
+  location <0.0, 0.0, 10.0>
+  plane {
+    normal <0.0, 0.0, -1.0>
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+}
+
+object {
+  location <0.0, 2.0, 0.0>
+  sphere {
+    radius 2.0
+  }
+  material {
+    matte texture {
+      image "earth.jpg" 1.0
+    }
+  }
+  transform {
+    rotate_y -90.0
+  }
+}
+
+object {
+  location <-3.0, 1.5, 4.0>
+  mesh {
+    file "LinkedTorus.obj"
+  }
+  material {
+    matte texture {
+      solid color white
+    }
+  }
+  transform {
+    rotate_y -30.0
+  }
+}
+
+object {
+  location <0.0, 2.0, 0.0>
+  sphere {
+    radius 1.0
+  }
+  material {
+    plastic texture {
+      solid color red
+    }
+  }
+  transform {
+    translate <0.0, 3.0, 0.0>
+    rotate_z 45.0
+  }
+}
+
+object {
+  location <0.0, 5.0, 0.0>
+  sphere {
+    radius 1.0
+  }
+  material {
+    plastic texture {
+      solid color green
+    }
+  }
+}
+
+object {
+  location <0.0, 2.0, 0.0>
+  sphere {
+    radius 1.0
+  }
+  material {
+    plastic texture {
+      solid color blue
+    }
+  }
+  transform {
+    translate <0.0, 3.0, 0.0>
+    rotate_z -45.0
+  }
+}
+
+object {
+  location <0.0, 1.0, 3.0>
+  sphere {
+    radius 1.0
+  }
+  material {
+    glass
+  }
+}
