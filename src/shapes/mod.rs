@@ -7,4 +7,11 @@ pub mod plane;
 pub mod rectangle;
 pub mod sphere;
 
+pub use self::bounding_box::*;
+pub use self::composite::*;
+pub use self::mesh::*;
+pub use self::plane::*;
+pub use self::rectangle::*;
+pub use self::sphere::*;
+
 pub trait Shape: Intersectable + Send + Sync {}

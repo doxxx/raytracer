@@ -1,5 +1,4 @@
 use direction::{Direction, Dot};
-use point::Point;
 use shapes::Shape;
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
@@ -39,13 +38,13 @@ impl Intersectable for XYRectangle {
         if denom.abs() < 1e-6 {
             return None;
         }
-        let w = ray.origin - Point::zero();
+        let w = ray.origin.to_dir();
         let t = -normal.dot(w) / denom;
         if t < 0.0 {
             return None;
         }
         let p = ray.origin + ray.direction * t;
-        let uv = Vector2f(self.u.dot(p - Point::zero()), self.v.dot(p - Point::zero()));
+        let uv = Vector2f(self.u.dot(p.to_dir()), self.v.dot(p.to_dir()));
         if p.x >= -self.width / 2.0 && p.y >= -self.height / 2.0
             && p.x <= self.width / 2.0 && p.y <= self.height / 2.0
         {

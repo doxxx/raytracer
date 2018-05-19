@@ -8,10 +8,7 @@ use object::Object;
 use point::Point;
 use sdl;
 use sdl::Scene;
-use shapes::Shape;
-use shapes::plane::Plane;
-use shapes::rectangle::XYRectangle;
-use shapes::sphere::Sphere;
+use shapes::*;
 use system::Camera;
 use texture::{Pattern,Texture};
 

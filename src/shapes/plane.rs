@@ -1,11 +1,9 @@
 use direction::{Dot, Direction};
-use point::Point;
 use shapes::Shape;
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
 pub struct Plane {
-    point: Point,
     normal: Direction,
     u: Direction,
     v: Direction,
@@ -23,7 +21,6 @@ impl Plane {
         u = u.normalize();
         let v = normal.cross(u);
         Plane {
-            point: Point::zero(),
             normal,
             u,
             v,
@@ -37,13 +34,13 @@ impl Intersectable for Plane {
         if denom.abs() < 1e-6 {
             return None;
         }
-        let w = ray.origin - self.point;
+        let w = ray.origin.to_dir();
         let t = -self.normal.dot(w) / denom;
         if t < 0.0 {
             return None;
         }
         let p = ray.origin + ray.direction * t;
-        let uv = Vector2f(self.u.dot(p - self.point), self.v.dot(p - self.point));
+        let uv = Vector2f(self.u.dot(p.to_dir()), self.v.dot(p.to_dir()));
         Some(Intersection {
             t,
             n: self.normal,
