@@ -182,12 +182,6 @@ texture_image -> Texture
 path -> String
   = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
 
-roughness -> f64
-  = T<"roughness"> n:FLOAT { n }
-
-highlight -> f64
-  = T<"highlight"> n:FLOAT { n }
-
 pub point -> Point
   = v:vec3 { Point::new(v.0, v.1, v.2) }
 
