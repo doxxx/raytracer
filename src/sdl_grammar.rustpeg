@@ -48,6 +48,8 @@ object_shape -> Box<Shape>
   / plane
   / mesh
   / xyrect
+  / xzrect
+  / zyrect
 
 sphere -> Box<Shape>
   = T<"sphere"> OPEN_BRACE r:sphere_radius CLOSE_BRACE {
@@ -58,12 +60,15 @@ sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE n:plane_normal CLOSE_BRACE {
-    Box::new(Plane::new(n))
+  = T<"plane"> OPEN_BRACE n:plane_normal b:plane_bidi? CLOSE_BRACE {
+    Box::new(Plane::new(n, b.is_some()))
   }
 
 plane_normal -> Direction
   = T<"normal"> n:direction { n }
+
+plane_bidi -> ()
+  = T<"bidi">
 
 mesh -> Box<Shape>
   = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
@@ -74,8 +79,18 @@ mesh_file -> String
   = T<"file"> p:path { p }
 
 xyrect -> Box<Shape>
-  = T<"xyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT CLOSE_BRACE {
-    Box::new(XYRectangle::new(w, h))
+  = T<"xyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
+    Box::new(XYRectangle::new(w, h, b.is_some()))
+  }
+
+xzrect -> Box<Shape>
+  = T<"xzrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
+    Box::new(XZRectangle::new(w, h, b.is_some()))
+  }
+
+zyrect -> Box<Shape>
+  = T<"zyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
+    Box::new(ZYRectangle::new(w, h, b.is_some()))
   }
 
 object_material -> Box<Material>
@@ -116,7 +131,7 @@ diffuse_light -> Box<Material>
   }
 
 object_transform -> Matrix44f
-  = T<"transform"> OPEN_BRACE transforms:transform+ CLOSE_BRACE {
+  = T<"transform"> OPEN_BRACE transforms:transform* CLOSE_BRACE {
     sdl::combine_transforms(transforms)
   }
 
