@@ -136,10 +136,7 @@ impl Ray {
     pub fn cast(&self, context: &RenderContext) -> Color {
         match self.trace(&context.scene.objects, f64::MAX) {
             None => {
-                // "sky" color
-                let unit_dir = self.direction;
-                let t = 0.5 * (unit_dir.y + 1.0);
-                (1.0 - t) * Color::white() + t * Color::new(0.5, 0.7, 1.0)
+                context.options.background_color
             },
             Some(hit) => {
                 let si = SurfaceInfo {
@@ -151,9 +148,9 @@ impl Ray {
 
                 let i = hit.object.material.interact(context, &si);
                 if self.depth < context.options.max_depth && !i.absorbed {
-                    i.attenuation * i.scattered.cast(context)
+                    i.emittance + i.attenuation * i.scattered.cast(context)
                 } else {
-                    Color::black()
+                    i.emittance
                 }
             }
         }

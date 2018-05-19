@@ -17,6 +17,7 @@ impl Clone for Box<Material> {
 
 pub struct SurfaceInteraction {
     pub absorbed: bool,
+    pub emittance: Color,
     pub attenuation: Color,
     pub scattered: Ray,
 }
@@ -24,7 +25,9 @@ pub struct SurfaceInteraction {
 mod lambertian;
 mod metal;
 mod dielectric;
+mod diffuse_light;
 
 pub use self::lambertian::Lambertian;
 pub use self::metal::Metal;
 pub use self::dielectric::Dielectric;
+pub use self::diffuse_light::DiffuseLight;

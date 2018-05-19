@@ -31,6 +31,7 @@ impl Material for Dielectric {
         if rng.next_f64() < kr {
             SurfaceInteraction {
                 absorbed: false,
+                emittance: Color::black(),
                 attenuation: Color::white(),
                 scattered: Ray::primary(
                     if outside { si.point + bias } else { si.point - bias },
@@ -41,6 +42,7 @@ impl Material for Dielectric {
         } else {
             SurfaceInteraction {
                 absorbed: false,
+                emittance: Color::black(),
                 attenuation: Color::white(),
                 scattered: Ray::primary(
                     if outside { si.point - bias } else { si.point + bias },

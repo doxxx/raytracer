@@ -1,3 +1,4 @@
+use color::Color;
 use direction::{Direction, Dot};
 use materials::SurfaceInteraction;
 use system::{Ray, RenderContext, SurfaceInfo};
@@ -26,6 +27,7 @@ impl Material for Metal {
 
         SurfaceInteraction {
             absorbed: scattered_dir.dot(si.n) < 0.0,
+            emittance: Color::black(),
             attenuation: self.texture.color_at_uv(si.uv),
             scattered: Ray::primary(scattered_origin, scattered_dir, si.incident.depth + 1),
         }

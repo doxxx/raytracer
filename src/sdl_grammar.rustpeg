@@ -5,10 +5,7 @@ use direction::Direction;
 use lights::Light;
 use lights::distant::Distant;
 use lights::omni::Omni;
-use materials::Material;
-use materials::Lambertian;
-use materials::Metal;
-use materials::Dielectric;
+use materials::*;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -127,6 +124,7 @@ material -> Box<Material>
   = lambertian
     / metal
     / dielectric
+    / diffuse_light
 
 lambertian -> Box<Material>
   = T<"lambertian"> texture:texture {
@@ -148,6 +146,11 @@ dielectric -> Box<Material>
 
 ior -> f64
   = "ior" WS+ n:FLOAT { n }
+
+diffuse_light -> Box<Material>
+  = T<"diffuse_light"> texture:texture {
+    Box::new(DiffuseLight::new(texture))
+  }
 
 object_transform -> Matrix44f
   = T<"transform"> OPEN_BRACE transforms:transform+ CLOSE_BRACE {
