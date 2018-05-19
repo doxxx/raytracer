@@ -4,6 +4,22 @@ camera {
 }
 
 object {
+  xzrect {
+    width 3.0
+    height 3.0
+  }
+  material {
+    diffuse_light texture {
+      solid color rgb <3.0, 3.0, 3.0>
+    }
+  }
+  transform {
+    rotate_x 180
+    translate <0.0, 5.0, -4.0>
+  }
+}
+
+object {
   plane {
     origin <0.0, 0.0, 0.0>
     normal <0.0, 1.0, 0.0>
@@ -12,6 +28,23 @@ object {
     lambertian texture {
       solid color rgb <0.8, 0.8, 0.0>
     }
+  }
+}
+
+object {
+  zyrect {
+    width 2
+    height 2
+    bidi
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.8, 0.1, 0.1>
+    }
+  }
+  transform {
+    rotate_z 180
+    translate <3, 1, -4>
   }
 }
 
@@ -47,22 +80,6 @@ object {
   }
   material {
     dielectric ior 1.5
-  }
-}
-
-object {
-  xzrect {
-    width 3.0
-    height 3.0
-  }
-  material {
-    diffuse_light texture {
-      solid color rgb <3.0, 3.0, 3.0>
-    }
-  }
-  transform {
-    rotate_x 180
-    translate <0.0, 5.0, -5.0>
   }
 }
 
