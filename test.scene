@@ -1,11 +1,11 @@
 camera {
-  location <0.0, 1.5, 0.0>
+  origin <0.0, 1.5, 0.0>
   look_at <0.0, 1.0, -5.0>
 }
 
 object {
-  location <0.0, 0.0, 0.0>
   plane {
+    origin <0.0, 0.0, 0.0>
     normal <0.0, 1.0, 0.0>
   }
   material {
@@ -16,8 +16,8 @@ object {
 }
 
 object {
-  location <0.0, 1.0, -5.0>
   sphere {
+    origin <0.0, 1.0, -5.0>
     radius 1.0
   }
   material {
@@ -29,8 +29,8 @@ object {
 
 
 object {
-  location <-2.0, 1.0, -5.0>
   sphere {
+    origin <-2.0, 1.0, -5.0>
     radius 1.0
   }
   material {
@@ -41,8 +41,8 @@ object {
 }
 
 object {
-  location <2.0, 1.0, -5.0>
   sphere {
+    origin <2.0, 1.0, -5.0>
     radius 1.0
   }
   material {
@@ -51,8 +51,7 @@ object {
 }
 
 object {
-  location <0.0, 5.0, -5.0>
-  xzrect { 
+  xzrect {
     width 3.0
     height 3.0
   }
@@ -63,12 +62,13 @@ object {
   }
   transform {
     rotate_x 180
+    translate <0.0, 5.0, -5.0>
   }
 }
 
 object {
-  location <3.0, 0.5, -4.0>
   zyrect {
+    origin <3.0, 0.5, -4.0>
     width 1.0
     height 1.0
     bidi
@@ -81,8 +81,8 @@ object {
 }
 
 object {
-  location <-1.0, 0.5, -4.0>
   zyrect {
+    origin <-1.0, 0.5, -4.0>
     width 1.0
     height 1.0
   }
@@ -96,8 +96,8 @@ object {
 
 
 object {
-  location <0.0, 2.5, -7.0>
   xyrect {
+    origin <0.0, 2.5, -7.0>
     width 5.0
     height 5.0
   }

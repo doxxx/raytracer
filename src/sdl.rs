@@ -25,10 +25,9 @@ pub fn parse(s: &str) -> sdl_grammar::ParseResult<Scene> {
     sdl_grammar::scene(s)
 }
 
-pub fn new_object(loc: Point, shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
+pub fn new_object(shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
     Object::new("object", shape, material)
         .transform(transform.unwrap_or(Matrix44f::identity()))
-        .transform(Matrix44f::translation(Direction::new(loc.x, loc.y, loc.z)))
 }
 
 pub fn load_image(path: &str) -> image::DynamicImage {

@@ -21,12 +21,9 @@ pub scene -> Scene
   }
 
 pub camera -> Camera
-  = T<"camera"> OPEN_BRACE loc:location p:camera_lookat CLOSE_BRACE {
-    Camera::new(loc, 60.0).look_at(p)
+  = T<"camera"> OPEN_BRACE o:origin p:camera_lookat CLOSE_BRACE {
+    Camera::new(o, 60.0).look_at(p)
   }
-
-location -> Point
-  = T<"location"> p:point { p }
 
 camera_lookat -> Point
   = T<"look_at"> p:point { p }
@@ -34,13 +31,12 @@ camera_lookat -> Point
 pub object -> Object
   = T<"object">
     OPEN_BRACE
-    loc:location
     shape:object_shape
     material:object_material
     transform:object_transform?
     CLOSE_BRACE
   {
-    sdl::new_object(loc, shape, material, transform)
+    sdl::new_object(shape, material, transform)
   }
 
 object_shape -> Box<Shape>
@@ -52,17 +48,20 @@ object_shape -> Box<Shape>
   / zyrect
 
 sphere -> Box<Shape>
-  = T<"sphere"> OPEN_BRACE r:sphere_radius CLOSE_BRACE {
-    Box::new(Sphere::new(r))
+  = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius CLOSE_BRACE {
+    Box::new(Sphere::new(o.unwrap_or(Point::zero()), r))
   }
 
 sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE n:plane_normal b:plane_bidi? CLOSE_BRACE {
-    Box::new(Plane::new(n, b.is_some()))
+  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal b:plane_bidi? CLOSE_BRACE {
+    Box::new(Plane::new(o.unwrap_or(Point::zero()), n, b.is_some()))
   }
+
+origin -> Point
+  = T<"origin"> p:point { p }
 
 plane_normal -> Direction
   = T<"normal"> n:direction { n }
@@ -79,19 +78,25 @@ mesh_file -> String
   = T<"file"> p:path { p }
 
 xyrect -> Box<Shape>
-  = T<"xyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
-    Box::new(XYRectangle::new(w, h, b.is_some()))
+  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
   }
 
 xzrect -> Box<Shape>
-  = T<"xzrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
-    Box::new(XZRectangle::new(w, h, b.is_some()))
+  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
   }
 
 zyrect -> Box<Shape>
-  = T<"zyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT b:plane_bidi? CLOSE_BRACE {
-    Box::new(ZYRectangle::new(w, h, b.is_some()))
+  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
   }
+
+width -> f64
+  = T<"width"> w:FLOAT { w }
+
+height -> f64
+  = T<"height"> h:FLOAT { h }
 
 object_material -> Box<Material>
   = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {

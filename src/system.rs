@@ -32,33 +32,33 @@ pub struct Options {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Camera {
-    location: Point,
+    origin: Point,
     fov_factor: f64,
     camera_to_world: Matrix44f,
 }
 
 impl Camera {
-    pub fn new(location: Point, fov: f64) -> Camera {
+    pub fn new(origin: Point, fov: f64) -> Camera {
         Camera {
-            location,
+            origin,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world: Matrix44f::identity(),
         }
     }
 
     pub fn look_at(&self, p: Point) -> Camera {
-        let forward = (self.location - p).normalize();
+        let forward = (self.origin - p).normalize();
         let right = Direction::new(0.0, 1.0, 0.0).normalize().cross(forward);
         let up = forward.cross(right);
         Camera {
-            location: self.location,
+            origin: self.origin,
             fov_factor: self.fov_factor,
             camera_to_world: Matrix44f(
                 [
                     [right.x, right.y, right.z, 0.0],
                     [up.x, up.y, up.z, 0.0],
                     [forward.x, forward.y, forward.z, 0.0],
-                    [self.location.x, self.location.y, self.location.z, 1.0],
+                    [self.origin.x, self.origin.y, self.origin.z, 1.0],
                 ]
             ),
         }
@@ -66,7 +66,7 @@ impl Camera {
 
     pub fn transform(&self, m: Matrix44f) -> Camera {
         Camera {
-            location: self.location * m,
+            origin: self.origin * m,
             fov_factor: self.fov_factor,
             camera_to_world: self.camera_to_world * m,
         }
