@@ -8,7 +8,6 @@ extern crate rand;
 
 mod color;
 mod direction;
-mod lights;
 mod materials;
 mod matrix;
 mod object;

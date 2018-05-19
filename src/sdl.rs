@@ -6,7 +6,6 @@ use image;
 use wavefront_obj;
 
 use direction::Direction;
-use lights::Light;
 use materials::Material;
 use matrix::Matrix44f;
 use object::Object;
@@ -19,7 +18,6 @@ use system::{Camera,Transformable};
 
 pub struct Scene {
     pub camera: Camera,
-    pub lights: Vec<Box<Light>>,
     pub objects: Vec<Object>,
 }
 

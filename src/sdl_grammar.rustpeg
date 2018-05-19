@@ -2,9 +2,6 @@ use std::str::FromStr;
 
 use color::Color;
 use direction::Direction;
-use lights::Light;
-use lights::distant::Distant;
-use lights::omni::Omni;
 use materials::*;
 use matrix::Matrix44f;
 use object::Object;
@@ -19,10 +16,9 @@ use system::Camera;
 use texture::{Pattern,Texture};
 
 pub scene -> Scene
-  = camera:camera lights:lights objects:object+ {
+  = camera:camera objects:object+ {
     Scene {
       camera,
-      lights,
       objects,
     }
   }
@@ -37,36 +33,6 @@ location -> Point
 
 camera_lookat -> Point
   = T<"look_at"> p:point { p }
-
-lights -> Vec<Box<Light>>
-  = T<"lights"> OPEN_BRACE lights:light+ CLOSE_BRACE {
-      lights
-  }
-
-light -> Box<Light>
-  = omni_light
-  / distant_light
-
-pub omni_light -> Box<Light>
-  = T<"omni"> OPEN_BRACE origin:point color:color intensity:light_intensity CLOSE_BRACE {
-    Box::new(Omni {
-      color,
-      intensity,
-      origin,
-    })
-  }
-
-pub distant_light -> Box<Light>
-  = T<"distant"> OPEN_BRACE direction:direction color:color intensity:light_intensity CLOSE_BRACE {
-    Box::new(Distant {
-      color,
-      intensity,
-      direction,
-    })
-  }
-
-light_intensity -> f64
-  = T<"intensity"> i:FLOAT { i }
 
 pub object -> Object
   = T<"object">
