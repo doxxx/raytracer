@@ -19,7 +19,7 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn interact(&self, context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction {
+    fn interact(&self, _context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction {
         SurfaceInteraction {
             absorbed: true,
             emittance: self.texture.color_at_uv(si.uv),
