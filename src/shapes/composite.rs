@@ -15,10 +15,7 @@ impl Composite {
 
 impl Intersectable for Composite {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.shapes.iter()
-            .map(|s| s.intersect(ray))
-            .find(|i| i.is_some())
-            .unwrap_or_default()
+        self.shapes.intersect(ray)
     }
 }
 
