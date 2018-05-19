@@ -57,7 +57,7 @@ object {
   }
   material {
     diffuse_light texture {
-      solid color rgb <2.0, 2.0, 2.0>
+      solid color rgb <3.0, 3.0, 3.0>
     }
   }
   transform {
@@ -67,43 +67,17 @@ object {
 }
 
 object {
-  zyrect {
-    origin <3.0, 0.5, -4.0>
-    width 1.0
-    height 1.0
-    bidi
+  cube {
+    <-0.5, 0.0, -0.5>
+    <0.5, 1.0, 0.5>
   }
   material {
-    diffuse_light texture {
-      solid color rgb <2.0, 2.0, 2.0>
+    lambertian texture {
+      solid color rgb <0.8, 0.1, 0.1>
     }
   }
-}
-
-object {
-  zyrect {
-    origin <-1.0, 0.5, -4.0>
-    width 1.0
-    height 1.0
-  }
-  material {
-    diffuse_light texture {
-      solid color rgb <2.0, 2.0, 2.0>
-    }
-  }
-}
-
-
-
-object {
-  xyrect {
-    origin <0.0, 2.5, -7.0>
-    width 5.0
-    height 5.0
-  }
-  material {
-    diffuse_light texture {
-      solid color rgb <2.0, 2.0, 2.0>
-    }
+  transform {
+    scale <0.5, 0.5, 0.5>
+    translate <-2.0, 0.0, -3.5>
   }
 }

@@ -46,6 +46,7 @@ object_shape -> Box<Shape>
   / xyrect
   / xzrect
   / zyrect
+  / cube
 
 sphere -> Box<Shape>
   = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius CLOSE_BRACE {
@@ -97,6 +98,11 @@ width -> f64
 
 height -> f64
   = T<"height"> h:FLOAT { h }
+
+cube -> Box<Shape>
+  = T<"cube"> OPEN_BRACE p1:point p2: point CLOSE_BRACE {
+    Box::new(Cube::new(p1, p2))
+  }
 
 object_material -> Box<Material>
   = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {
