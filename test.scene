@@ -57,3 +57,20 @@ object {
     dielectric ior 1.5
   }
 }
+
+object {
+  location <0.0, 0.0, 0.0>
+  xyrect { 
+    width 3.0
+    height 3.0
+  }
+  material {
+    lambertian texture {
+      solid color rgb <1.0, 1.0, 1.0>
+    }
+  }
+  transform {
+    rotate_x 90.0
+    translate <0.0, 1.5, -5.0>
+  }
+}

@@ -16,6 +16,7 @@ use sdl;
 use sdl::Scene;
 use shapes::Shape;
 use shapes::plane::Plane;
+use shapes::rectangle::XYRectangle;
 use shapes::sphere::Sphere;
 use system::Camera;
 use texture::{Pattern,Texture};
@@ -86,6 +87,7 @@ object_shape -> Box<Shape>
   = sphere
   / plane
   / mesh
+  / xyrect
 
 sphere -> Box<Shape>
   = T<"sphere"> OPEN_BRACE r:sphere_radius CLOSE_BRACE {
@@ -110,6 +112,11 @@ mesh -> Box<Shape>
 
 mesh_file -> String
   = T<"file"> p:path { p }
+
+xyrect -> Box<Shape>
+  = T<"xyrect"> OPEN_BRACE T<"width"> w:FLOAT T<"height"> h:FLOAT CLOSE_BRACE {
+    Box::new(XYRectangle::new(w, h))
+  }
 
 object_material -> Box<Material>
   = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {
