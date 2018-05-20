@@ -24,7 +24,6 @@ pub struct Options {
     pub num_threads: usize,
     pub width: u32,
     pub height: u32,
-    pub background_color: Color,
     pub bias: f64,
     pub max_depth: u16,
     pub samples: u16,
@@ -136,7 +135,7 @@ impl Ray {
     pub fn cast(&self, context: &RenderContext) -> Color {
         match self.trace(&context.scene.objects, f64::MAX) {
             None => {
-                context.options.background_color
+                context.scene.options.background_color
             },
             Some(hit) => {
                 let si = SurfaceInfo {

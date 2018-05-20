@@ -7,18 +7,29 @@ use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use sdl;
-use sdl::Scene;
+use sdl::{Scene,SceneOptions};
 use shapes::*;
 use system::Camera;
 use texture::{Pattern,Texture};
 
 pub scene -> Scene
-  = camera:camera objects:object+ {
+  = options:options? camera:camera objects:object+ {
     Scene {
+      options: options.unwrap_or(SceneOptions::default()),
       camera,
       objects,
     }
   }
+
+options -> SceneOptions
+  = T<"options"> OPEN_BRACE bg:bg CLOSE_BRACE {
+    SceneOptions {
+      background_color: bg,
+    }
+  }
+
+bg -> Color
+  = T<"background"> color:color { color }
 
 pub camera -> Camera
   = T<"camera"> OPEN_BRACE o:origin p:camera_lookat fov:fov? CLOSE_BRACE {

@@ -5,6 +5,7 @@ use std::fs::File;
 use image;
 use wavefront_obj;
 
+use color::Color;
 use direction::Direction;
 use materials::Material;
 use matrix::Matrix44f;
@@ -17,8 +18,21 @@ use shapes::mesh::{Mesh,MeshTriangle};
 use system::{Camera,Transformable};
 
 pub struct Scene {
+    pub options: SceneOptions,
     pub camera: Camera,
     pub objects: Vec<Object>,
+}
+
+pub struct SceneOptions {
+    pub background_color: Color,
+}
+
+impl SceneOptions {
+    pub fn default() -> SceneOptions {
+        SceneOptions {
+            background_color: Color::black(),
+        }
+    }
 }
 
 pub fn parse(s: &str) -> sdl_grammar::ParseResult<Scene> {
