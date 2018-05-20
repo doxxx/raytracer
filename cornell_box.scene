@@ -1,0 +1,135 @@
+options {
+    background color black
+}
+
+camera {
+    origin <278, 273, -800>
+    look_at <278, 273, 0>
+    fov 40
+}
+
+// outer box
+
+object {
+    zyrect {
+        origin <0, 278, 278>
+        width 555
+        height 555
+        bidi
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.65, 0.05, 0.05>
+        }
+    }
+}
+
+object {
+    zyrect {
+        width 555
+        height 555
+        bidi
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.12, 0.45, 0.15>
+        }
+    }
+    transform {
+        //rotate_z 180
+        translate <555, 278, 278>
+    }
+}
+
+object {
+    xzrect {
+        origin <278, 555, 278>
+        width 555
+        height 555
+        bidi
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.73, 0.73, 0.73>
+        }
+    }
+}
+
+object {
+    xzrect {
+        origin <278, 0, 278>
+        width 555
+        height 555
+        bidi
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.73, 0.73, 0.73>
+        }
+    }
+}
+
+object {
+    xyrect {
+        origin <278, 278, 555>
+        width 555
+        height 555
+        bidi
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.73, 0.73, 0.73>
+        }
+    }
+}
+
+// light
+object {
+    xzrect {
+        width 130
+        height 105
+    }
+    material {
+        diffuse_light texture {
+            solid color rgb <15, 15, 15>
+        }
+    }
+    transform {
+        rotate_x 180
+        translate <278, 554, 278>
+    }
+}
+
+// inner boxes
+
+object {
+    cube {
+        <0, 0, 0>
+        <165, 165, 165>
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.73, 0.73, 0.73>
+        }
+    }
+    transform {
+        rotate_y -18
+        translate <130, 0, 65>
+    }
+}
+
+object {
+    cube {
+        <0, 0, 0>
+        <165, 330, 165>
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.73, 0.73, 0.73>
+        }
+    }
+    transform {
+        rotate_y 15
+        translate <265, 0, 295>
+    }
+}
