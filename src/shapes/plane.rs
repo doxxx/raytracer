@@ -160,10 +160,6 @@ impl Intersectable for XZRectangle {
 
 impl Shape for XZRectangle {}
 
-fn zy_normal() -> Direction {
-    Direction::new(1.0, 0.0, 0.0)
-}
-
 pub struct ZYRectangle {
     plane: Plane,
     z0: f64,
