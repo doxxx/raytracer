@@ -21,12 +21,15 @@ pub scene -> Scene
   }
 
 pub camera -> Camera
-  = T<"camera"> OPEN_BRACE o:origin p:camera_lookat CLOSE_BRACE {
-    Camera::new(o, 60.0).look_at(p)
+  = T<"camera"> OPEN_BRACE o:origin p:camera_lookat fov:fov? CLOSE_BRACE {
+    Camera::new(o, fov.unwrap_or(60.0)).look_at(p)
   }
 
 camera_lookat -> Point
   = T<"look_at"> p:point { p }
+
+fov -> f64
+  = T<"fov"> f:FLOAT { f }
 
 pub object -> Object
   = T<"object">
