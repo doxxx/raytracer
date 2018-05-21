@@ -91,10 +91,10 @@ object {
   }
 }
 
-// spheres
+// world map sphere
 object {
   sphere {
-    radius 1.0
+    radius 0.9
   }
   material {
     lambertian texture {
@@ -106,7 +106,19 @@ object {
     translate <0.0, 1.0, -5.0>
   }
 }
+object {
+  sphere {
+    radius 1.0
+  }
+  material {
+    dielectric ior 1.5
+  }
+  transform {
+    translate <0.0, 1.0, -5.0>
+  }
+}
 
+// gold sphere
 object {
   sphere {
     origin <-2.0, 1.0, -5.0>
@@ -119,6 +131,7 @@ object {
   }
 }
 
+// glass sphere
 object {
   sphere {
     origin <2.0, 1.0, -5.0>
@@ -129,7 +142,7 @@ object {
   }
 }
 
-// cube
+// red cube
 object {
   cube {
     <-0.5, 0.0, -0.5>
