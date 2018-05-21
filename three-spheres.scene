@@ -1,0 +1,147 @@
+camera {
+  origin <0.0, 1.5, 0.0>
+  look_at <0.0, 1.0, -5.0>
+}
+
+// light
+object {
+  sphere {
+    origin <3, 3, -2>
+    radius 1
+  }
+  material {
+    diffuse_light texture {
+      solid color rgb <6, 6, 6>
+    }
+  }
+}
+
+// infinite floor
+object {
+  plane {
+    origin <0.0, 0.0, 0.0>
+    normal <0.0, 1.0, 0.0>
+  }
+  material {
+    lambertian texture {
+      solid color rgb <1, 1, 1>
+    }
+  }
+}
+
+// roof
+object {
+  xzrect {
+    width 8
+    height 4
+  }
+  material {
+    lambertian texture {
+      solid color rgb <1, 1, 1>
+    }
+  }
+  transform {
+    rotate_x 180
+    translate <0, 4, -5>
+  }
+}
+
+// left wall
+object {
+  zyrect {
+    origin <-4, 2, -5>
+    width 4
+    height 4
+    bidi
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.7, 0.1, 0.1>
+    }
+  }
+}
+
+// right wall
+object {
+  zyrect {
+    origin <4, 2, -5>
+    width 4
+    height 4
+    bidi
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.1, 0.7, 0.1>
+    }
+  }
+}
+
+// back wall
+object {
+  xyrect {
+    origin <0, 2, -7>
+    width 8
+    height 4
+    bidi
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.8, 1, 1>
+    }
+  }
+}
+
+// spheres
+object {
+  sphere {
+    radius 1.0
+  }
+  material {
+    lambertian texture {
+      image "earth.jpg" 1.0
+    }
+  }
+  transform {
+    rotate_y -90.0
+    translate <0.0, 1.0, -5.0>
+  }
+}
+
+object {
+  sphere {
+    origin <-2.0, 1.0, -5.0>
+    radius 1.0
+  }
+  material {
+    metal fuzz 0.0 texture {
+      solid color rgb <0.8, 0.8, 0.1>
+    }
+  }
+}
+
+object {
+  sphere {
+    origin <2.0, 1.0, -5.0>
+    radius 1.0
+  }
+  material {
+    dielectric ior 1.5
+  }
+}
+
+// cube
+object {
+  cube {
+    <-0.5, 0.0, -0.5>
+    <0.5, 1.0, 0.5>
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.8, 0.1, 0.1>
+    }
+  }
+  transform {
+    scale <0.5, 0.5, 0.5>
+    translate <-2.0, 0.0, -3.5>
+  }
+}
