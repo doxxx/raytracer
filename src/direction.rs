@@ -32,8 +32,9 @@ impl Direction {
             let x = rng.next_f64() * 2.0 - 1.0;
             let y = rng.next_f64() * 2.0 - 1.0;
             let z = rng.next_f64() * 2.0 - 1.0;
-            let d = (x.powi(2) + y.powi(2) + z.powi(2)).sqrt();
+            let d = x.powi(2) + y.powi(2) + z.powi(2);
             if d <= 1.0 {
+                let d = d.sqrt();
                 return Direction::new(x/d, y/d, z/d)
             }
         }
