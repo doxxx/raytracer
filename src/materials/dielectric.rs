@@ -46,13 +46,16 @@ impl Material for Dielectric {
             }
         } else { 
             // refraction
+            let refracted = refract(si.incident.direction, si.n, self.ior);
+            let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
+            let scattered = (refracted + fuzz).normalize();
             SurfaceInteraction {
                 absorbed: false,
                 emittance: Color::black(),
                 attenuation: Color::white(),
                 scattered: Ray::primary(
                     if outside { si.point - bias } else { si.point + bias },
-                    refract(si.incident.direction, si.n, self.ior).normalize(),
+                    scattered,
                     si.incident.depth + 1,
                 ),
             }
