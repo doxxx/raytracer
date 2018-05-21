@@ -5,10 +5,6 @@ camera {
 
 // light
 object {
-  //xzrect {
-  //  width 3.0
-  //  height 3.0
-  //}
   sphere {
     origin <3, 3, -2>
     radius 1
@@ -18,10 +14,6 @@ object {
       solid color rgb <6, 6, 6>
     }
   }
-  //transform {
-  //  rotate_x 180
-  //  translate <0.0, 5.0, -4.0>
-  //}
 }
 
 // infinite floor
@@ -102,8 +94,8 @@ object {
 // spheres
 object {
   sphere {
-    origin <0.0, 1.0, -5.0>
-    radius 1.0
+    origin <-2, 1, -5>
+    radius 1
   }
   material {
     lambertian texture {
@@ -114,39 +106,32 @@ object {
 
 object {
   sphere {
-    origin <-2.0, 1.0, -5.0>
-    radius 1.0
+    origin <0.0, 1.0, -5.0>
+    radius 0.9
   }
   material {
-    metal fuzz 0.0 texture {
-      solid color rgb <0.8, 0.8, 0.1>
+    lambertian texture {
+      solid color rgb <0.8, 0.3, 0.3>
     }
   }
 }
 
 object {
   sphere {
-    origin <2.0, 1.0, -5.0>
-    radius 1.0
+    origin <0, 1, -5>
+    radius 1
   }
   material {
-    dielectric ior 1.5
+    dielectric ior 1.49 fuzz 0.1
   }
 }
 
-// cube
 object {
-  cube {
-    <-0.5, 0.0, -0.5>
-    <0.5, 1.0, 0.5>
+  sphere {
+    origin <2, 1, -5>
+    radius 1
   }
   material {
-    lambertian texture {
-      solid color rgb <0.8, 0.1, 0.1>
-    }
-  }
-  transform {
-    scale <0.5, 0.5, 0.5>
-    translate <-2.0, 0.0, -3.5>
+    dielectric ior 1.49 fuzz 0.1
   }
 }

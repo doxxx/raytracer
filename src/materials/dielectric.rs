@@ -13,11 +13,12 @@ use materials::Material;
 #[derive(Clone)]
 pub struct Dielectric {
     ior: f64,
+    fuzz: f64,
 }
 
 impl Dielectric {
-    pub fn new(ior: f64) -> Dielectric {
-        Dielectric { ior }
+    pub fn new(ior: f64, fuzz: f64) -> Dielectric {
+        Dielectric { ior, fuzz }
     }
 }
 
@@ -28,18 +29,23 @@ impl Material for Dielectric {
 
         let kr = fresnel(si.incident.direction, si.n, self.ior);
         let mut rng = rand::thread_rng();
-        if rng.next_f64() < kr {
+        if rng.next_f64() < kr { 
+            // reflection
+            let reflected = si.incident.direction.reflect(si.n);
+            let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
+            let scattered = (reflected + fuzz).normalize();
             SurfaceInteraction {
                 absorbed: false,
                 emittance: Color::black(),
                 attenuation: Color::white(),
                 scattered: Ray::primary(
                     if outside { si.point + bias } else { si.point - bias },
-                    si.incident.direction.reflect(si.n).normalize(),
+                    scattered,
                     si.incident.depth + 1,
                 ),
             }
-        } else {
+        } else { 
+            // refraction
             SurfaceInteraction {
                 absorbed: false,
                 emittance: Color::black(),

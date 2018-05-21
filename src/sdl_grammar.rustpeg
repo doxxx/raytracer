@@ -143,8 +143,8 @@ fuzz -> f64
   = T<"fuzz"> n:FLOAT { n }
 
 dielectric -> Box<Material>
-  = T<"dielectric"> ior:ior {
-    Box::new(Dielectric::new(ior))
+  = T<"dielectric"> ior:ior fuzz:fuzz? {
+    Box::new(Dielectric::new(ior, fuzz.unwrap_or(0.0)))
   }
 
 ior -> f64
