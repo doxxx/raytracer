@@ -151,6 +151,7 @@ impl RenderProgress for CliRenderProgress {
         println!("Started at {}", self.start_time.rfc822());
 
         // Trigger initial progress bar draw
+        self.pb.show_tick = true;
         self.pb.total = options.samples as u64;
         self.pb.message("Samples: ");
         self.pb.set(0);
