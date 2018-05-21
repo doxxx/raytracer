@@ -15,7 +15,7 @@ use sdl_grammar;
 use shapes::Shape;
 use shapes::composite::Composite;
 use shapes::mesh::{Mesh,MeshTriangle};
-use system::{Camera,Transformable};
+use system::{Camera,Transformable,Options};
 
 pub struct Scene {
     pub options: SceneOptions,
@@ -35,8 +35,8 @@ impl SceneOptions {
     }
 }
 
-pub fn parse(s: &str) -> sdl_grammar::ParseResult<Scene> {
-    sdl_grammar::scene(s)
+pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
+    sdl_grammar::scene(&s, &options)
 }
 
 pub fn new_object(shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {

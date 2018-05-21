@@ -9,8 +9,10 @@ use point::Point;
 use sdl;
 use sdl::{Scene,SceneOptions};
 use shapes::*;
-use system::Camera;
+use system::{Camera,Options};
 use texture::{Pattern,Texture};
+
+#![arguments(renderOptions: &Options)]
 
 pub scene -> Scene
   = options:options? camera:camera objects:object+ {
@@ -33,7 +35,7 @@ bg -> Color
 
 pub camera -> Camera
   = T<"camera"> OPEN_BRACE o:origin p:camera_lookat fov:fov? CLOSE_BRACE {
-    Camera::new(o, fov.unwrap_or(60.0)).look_at(p)
+    Camera::new(renderOptions.width as f64, renderOptions.height as f64, o, fov.unwrap_or(60.0)).look_at(p)
   }
 
 camera_lookat -> Point

@@ -111,7 +111,7 @@ fn main() {
         let mut f = File::open(args.value_of("scene").unwrap()).expect("could not open scene file");
         let mut text = String::new();
         f.read_to_string(&mut text).expect("could not read scene file");
-        sdl::parse(&text).expect("could not parse scene file")
+        sdl::parse(&options, &text).expect("could not parse scene file")
     };
 
     let imgbuf = system::render(options, scene);

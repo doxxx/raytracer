@@ -31,14 +31,18 @@ pub struct Options {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Camera {
+    width: f64,
+    height: f64,
     origin: Point,
     fov_factor: f64,
     camera_to_world: Matrix44f,
 }
 
 impl Camera {
-    pub fn new(origin: Point, fov: f64) -> Camera {
+    pub fn new(width: f64, height: f64, origin: Point, fov: f64) -> Camera {
         Camera {
+            width,
+            height,
             origin,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world: Matrix44f::identity(),
@@ -50,6 +54,8 @@ impl Camera {
         let right = Direction::new(0.0, 1.0, 0.0).normalize().cross(forward);
         let up = forward.cross(right);
         Camera {
+            width: self.width,
+            height: self.height,
             origin: self.origin,
             fov_factor: self.fov_factor,
             camera_to_world: Matrix44f(
@@ -65,18 +71,18 @@ impl Camera {
 
     pub fn transform(&self, m: Matrix44f) -> Camera {
         Camera {
+            width: self.width,
+            height: self.height,
             origin: self.origin * m,
             fov_factor: self.fov_factor,
             camera_to_world: self.camera_to_world * m,
         }
     }
 
-    fn pixel_ray(&self, width: u32, height: u32, x: f64, y: f64) -> Ray {
-        let w = width as f64;
-        let h = height as f64;
-        let aspect_ratio = w / h;
-        let ndcx = x / w;
-        let ndcy = y / h;
+    fn pixel_ray(&self, x: f64, y: f64) -> Ray {
+        let aspect_ratio = self.width / self.height;
+        let ndcx = x / self.width;
+        let ndcy = y / self.height;
         let cx = (2.0 * ndcx - 1.0) * self.fov_factor * aspect_ratio;
         let cy = (1.0 - 2.0 * ndcy) * self.fov_factor;
         let origin = Point::zero() * self.camera_to_world;
@@ -84,11 +90,11 @@ impl Camera {
         Ray::primary(origin, (dir_point - origin).normalize(), 0)
     }
 
-    fn pixel_rays(&self, count: u16, width: u32, height: u32, x: u32, y: u32) -> Vec<Ray> {
+    fn pixel_rays(&self, count: u16, x: u32, y: u32) -> Vec<Ray> {
         let mut rng = rand::thread_rng();
         let mut rays = Vec::new();
         for _ in 0..count {
-            rays.push(self.pixel_ray(width, height, x as f64 + rng.next_f64(), y as f64 + rng.next_f64()));
+            rays.push(self.pixel_ray(x as f64 + rng.next_f64(), y as f64 + rng.next_f64()));
         }
         rays
     }
@@ -231,7 +237,7 @@ fn color_to_rgb(v: Color) -> image::Rgb<u8> {
 }
 
 fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
-    let rays = context.scene.camera.pixel_rays(context.options.samples, context.options.width, context.options.height, x, y);
+    let rays = context.scene.camera.pixel_rays(context.options.samples, x, y);
     let mut color = Color::black();
     for ray in rays.iter() {
         color += ray.cast(&context);
