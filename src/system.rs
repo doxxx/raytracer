@@ -2,12 +2,7 @@ use std::f64;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use std::thread::spawn;
-use std::fs::File;
-use std::thread;
 
-use image;
-use pbr::MultiBar;
-use time;
 use rand;
 use rand::Rng;
 
@@ -224,6 +219,14 @@ pub struct SurfaceInfo {
     pub uv: Vector2f,
 }
 
+pub trait RenderProgress {
+    fn render_started(&mut self, options: &Options);
+    fn sample_started(&mut self, options: &Options);
+    fn row_finished(&mut self, options: &Options);
+    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
+    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
+}
+
 fn color_at_pixel(context: &RenderContext, rng: &mut Rng, x: u32, y: u32) -> Color {
     context.scene.camera.random_pixel_ray(rng, x, y).cast(&context)
 }
@@ -235,155 +238,69 @@ fn update_row(renderbuf: &mut Vec<Vec<Color>>, y: u32, new_row: &Vec<Color>) {
     }
 }
 
-fn color_to_rgb(v: Color) -> image::Rgb<u8> {
-    let r = (v.r * 255.0).min(255.0) as u8;
-    let g = (v.g * 255.0).min(255.0) as u8;
-    let b = (v.b * 255.0).min(255.0) as u8;
-    image::Rgb([r, g, b])
-}
+pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
+where T: RenderProgress,
+{
+    progress.render_started(&options);
 
-fn convert_render_result_to_image(renderbuf: &Vec<Vec<Color>>, num_samples: f64, imgbuf: &mut image::ImageBuffer<image::Rgb<u8>, Vec<u8>>) {
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let row = &renderbuf[y as usize];
-        let c = (row[x as usize] / num_samples).gamma_2();
-        *pixel = color_to_rgb(c);
-    }
-}
-
-fn write_render_result_to_file(options: &Options, filename: &str, renderbuf: &Vec<Vec<Color>>, current_sample: u16) {
-    let mut imgbuf = image::RgbImage::new(options.width, options.height);
-    convert_render_result_to_image(&renderbuf, (current_sample + 1) as f64, &mut imgbuf);
-
-    let ref mut fout = File::create(filename).expect("Could not open output file");
-    image::ImageRgb8(imgbuf).save(fout, image::PNG).expect("Could not write render result to output file");
-}
-
-fn format_duration(mut d: time::Duration) -> String {
-    let mut s = String::new();
-    let hours = d.num_hours();
-    d = d - time::Duration::hours(hours);
-    if hours > 0 {
-        s += &format!("{}h ", hours);
-    }
-    let minutes = d.num_minutes();
-    d = d - time::Duration::minutes(minutes);
-    if minutes > 0 {
-        s += &format!("{}m ", minutes);
-    }
-    let seconds = d.num_seconds();
-    d = d - time::Duration::seconds(seconds);
-    let milliseconds = d.num_milliseconds();
-    if seconds > 0 {
-        s += &format!("{}.{:03}s", seconds, milliseconds);
-    }
-    s
-}
-
-pub fn render(options: Options, scene: Scene, filename: String) {
+    // pre-allocate render buffer
     let width = options.width;
     let height = options.height;
+    let mut renderbuf: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    let mut renderbuf_row: Vec<Color> = Vec::with_capacity(width as usize);
+    renderbuf_row.resize(width as usize, Color::black());
+    renderbuf.resize(height as usize, renderbuf_row);
 
-    println!("Rendering {}x{}, {} samples per pixel, using {} threads.", width, height, options.samples, options.num_threads);
-
-    let start_time = time::now();
-    let steady_start_time = time::SteadyTime::now();
-
-    println!("Started at {}", start_time.rfc822());
-
-    // Setup progress bar(s)
-    let mut mb = MultiBar::new();
-    let mut pb = mb.create_bar(options.samples as u64);
-    
-    pb.show_tick = true;
-    pb.message("Samples: ");
-
-    // Trigger initial progress bar draw
-    pb.set(0);
-
-    let context = RenderContext {
+    let context = Arc::new(RenderContext {
         options,
         scene,
-    };
-
-    thread::spawn(move || {
-        let context = Arc::new(context);
-
-        // pre-allocate render buffer
-        let mut renderbuf: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
-        let mut renderbuf_row: Vec<Color> = Vec::with_capacity(width as usize);
-        renderbuf_row.resize(width as usize, Color::black());
-        renderbuf.resize(height as usize, renderbuf_row);
-        let renderbuf = Arc::new(Mutex::new(renderbuf));
-
-        let mut last_pb_tick = time::SteadyTime::now();
-        let mut last_output_time = time::SteadyTime::now();
-
-        for current_sample in 0..options.samples {
-            let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
-            let (tx, rx) = mpsc::channel();
-
-            // Spawn threads for rendering rows.
-            // Each thread pulls a row index, renders the row, and sends the row index when finished.
-            for _ in 0..options.num_threads {
-                let context = context.clone();
-                let rows = rows.clone();
-                let renderbuf = renderbuf.clone();
-                let tx = tx.clone();
-                spawn(move || {
-                    let mut rng = rand::thread_rng();
-                    loop {
-                        let y = rows.lock().unwrap().pop();
-                        if let Some(y) = y {
-                            let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, &mut rng, x, y)).collect();
-
-                            {
-                                let mut renderbuf = renderbuf.lock().unwrap();
-                                update_row(&mut renderbuf, y, &row);
-                            }
-
-                            let _ = tx.send(y);
-                        } else {
-                            break;
-                        }
-                    }
-                });
-            }
-
-            // Wait for all the rows to be rendered.
-            // Tick progress every row with at most one tick per 250ms.
-            for _ in 0..height {
-                let _ = rx.recv();
-                let now = time::SteadyTime::now();
-                if (now - last_pb_tick).num_milliseconds() >= 250 {
-                    last_pb_tick = now;
-                    pb.tick();
-                }
-            }
-
-            // Write render buffer to file every 5 seconds.
-            {
-                let now = time::SteadyTime::now();
-                if (now - last_output_time).num_milliseconds() >= 5000 {
-                    last_output_time = now;
-
-                    let renderbuf = renderbuf.lock().unwrap();
-                    write_render_result_to_file(&options, &filename, &renderbuf, current_sample + 1);
-                }
-            }
-
-            pb.inc();
-        }
-    
-        // Write final render buffer to file.
-        let renderbuf = renderbuf.lock().unwrap();
-        write_render_result_to_file(&options, &filename, &renderbuf, options.samples);
-
-        let end_time = time::now();
-        let elapsed = time::SteadyTime::now() - steady_start_time;
-
-        pb.finish_println(&format!("Finished at {} ({})", end_time.rfc822(), format_duration(elapsed)));
     });
+    let renderbuf = Arc::new(Mutex::new(renderbuf));
 
-    mb.listen();
+    for current_sample in 0..options.samples {
+        progress.sample_started(&options);
 
+        let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
+        let (tx, rx) = mpsc::channel();
+
+        // Spawn threads for rendering rows.
+        // Each thread pulls a row index, renders the row, and sends the row index when finished.
+        for _ in 0..options.num_threads {
+            let context = context.clone();
+            let rows = rows.clone();
+            let renderbuf = renderbuf.clone();
+            let tx = tx.clone();
+
+            spawn(move || {
+                let mut rng = rand::thread_rng();
+                loop {
+                    let y = rows.lock().unwrap().pop();
+                    if let Some(y) = y {
+                        let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, &mut rng, x, y)).collect();
+
+                        {
+                            let mut renderbuf = renderbuf.lock().unwrap();
+                            update_row(&mut renderbuf, y, &row);
+                        }
+
+                        let _ = tx.send(y);
+                    } else {
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Wait for all the rows to be rendered.
+        for _ in 0..height {
+            let _ = rx.recv();
+            progress.row_finished(&options);
+        }
+
+        let renderbuf = renderbuf.lock().unwrap();
+        progress.sample_finished(&options, &renderbuf, current_sample + 1);
+    }
+
+    let renderbuf = renderbuf.lock().unwrap();
+    progress.render_finished(&options, &renderbuf, options.samples)
 }
