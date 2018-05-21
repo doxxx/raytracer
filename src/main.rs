@@ -114,8 +114,5 @@ fn main() {
         sdl::parse(&options, &text).expect("could not parse scene file")
     };
 
-    let imgbuf = system::render(options, scene);
-
-    let ref mut fout = File::create("out.png").unwrap();
-    let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
+    system::render(options, scene, String::from("out.png"));
 }
