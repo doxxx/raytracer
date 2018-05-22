@@ -28,49 +28,28 @@ pub struct Options {
 pub struct Camera {
     width: f64,
     height: f64,
-    origin: Point,
     fov_factor: f64,
     camera_to_world: Matrix44f,
 }
 
 impl Camera {
-    pub fn new(width: f64, height: f64, origin: Point, fov: f64) -> Camera {
+    pub fn new(width: f64, height: f64, fov: f64, origin: Point, look_at: Point) -> Camera {
+        let up = Direction::new(0.0, 1.0, 0.0);
+        let zaxis = (origin - look_at).normalize();
+        let xaxis = up.normalize().cross(zaxis);
+        let yaxis = zaxis.cross(xaxis);
+        let camera_to_world = Matrix44f([
+            [xaxis.x, xaxis.y, xaxis.z, 0.0],
+            [yaxis.x, yaxis.y, yaxis.z, 0.0],
+            [zaxis.x, zaxis.y, zaxis.z, 0.0],
+            [origin.x, origin.y, origin.z, 1.0],
+        ]);
+
         Camera {
             width,
             height,
-            origin,
             fov_factor: (fov * 0.5).to_radians().tan(),
-            camera_to_world: Matrix44f::identity(),
-        }
-    }
-
-    pub fn look_at(&self, p: Point) -> Camera {
-        let forward = (self.origin - p).normalize();
-        let right = Direction::new(0.0, 1.0, 0.0).normalize().cross(forward);
-        let up = forward.cross(right);
-        Camera {
-            width: self.width,
-            height: self.height,
-            origin: self.origin,
-            fov_factor: self.fov_factor,
-            camera_to_world: Matrix44f(
-                [
-                    [right.x, right.y, right.z, 0.0],
-                    [up.x, up.y, up.z, 0.0],
-                    [forward.x, forward.y, forward.z, 0.0],
-                    [self.origin.x, self.origin.y, self.origin.z, 1.0],
-                ]
-            ),
-        }
-    }
-
-    pub fn transform(&self, m: Matrix44f) -> Camera {
-        Camera {
-            width: self.width,
-            height: self.height,
-            origin: self.origin * m,
-            fov_factor: self.fov_factor,
-            camera_to_world: self.camera_to_world * m,
+            camera_to_world,
         }
     }
 

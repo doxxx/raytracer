@@ -35,7 +35,7 @@ bg -> Color
 
 pub camera -> Camera
   = T<"camera"> OPEN_BRACE o:origin p:camera_lookat fov:fov? CLOSE_BRACE {
-    Camera::new(renderOptions.width as f64, renderOptions.height as f64, o, fov.unwrap_or(60.0)).look_at(p)
+    Camera::new(renderOptions.width as f64, renderOptions.height as f64, fov.unwrap_or(60.0), o, p)
   }
 
 camera_lookat -> Point
