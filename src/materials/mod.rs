@@ -4,8 +4,6 @@ use system::{RenderContext,SurfaceInfo};
 
 pub trait Material: Send + Sync {
     fn interact(&self, context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction;
-    // fn color(&self, context: &RenderContext, si: &SurfaceInfo) -> Color;
-    // fn has_transparency(&self) -> bool { false }
     fn box_clone(&self) -> Box<Material>;
 }
 

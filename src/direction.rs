@@ -52,6 +52,10 @@ impl Direction {
         self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
+    pub fn length(&self) -> f64 {
+        self.length_squared().sqrt()
+    }
+
     pub fn normalize(self) -> Direction {
         let l2 = self.length_squared();
         if l2 > 0.0 {
