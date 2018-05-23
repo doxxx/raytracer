@@ -2,106 +2,89 @@ use std::str::FromStr;
 
 use color::Color;
 use direction::Direction;
-use lights::Light;
-use lights::distant::Distant;
-use lights::omni::Omni;
-use materials::Material;
-use materials::glass::Glass;
-use materials::matte::Matte;
-use materials::plastic::Plastic;
+use materials::*;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use sdl;
-use sdl::Scene;
-use shapes::Shape;
-use shapes::plane::Plane;
-use shapes::sphere::Sphere;
-use system::Camera;
+use sdl::{Scene,SceneOptions};
+use shapes::*;
+use system::{Camera,Options};
 use texture::{Pattern,Texture};
 
+#![arguments(renderOptions: &Options)]
+
 pub scene -> Scene
-  = camera:camera lights:lights objects:object+ {
+  = options:options? camera:camera objects:object+ {
     Scene {
+      options: options.unwrap_or(SceneOptions::default()),
       camera,
-      lights,
       objects,
     }
   }
 
-pub camera -> Camera
-  = T<"camera"> OPEN_BRACE loc:location p:camera_lookat CLOSE_BRACE {
-    Camera::new(loc, 60.0).look_at(p)
+options -> SceneOptions
+  = T<"options"> OPEN_BRACE bg:bg CLOSE_BRACE {
+    SceneOptions {
+      background_color: bg,
+    }
   }
 
-location -> Point
-  = T<"location"> p:point { p }
+bg -> Color
+  = T<"background"> color:color { color }
+
+pub camera -> Camera
+  = T<"camera"> OPEN_BRACE o:origin p:camera_lookat fov:fov? CLOSE_BRACE {
+    Camera::new(renderOptions.width as f64, renderOptions.height as f64, fov.unwrap_or(60.0), o, p)
+  }
 
 camera_lookat -> Point
   = T<"look_at"> p:point { p }
 
-lights -> Vec<Box<Light>>
-  = T<"lights"> OPEN_BRACE lights:light+ CLOSE_BRACE {
-      lights
-  }
-
-light -> Box<Light>
-  = omni_light
-  / distant_light
-
-pub omni_light -> Box<Light>
-  = T<"omni"> OPEN_BRACE origin:point color:color intensity:light_intensity CLOSE_BRACE {
-    Box::new(Omni {
-      color,
-      intensity,
-      origin,
-    })
-  }
-
-pub distant_light -> Box<Light>
-  = T<"distant"> OPEN_BRACE direction:direction color:color intensity:light_intensity CLOSE_BRACE {
-    Box::new(Distant {
-      color,
-      intensity,
-      direction,
-    })
-  }
-
-light_intensity -> f64
-  = T<"intensity"> i:FLOAT { i }
+fov -> f64
+  = T<"fov"> f:FLOAT { f }
 
 pub object -> Object
   = T<"object">
     OPEN_BRACE
-    loc:location
     shape:object_shape
     material:object_material
     transform:object_transform?
     CLOSE_BRACE
   {
-    sdl::new_object(loc, shape, material, transform)
+    sdl::new_object(shape, material, transform)
   }
 
 object_shape -> Box<Shape>
   = sphere
   / plane
   / mesh
+  / xyrect
+  / xzrect
+  / zyrect
+  / cube
 
 sphere -> Box<Shape>
-  = T<"sphere"> OPEN_BRACE r:sphere_radius CLOSE_BRACE {
-    Box::new(Sphere::new(r))
+  = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius CLOSE_BRACE {
+    Box::new(Sphere::new(o.unwrap_or(Point::zero()), r))
   }
 
 sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE n:plane_normal CLOSE_BRACE {
-    Box::new(Plane::new(n))
+  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal b:plane_bidi? CLOSE_BRACE {
+    Box::new(Plane::new(o.unwrap_or(Point::zero()), n, b.is_some()))
   }
+
+origin -> Point
+  = T<"origin"> p:point { p }
 
 plane_normal -> Direction
   = T<"normal"> n:direction { n }
+
+plane_bidi -> ()
+  = T<"bidi">
 
 mesh -> Box<Shape>
   = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
@@ -111,33 +94,71 @@ mesh -> Box<Shape>
 mesh_file -> String
   = T<"file"> p:path { p }
 
+xyrect -> Box<Shape>
+  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  }
+
+xzrect -> Box<Shape>
+  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  }
+
+zyrect -> Box<Shape>
+  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
+    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  }
+
+width -> f64
+  = T<"width"> w:FLOAT { w }
+
+height -> f64
+  = T<"height"> h:FLOAT { h }
+
+cube -> Box<Shape>
+  = T<"cube"> OPEN_BRACE p1:point p2: point CLOSE_BRACE {
+    Box::new(Cube::new(p1, p2))
+  }
+
 object_material -> Box<Material>
   = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {
     material
   }
 
 material -> Box<Material>
-  = matte
-  / plastic
-  / glass
+  = lambertian
+    / metal
+    / dielectric
+    / diffuse_light
 
-matte -> Box<Material>
-  = T<"matte"> texture:texture {
-    Box::new(Matte::new(texture))
+lambertian -> Box<Material>
+  = T<"lambertian"> texture:texture {
+    Box::new(Lambertian::new(texture))
   }
 
-plastic -> Box<Material>
-  = T<"plastic"> texture:texture {
-    Box::new(Plastic::new(texture))
+metal -> Box<Material>
+  = T<"metal"> fuzz:fuzz texture:texture {
+    Box::new(Metal::new(fuzz, texture))
   }
 
-glass -> Box<Material>
-  = T<"glass"> {
-    Box::new(Glass::new())
+fuzz -> f64
+  = T<"fuzz"> n:FLOAT { n }
+
+dielectric -> Box<Material>
+  = T<"dielectric"> ior:ior fuzz:fuzz? {
+    Box::new(Dielectric::new(ior, fuzz.unwrap_or(0.0)))
+  }
+
+ior -> f64
+  = "ior" WS+ n:FLOAT { n }
+
+diffuse_light -> Box<Material>
+  = T<"diffuse_light"> texture:texture {
+    Box::new(DiffuseLight::new(texture))
   }
 
 object_transform -> Matrix44f
-  = T<"transform"> OPEN_BRACE transforms:transform+ CLOSE_BRACE {
+  = T<"transform"> OPEN_BRACE transforms:transform* CLOSE_BRACE {
     sdl::combine_transforms(transforms)
   }
 
@@ -176,39 +197,6 @@ scale -> Matrix44f
     Matrix44f::scaling(d)
   }
 
-/*
-object_shader -> (f64, Shader)
-  = f:FLOAT WS+ t:shader_type { (f, t) }
-
-shader_type -> Shader
-  = diffuse_specular
-  / reflection
-  / transparency
-
-diffuse_specular -> Shader
-  = "diffuse_specular" WS* "{" WS* texture:texture WS+ roughness:roughness WS+ highlight:highlight WS* "}" {
-    Shader::DiffuseSpecular {
-      albedo: DEFAULT_ALBEDO,
-      texture,
-      roughness,
-      highlight,
-    }
-  }
-
-reflection -> Shader
-  = "reflection" {
-    Shader::Reflection
-  }
-
-transparency -> Shader
-  = "transparency" WS* "{" WS* ior:ior WS* "}" {
-    Shader::Transparency { ior }
-  }
-
-ior -> f64
-  = "ior" WS+ n:FLOAT { n }
-*/
-
 texture -> Texture
   = T<"texture"> OPEN_BRACE t:(texture_solid / texture_pattern / texture_image) CLOSE_BRACE { t }
 
@@ -232,12 +220,6 @@ texture_image -> Texture
 
 path -> String
   = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
-
-roughness -> f64
-  = T<"roughness"> n:FLOAT { n }
-
-highlight -> f64
-  = T<"highlight"> n:FLOAT { n }
 
 pub point -> Point
   = v:vec3 { Point::new(v.0, v.1, v.2) }

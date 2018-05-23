@@ -1,13 +1,10 @@
 use std::f64;
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 use std::thread::spawn;
-use std::io::Stdout;
-use std::ops::Deref;
 
-use image;
-use pbr::ProgressBar;
-use time;
+use rand;
+use rand::Rng;
 
 use color::Color;
 use direction::Direction;
@@ -22,60 +19,44 @@ pub struct Options {
     pub num_threads: usize,
     pub width: u32,
     pub height: u32,
-    pub background_color: Color,
     pub bias: f64,
     pub max_depth: u16,
-    pub antialiasing: bool,
+    pub samples: u16,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Camera {
-    location: Point,
+    width: f64,
+    height: f64,
     fov_factor: f64,
     camera_to_world: Matrix44f,
 }
 
 impl Camera {
-    pub fn new(location: Point, fov: f64) -> Camera {
+    pub fn new(width: f64, height: f64, fov: f64, origin: Point, look_at: Point) -> Camera {
+        let up = Direction::new(0.0, 1.0, 0.0);
+        let zaxis = (origin - look_at).normalize();
+        let xaxis = up.normalize().cross(zaxis);
+        let yaxis = zaxis.cross(xaxis);
+        let camera_to_world = Matrix44f([
+            [xaxis.x, xaxis.y, xaxis.z, 0.0],
+            [yaxis.x, yaxis.y, yaxis.z, 0.0],
+            [zaxis.x, zaxis.y, zaxis.z, 0.0],
+            [origin.x, origin.y, origin.z, 1.0],
+        ]);
+
         Camera {
-            location,
+            width,
+            height,
             fov_factor: (fov * 0.5).to_radians().tan(),
-            camera_to_world: Matrix44f::identity(),
+            camera_to_world,
         }
     }
 
-    pub fn look_at(&self, p: Point) -> Camera {
-        let forward = (self.location - p).normalize();
-        let right = Direction::new(0.0, 1.0, 0.0).normalize().cross(forward);
-        let up = forward.cross(right);
-        Camera {
-            location: self.location,
-            fov_factor: self.fov_factor,
-            camera_to_world: Matrix44f(
-                [
-                    [right.x, right.y, right.z, 0.0],
-                    [up.x, up.y, up.z, 0.0],
-                    [forward.x, forward.y, forward.z, 0.0],
-                    [self.location.x, self.location.y, self.location.z, 1.0],
-                ]
-            ),
-        }
-    }
-
-    pub fn transform(&self, m: Matrix44f) -> Camera {
-        Camera {
-            location: self.location * m,
-            fov_factor: self.fov_factor,
-            camera_to_world: self.camera_to_world * m,
-        }
-    }
-
-    fn pixel_ray(&self, width: u32, height: u32, x: f64, y: f64) -> Ray {
-        let w = width as f64;
-        let h = height as f64;
-        let aspect_ratio = w / h;
-        let ndcx = x / w;
-        let ndcy = y / h;
+    fn pixel_ray(&self, x: f64, y: f64) -> Ray {
+        let aspect_ratio = self.width / self.height;
+        let ndcx = x / self.width;
+        let ndcy = y / self.height;
         let cx = (2.0 * ndcx - 1.0) * self.fov_factor * aspect_ratio;
         let cy = (1.0 - 2.0 * ndcy) * self.fov_factor;
         let origin = Point::zero() * self.camera_to_world;
@@ -83,13 +64,8 @@ impl Camera {
         Ray::primary(origin, (dir_point - origin).normalize(), 0)
     }
 
-    fn pixel_ray_bundle(&self, width: u32, height: u32, x: u32, y: u32) -> [Ray; 4] {
-        [
-            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.25),
-            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.25),
-            self.pixel_ray(width, height, x as f64 + 0.75, y as f64 + 0.75),
-            self.pixel_ray(width, height, x as f64 + 0.25, y as f64 + 0.75),
-        ]
+    fn random_pixel_ray(&self, rng: &mut rand::Rng, x: u32, y: u32) -> Ray {
+        self.pixel_ray(x as f64 + rng.next_f64(), y as f64 + rng.next_f64())
     }
 }
 
@@ -132,12 +108,10 @@ impl Ray {
 
 
     pub fn cast(&self, context: &RenderContext) -> Color {
-        if self.depth > context.options.max_depth {
-            return context.options.background_color;
-        }
-
         match self.trace(&context.scene.objects, f64::MAX) {
-            None => context.options.background_color,
+            None => {
+                context.scene.options.background_color
+            },
             Some(hit) => {
                 let si = SurfaceInfo {
                     incident: *self,
@@ -146,7 +120,12 @@ impl Ray {
                     uv: hit.i.uv.clone(),
                 };
 
-                hit.object.material.color(context, &si)
+                let i = hit.object.material.interact(context, &si);
+                if self.depth < context.options.max_depth && !i.absorbed {
+                    i.emittance + i.attenuation * i.scattered.cast(context)
+                } else {
+                    i.emittance
+                }
             }
         }
     }
@@ -159,9 +138,6 @@ impl Ray {
             let intersection = object.intersect(self);
             if let Some(intersection) = intersection {
                 if intersection.t < nearest_distance {
-                    // HACK: transparent objects don't cast shadows
-                    if self.kind == RayKind::Shadow && object.material.has_transparency() { continue }
-
                     nearest_distance = intersection.t;
                     nearest = Some(RayHit::new(&object, intersection));
                 }
@@ -222,109 +198,88 @@ pub struct SurfaceInfo {
     pub uv: Vector2f,
 }
 
-fn color_to_rgb(v: Color) -> image::Rgb<u8> {
-    let r = (v.r * 255.0).min(255.0) as u8;
-    let g = (v.g * 255.0).min(255.0) as u8;
-    let b = (v.b * 255.0).min(255.0) as u8;
-    image::Rgb([r, g, b])
+pub trait RenderProgress {
+    fn render_started(&mut self, options: &Options);
+    fn sample_started(&mut self, options: &Options);
+    fn row_finished(&mut self, options: &Options);
+    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
+    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
 }
 
-fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
-    if context.options.antialiasing {
-        let rays = context.scene.camera.pixel_ray_bundle(context.options.width, context.options.height, x, y);
-        let mut color = Color::black();
-        for ray in rays.iter() {
-            color += ray.cast(&context);
-        }
-        color / (rays.len() as f64)
-    }
-    else {
-        context.scene.camera.pixel_ray(context.options.width, context.options.height, x as f64 + 0.5, y as f64 + 0.5).cast(&context)
+fn color_at_pixel(context: &RenderContext, rng: &mut Rng, x: u32, y: u32) -> Color {
+    context.scene.camera.random_pixel_ray(rng, x, y).cast(&context)
+}
+
+fn update_row(renderbuf: &mut Vec<Vec<Color>>, y: u32, new_row: &Vec<Color>) {
+    let row = &mut renderbuf[y as usize];
+    for i in 0..row.len() {
+        row[i] = row[i] + new_row[i];
     }
 }
 
-pub fn render(
-    options: Options,
-    scene: Scene,
-) -> image::RgbImage {
+pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
+where T: RenderProgress,
+{
+    progress.render_started(&options);
+
+    // pre-allocate render buffer
     let width = options.width;
     let height = options.height;
+    let mut renderbuf: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    let mut renderbuf_row: Vec<Color> = Vec::with_capacity(width as usize);
+    renderbuf_row.resize(width as usize, Color::black());
+    renderbuf.resize(height as usize, renderbuf_row);
 
-    let context = RenderContext {
+    let context = Arc::new(RenderContext {
         options,
         scene,
-    };
+    });
+    let renderbuf = Arc::new(Mutex::new(renderbuf));
 
-    let start_time = time::now();
-    let steady_start_time = time::SteadyTime::now();
+    for current_sample in 0..options.samples {
+        progress.sample_started(&options);
 
-    println!("Started rendering at: {}", start_time.rfc822());
-
-    // start progress bar update task
-    let mut pb: ProgressBar<Stdout> = ProgressBar::new(height as u64);
-    pb.message(&format!("Rendering (x{}): ", options.num_threads));
-
-    let mut results: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
-    results.resize(height as usize, Vec::new());
-    let results: Arc<Mutex<Vec<Vec<Color>>>> = Arc::new(Mutex::new(results));
-
-    if options.num_threads > 1 {
-        let context = Arc::new(context);
         let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
-        let (tx, rx): (Sender<u32>, Receiver<u32>) = mpsc::channel();
+        let (tx, rx) = mpsc::channel();
 
-        // spawn threads for rendering rows
-        // each thread sends the row index when it finishes rendering
+        // Spawn threads for rendering rows.
+        // Each thread pulls a row index, renders the row, and sends the row index when finished.
         for _ in 0..options.num_threads {
             let context = context.clone();
             let rows = rows.clone();
-            let results = results.clone();
+            let renderbuf = renderbuf.clone();
             let tx = tx.clone();
+
             spawn(move || {
+                let mut rng = rand::thread_rng();
                 loop {
-                    let y = { rows.lock().unwrap().pop() };
-                    match y {
-                        Some(y) => {
-                            let row = (0..width).map(|x| {
-                                let context = context.deref();
-                                color_at_pixel(&context, x, y)
-                            }).collect();
-                            let mut results = results.lock().unwrap();
-                            results[y as usize] = row;
-                            let _ = tx.send(y);
+                    let y = rows.lock().unwrap().pop();
+                    if let Some(y) = y {
+                        let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, &mut rng, x, y)).collect();
+
+                        {
+                            let mut renderbuf = renderbuf.lock().unwrap();
+                            update_row(&mut renderbuf, y, &row);
                         }
-                        None => break
+
+                        let _ = tx.send(y);
+                    } else {
+                        break;
                     }
                 }
             });
         }
 
-        // wait for all the rows to be rendered,
-        // updating progress as each row is finished
-        for _ in 0..pb.total {
+        // Wait for all the rows to be rendered.
+        for _ in 0..height {
             let _ = rx.recv();
-            pb.inc();
+            progress.row_finished(&options);
         }
-    } else {
-        for y in 0..height {
-            let row = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
-            let mut results = results.lock().unwrap();
-            results[y as usize] = row;
-        }
+
+        let renderbuf = renderbuf.lock().unwrap();
+        progress.sample_finished(&options, &renderbuf, current_sample + 1);
     }
 
-    let end_time = time::now();
-    let elapsed = time::SteadyTime::now() - steady_start_time;
-
-    pb.finish_println(&format!("Finished rendering at: {}\n", end_time.rfc822()));
-
-    println!("Elapsed time: {}", elapsed);
-
-    let results = results.lock().unwrap();
-    let mut imgbuf = image::RgbImage::new(options.width, options.height);
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        *pixel = color_to_rgb(results[y as usize][x as usize]);
-    }
-
-    imgbuf
+    let renderbuf = renderbuf.lock().unwrap();
+    progress.render_finished(&options, &renderbuf, options.samples)
 }

@@ -24,7 +24,12 @@ object {
   }
   material {
     lambertian texture {
-      solid color rgb <1, 1, 1>
+      pattern {
+        checkerboard 
+        color white 
+        color rgb <0.7, 0.7, 1> 
+        0.5
+      }
     }
   }
 }
@@ -91,47 +96,70 @@ object {
   }
 }
 
-// spheres
+// world map sphere
 object {
   sphere {
-    origin <-2, 1, -5>
-    radius 1
-  }
-  material {
-    lambertian texture {
-      solid color rgb <0.8, 0.3, 0.3>
-    }
-  }
-}
-
-object {
-  sphere {
-    origin <0.0, 1.0, -5.0>
     radius 0.9
   }
   material {
     lambertian texture {
-      solid color rgb <0.8, 0.3, 0.3>
+      image "earth.jpg" 1.0
+    }
+  }
+  transform {
+    rotate_y -90.0
+    translate <0.0, 1.0, -5.0>
+  }
+}
+object {
+  sphere {
+    radius 1.0
+  }
+  material {
+    dielectric ior 1.5
+  }
+  transform {
+    translate <0.0, 1.0, -5.0>
+  }
+}
+
+// gold sphere
+object {
+  sphere {
+    origin <-2.0, 1.0, -5.0>
+    radius 1.0
+  }
+  material {
+    metal fuzz 0.0 texture {
+      solid color rgb <0.8, 0.8, 0.1>
     }
   }
 }
 
+// glass sphere
 object {
   sphere {
-    origin <0, 1, -5>
-    radius 1
+    origin <2.0, 1.0, -5.0>
+    radius 1.0
   }
   material {
-    dielectric ior 1.49 fuzz 0.1
+    dielectric ior 1.5
   }
 }
 
+// red cube
 object {
-  sphere {
-    origin <2, 1, -5>
-    radius 1
+  cube {
+    <-0.5, 0.0, -0.5>
+    <0.5, 1.0, 0.5>
   }
   material {
-    dielectric ior 1.49 fuzz 0.1
+    lambertian texture {
+      solid color rgb <0.8, 0.1, 0.1>
+    }
+  }
+  transform {
+    scale <0.5, 0.5, 0.5>
+    translate <-2.0, 0.0, -3.5>
   }
 }

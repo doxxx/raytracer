@@ -21,6 +21,10 @@ impl Point {
     pub fn zero() -> Point {
         Point::new(0.0, 0.0, 0.0)
     }
+
+    pub fn to_dir(&self) -> Direction {
+        Direction::new(self.x, self.y, self.z)
+    }
 }
 
 impl Add for Point {

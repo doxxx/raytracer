@@ -5,8 +5,8 @@ use std::fs::File;
 use image;
 use wavefront_obj;
 
+use color::Color;
 use direction::Direction;
-use lights::Light;
 use materials::Material;
 use matrix::Matrix44f;
 use object::Object;
@@ -15,22 +15,33 @@ use sdl_grammar;
 use shapes::Shape;
 use shapes::composite::Composite;
 use shapes::mesh::{Mesh,MeshTriangle};
-use system::{Camera,Transformable};
+use system::{Camera,Transformable,Options};
 
 pub struct Scene {
+    pub options: SceneOptions,
     pub camera: Camera,
-    pub lights: Vec<Box<Light>>,
     pub objects: Vec<Object>,
 }
 
-pub fn parse(s: &str) -> sdl_grammar::ParseResult<Scene> {
-    sdl_grammar::scene(s)
+pub struct SceneOptions {
+    pub background_color: Color,
 }
 
-pub fn new_object(loc: Point, shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
+impl SceneOptions {
+    pub fn default() -> SceneOptions {
+        SceneOptions {
+            background_color: Color::black(),
+        }
+    }
+}
+
+pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
+    sdl_grammar::scene(&s, &options)
+}
+
+pub fn new_object(shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
     Object::new("object", shape, material)
         .transform(transform.unwrap_or(Matrix44f::identity()))
-        .transform(Matrix44f::translation(Direction::new(loc.x, loc.y, loc.z)))
 }
 
 pub fn load_image(path: &str) -> image::DynamicImage {
