@@ -24,7 +24,12 @@ object {
   }
   material {
     lambertian texture {
-      solid color rgb <1, 1, 1>
+      pattern {
+        checkerboard 
+        color white 
+        color rgb <0.7, 0.7, 1> 
+        0.5
+      }
     }
   }
 }
