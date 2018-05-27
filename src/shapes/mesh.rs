@@ -94,24 +94,22 @@ impl Mesh {
 }
 
 impl Intersectable for Mesh {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
         if !self.bounding_box.intersect(ray) {
             return None;
         }
 
-        let mut nearest = None;
+        let mut all: Vec<Intersection> = 
+            self.triangles.iter()
+                .filter_map(|triangle| self.intersect_triangle(ray, triangle))
+                .collect();
 
-        for triangle in &self.triangles {
-            let i = self.intersect_triangle(ray, triangle);
-            if let Some(i) = i {
-                nearest = match nearest {
-                    None => Some(i),
-                    Some(n) => if i.t < n.t { Some(i) } else { Some(n) },
-                }
-            }
+        if all.len() > 0 {
+            all.sort_by(|a,b| a.partial_cmp(b).unwrap());
+            Some(all)
+        } else {
+            None
         }
-
-        nearest
     }
 }
 

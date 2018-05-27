@@ -85,8 +85,8 @@ impl Plane {
 }
 
 impl Intersectable for Plane {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.bidi_intersect_with_bounds(ray, |_| false)
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+        self.bidi_intersect_with_bounds(ray, |_| false).map(|i| vec![i])
     }
 }
 
@@ -119,8 +119,8 @@ impl XYRectangle {
 }
 
 impl Intersectable for XYRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1)
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1).map(|i| vec![i])
     }
 }
 
@@ -153,8 +153,8 @@ impl XZRectangle {
 }
 
 impl Intersectable for XZRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1)
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1).map(|i| vec![i])
     }
 }
 
@@ -187,8 +187,8 @@ impl ZYRectangle {
 }
 
 impl Intersectable for ZYRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1)
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1).map(|i| vec![i])
     }
 }
 

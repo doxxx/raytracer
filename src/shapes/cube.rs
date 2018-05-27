@@ -56,7 +56,7 @@ fn zyrect(z0: f64, y0: f64, z1: f64, y1: f64, x: f64) -> Box<Shape> {
 }
 
 impl Intersectable for Cube {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
         self.sides.intersect(ray)
     }
 }

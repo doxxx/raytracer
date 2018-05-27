@@ -7,14 +7,12 @@ pub struct Composite {
 
 impl Composite {
     pub fn new(shapes: Vec<Box<Shape>>) -> Composite {
-        Composite {
-            shapes,
-        }
+        Composite { shapes }
     }
 }
 
 impl Intersectable for Composite {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
         self.shapes.intersect(ray)
     }
 }

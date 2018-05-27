@@ -19,6 +19,19 @@ impl Sphere {
             radius_squared: radius.powi(2),
         }
     }
+
+    fn intersection_for_t(&self, ray: &Ray, t: f64) -> Intersection {
+        let p = ray.origin + ray.direction * t;
+        let n = (p - self.origin).normalize();
+        let u = (1.0 - n.z.atan2(n.x) / f64::consts::PI) * 0.5;
+        let v = n.y.acos() / f64::consts::PI;
+
+        Intersection {
+            t,
+            n,
+            uv: Vector2f(u, v),
+        }
+    }
 }
 
 fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
@@ -39,32 +52,29 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
 }
 
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
         let l = ray.origin - self.origin;
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(l);
         let c = l.dot(l) - self.radius_squared;
+
         if let Some((mut t0, mut t1)) = solve_quadratic(a, b, c) {
             if t0 > t1 {
                 mem::swap(&mut t0, &mut t1);
             }
+            
             if t0 < 0.0 {
-                t0 = t1;
-                if t0 < 0.0 {
-                    return None;
+                if t1 < 0.0 {
+                    None
+                } else {
+                    Some(vec![self.intersection_for_t(ray, t1)])
                 }
+            } else {
+                Some(vec![
+                    self.intersection_for_t(ray, t0),
+                    self.intersection_for_t(ray, t1),
+                ])
             }
-
-            let p = ray.origin + ray.direction * t0;
-            let n = (p - self.origin).normalize();
-            let u = (1.0 - n.z.atan2(n.x) / f64::consts::PI) * 0.5;
-            let v = n.y.acos() / f64::consts::PI;
-
-            Some(Intersection {
-                t: t0,
-                n,
-                uv: Vector2f(u, v),
-            })
         } else {
             None
         }

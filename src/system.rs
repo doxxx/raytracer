@@ -1,3 +1,4 @@
+use std::cmp;
 use std::f64;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
@@ -135,11 +136,11 @@ impl Ray {
         let mut nearest: Option<RayHit> = None;
 
         for object in objects {
-            let intersection = object.intersect(self);
-            if let Some(intersection) = intersection {
-                if intersection.t < nearest_distance {
-                    nearest_distance = intersection.t;
-                    nearest = Some(RayHit::new(&object, intersection));
+            if let Some(is) = object.intersect(self) {
+                let i = is.first().expect("empty intersections list");
+                if i.t < nearest_distance {
+                    nearest_distance = i.t;
+                    nearest = Some(RayHit::new(&object, i.clone()));
                 }
             }
         }
@@ -165,7 +166,7 @@ impl<'a> RayHit<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Intersection {
     pub t: f64,
     pub n: Direction,
@@ -178,8 +179,14 @@ impl Intersection {
     }
 }
 
+impl cmp::PartialOrd for Intersection {
+    fn partial_cmp(&self, other: &Intersection) -> Option<cmp::Ordering> {
+        self.t.partial_cmp(&other.t)
+    }
+}
+
 pub trait Intersectable {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection>;
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>>;
 }
 
 pub trait Transformable {

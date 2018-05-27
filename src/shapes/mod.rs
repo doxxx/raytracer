@@ -1,17 +1,19 @@
+use system::Intersectable;
 use system::Intersection;
 use system::Ray;
-use system::Intersectable;
 
 pub mod bounding_box;
-pub mod cube;
 pub mod composite;
+pub mod csg;
+pub mod cube;
 pub mod mesh;
 pub mod plane;
 pub mod sphere;
 
 pub use self::bounding_box::*;
-pub use self::cube::*;
 pub use self::composite::*;
+pub use self::csg::*;
+pub use self::cube::*;
 pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
@@ -19,17 +21,22 @@ pub use self::sphere::*;
 pub trait Shape: Intersectable + Send + Sync {}
 
 impl Intersectable for [Box<Shape>] {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        let mut nearest: Option<Intersection> = None;
-
-        for s in self {
-            if let Some(i) = s.intersect(ray) {
-                if nearest.is_none() || i.t < nearest.as_ref().unwrap().t {
-                    nearest = Some(i);
-                }
-            }
+    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+        if self.len() == 0 {
+            return None;
         }
-        
-        nearest
+
+        let mut all: Vec<Intersection> = self
+            .iter()
+            .filter_map(|shape| shape.intersect(ray))
+            .flat_map(|intersections| intersections)
+            .collect();
+
+        if all.len() > 0 {
+            all.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            Some(all)
+        } else {
+            None
+        }
     }
 }
