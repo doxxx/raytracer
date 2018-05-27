@@ -18,25 +18,21 @@ pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
 
-pub trait Shape: Intersectable + Send + Sync {}
+#[derive(PartialEq, PartialOrd)]
+pub struct Interval(Intersection, Intersection);
+
+pub trait Shape: Intersectable + Send + Sync {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval>;
+}
 
 impl Intersectable for [Box<Shape>] {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         if self.len() == 0 {
             return None;
         }
 
-        let mut all: Vec<Intersection> = self
-            .iter()
-            .filter_map(|shape| shape.intersect(ray))
-            .flat_map(|intersections| intersections)
-            .collect();
-
-        if all.len() > 0 {
-            all.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            Some(all)
-        } else {
-            None
-        }
+        self.iter()
+            .flat_map(|s| s.intersect(ray))
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
     }
 }

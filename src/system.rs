@@ -136,8 +136,7 @@ impl Ray {
         let mut nearest: Option<RayHit> = None;
 
         for object in objects {
-            if let Some(is) = object.intersect(self) {
-                let i = is.first().expect("empty intersections list");
+            if let Some(i) = object.intersect(self) {
                 if i.t < nearest_distance {
                     nearest_distance = i.t;
                     nearest = Some(RayHit::new(&object, i.clone()));
@@ -186,7 +185,7 @@ impl cmp::PartialOrd for Intersection {
 }
 
 pub trait Intersectable {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>>;
+    fn intersect(&self, ray: &Ray) -> Option<Intersection>;
 }
 
 pub trait Transformable {

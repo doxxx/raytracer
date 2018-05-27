@@ -1,9 +1,9 @@
 use std::f64;
 
-use direction::{Dot, Direction};
+use direction::{Direction, Dot};
 use point::Point;
-use shapes::Shape;
 use shapes::bounding_box::BoundingBox;
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -21,7 +21,12 @@ pub struct MeshTriangle {
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Point>, normals: Vec<Direction>, triangles: Vec<MeshTriangle>, smooth_shading: bool) -> Mesh {
+    pub fn new(
+        vertices: Vec<Point>,
+        normals: Vec<Direction>,
+        triangles: Vec<MeshTriangle>,
+        smooth_shading: bool,
+    ) -> Mesh {
         let mut min = Point::zero();
         let mut max = Point::zero();
 
@@ -94,23 +99,20 @@ impl Mesh {
 }
 
 impl Intersectable for Mesh {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         if !self.bounding_box.intersect(ray) {
             return None;
         }
 
-        let mut all: Vec<Intersection> = 
-            self.triangles.iter()
-                .filter_map(|triangle| self.intersect_triangle(ray, triangle))
-                .collect();
-
-        if all.len() > 0 {
-            all.sort_by(|a,b| a.partial_cmp(b).unwrap());
-            Some(all)
-        } else {
-            None
-        }
+        self.triangles
+            .iter()
+            .filter_map(|triangle| self.intersect_triangle(ray, triangle))
+            .nth(0)
     }
 }
 
-impl Shape for Mesh {}
+impl Shape for Mesh {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("Mesh does not have intersection intervals");
+    }
+}

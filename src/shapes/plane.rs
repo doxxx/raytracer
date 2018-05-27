@@ -1,6 +1,6 @@
 use direction::{Direction, Dot};
 use point::Point;
-use shapes::Shape;
+use shapes::{Shape, Interval};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -85,12 +85,16 @@ impl Plane {
 }
 
 impl Intersectable for Plane {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
-        self.bidi_intersect_with_bounds(ray, |_| false).map(|i| vec![i])
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        self.bidi_intersect_with_bounds(ray, |_| false)
     }
 }
 
-impl Shape for Plane {}
+impl Shape for Plane {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("Plane does not have intersection intervals");
+    }
+}
 
 pub struct XYRectangle {
     plane: Plane,
@@ -116,15 +120,23 @@ impl XYRectangle {
             y1,
         }
     }
-}
 
-impl Intersectable for XYRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1).map(|i| vec![i])
+    fn out_of_bounds(&self, p: &Point) -> bool {
+        p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1
     }
 }
 
-impl Shape for XYRectangle {}
+impl Intersectable for XYRectangle {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| self.out_of_bounds(p))
+    }
+}
+
+impl Shape for XYRectangle {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("XYRectangle does not have intersection intervals");
+    }
+}
 
 pub struct XZRectangle {
     plane: Plane,
@@ -153,12 +165,16 @@ impl XZRectangle {
 }
 
 impl Intersectable for XZRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1).map(|i| vec![i])
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1)
     }
 }
 
-impl Shape for XZRectangle {}
+impl Shape for XZRectangle {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("XZRectangle does not have intersection intervals");
+    }
+}
 
 pub struct ZYRectangle {
     plane: Plane,
@@ -187,9 +203,13 @@ impl ZYRectangle {
 }
 
 impl Intersectable for ZYRectangle {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1).map(|i| vec![i])
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        self.plane.bidi_intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1)
     }
 }
 
-impl Shape for ZYRectangle {}
+impl Shape for ZYRectangle {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("ZYRectangle does not have intersection intervals");
+    }
+}

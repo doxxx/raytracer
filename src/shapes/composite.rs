@@ -1,4 +1,4 @@
-use shapes::Shape;
+use shapes::{Shape, Interval};
 use system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
@@ -12,9 +12,13 @@ impl Composite {
 }
 
 impl Intersectable for Composite {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         self.shapes.intersect(ray)
     }
 }
 
-impl Shape for Composite {}
+impl Shape for Composite {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        panic!("Composite does not have intersection intervals");
+    }
+}

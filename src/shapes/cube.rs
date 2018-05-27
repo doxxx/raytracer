@@ -1,6 +1,6 @@
 use super::{XYRectangle, XZRectangle, ZYRectangle};
 use point::Point;
-use shapes::Shape;
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 
 pub struct Cube {
@@ -56,9 +56,19 @@ fn zyrect(z0: f64, y0: f64, z1: f64, y1: f64, x: f64) -> Box<Shape> {
 }
 
 impl Intersectable for Cube {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         self.sides.intersect(ray)
     }
 }
 
-impl Shape for Cube {}
+impl Shape for Cube {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        let mut is: Vec<Intersection> = self.sides.iter().flat_map(|s| s.intersect(ray)).collect();
+        if is.len() == 0 {
+            return Vec::new();
+        } else {
+            assert!(is.len() == 2);
+            vec![Interval(is.pop().unwrap(), is.pop().unwrap())]
+        }
+    }
+}

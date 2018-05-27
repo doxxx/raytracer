@@ -42,18 +42,16 @@ impl Transformable for Object {
 }
 
 impl Intersectable for Object {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let object_ray = ray.transform(self.world_to_object);
-        self.shape.intersect(&object_ray).map(|is| {
-            is.into_iter().map(|i| {
-                    let object_hit_point = i.point(&object_ray);
-                    let world_hit_point = object_hit_point * self.object_to_world;
-                    Intersection {
-                        t: (world_hit_point - ray.origin).length(),
-                        n: i.n * self.normal_to_world,
-                        uv: i.uv,
-                    }
-            }).collect()
+        self.shape.intersect(&object_ray).map(|i| {
+            let object_hit_point = i.point(&object_ray);
+            let world_hit_point = object_hit_point * self.object_to_world;
+            Intersection {
+                t: (world_hit_point - ray.origin).length(),
+                n: i.n * self.normal_to_world,
+                uv: i.uv,
+            }
         })
     }
 }

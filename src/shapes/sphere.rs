@@ -3,7 +3,7 @@ use std::mem;
 
 use direction::Dot;
 use point::Point;
-use shapes::Shape;
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -52,7 +52,26 @@ fn solve_quadratic(a: f64, b: f64, c: f64) -> Option<(f64, f64)> {
 }
 
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Intersection>> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        if let Some(Interval(a, b)) = self.intersection_intervals(ray).into_iter().nth(0) {
+            if a.t < 0.0 {
+                if b.t < 0.0 {
+                    None
+                } else {
+                    Some(b)
+                }
+            }
+            else {
+                Some(a)
+            }
+        } else {
+            None
+        }
+    }
+}
+
+impl Shape for Sphere {
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let l = ray.origin - self.origin;
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(l);
@@ -62,23 +81,10 @@ impl Intersectable for Sphere {
             if t0 > t1 {
                 mem::swap(&mut t0, &mut t1);
             }
-            
-            if t0 < 0.0 {
-                if t1 < 0.0 {
-                    None
-                } else {
-                    Some(vec![self.intersection_for_t(ray, t1)])
-                }
-            } else {
-                Some(vec![
-                    self.intersection_for_t(ray, t0),
-                    self.intersection_for_t(ray, t1),
-                ])
-            }
+
+            vec![Interval(self.intersection_for_t(ray, t0), self.intersection_for_t(ray, t1))]
         } else {
-            None
+            Vec::new()
         }
     }
 }
-
-impl Shape for Sphere {}
