@@ -18,7 +18,7 @@ pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
 
-#[derive(PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);
 
 pub trait Shape: Intersectable + Send + Sync {

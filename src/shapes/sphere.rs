@@ -84,7 +84,7 @@ impl Shape for Sphere {
 
             vec![Interval(self.intersection_for_t(ray, t0), self.intersection_for_t(ray, t1))]
         } else {
-            Vec::new()
+            Vec::with_capacity(0)
         }
     }
 }

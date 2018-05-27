@@ -1,3 +1,5 @@
+use std::mem;
+
 use super::{XYRectangle, XZRectangle, ZYRectangle};
 use point::Point;
 use shapes::{Interval, Shape};
@@ -64,11 +66,18 @@ impl Intersectable for Cube {
 impl Shape for Cube {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let mut is: Vec<Intersection> = self.sides.iter().flat_map(|s| s.intersect(ray)).collect();
-        if is.len() == 0 {
-            return Vec::new();
+        if is.len() == 2 {
+            let mut a = is.pop().unwrap();
+            let mut b = is.pop().unwrap();
+            if a > b {
+                mem::swap(&mut a, &mut b);
+            }
+            vec![Interval(a, b)]
+        } else if is.len() == 1 {
+            let i = is.pop().unwrap();
+            vec![Interval(i.clone(), i.clone())]
         } else {
-            assert!(is.len() == 2);
-            vec![Interval(is.pop().unwrap(), is.pop().unwrap())]
+            Vec::with_capacity(0)
         }
     }
 }
