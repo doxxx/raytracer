@@ -139,7 +139,7 @@ impl Ray {
             if let Some(i) = object.intersect(self) {
                 if i.t < nearest_distance {
                     nearest_distance = i.t;
-                    nearest = Some(RayHit::new(&object, i.clone()));
+                    nearest = Some(RayHit::new(&object, i));
                 }
             }
         }
