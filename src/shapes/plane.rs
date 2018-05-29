@@ -60,7 +60,7 @@ impl Plane {
     }
 
     fn bidi_intersect_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Option<Intersection> 
-        where F: FnOnce(&Point) -> bool 
+        where F: FnOnce(Point) -> bool 
     {
         let mut n = self.normal;
         let mut uv = self.uv;
@@ -72,7 +72,7 @@ impl Plane {
         }
         if let Some(t) = t {
             let p = ray.origin + ray.direction * t;
-            if out_of_bounds(&p) {
+            if out_of_bounds(p) {
                 return None;
             }
             let op = p - self.origin;
@@ -121,7 +121,7 @@ impl XYRectangle {
         }
     }
 
-    fn out_of_bounds(&self, p: &Point) -> bool {
+    fn out_of_bounds(&self, p: Point) -> bool {
         p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1
     }
 }
