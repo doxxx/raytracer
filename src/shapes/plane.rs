@@ -92,7 +92,7 @@ impl Intersectable for Plane {
 
 impl Shape for Plane {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        panic!("Plane does not have intersection intervals");
+        panic!("not a solid");
     }
 }
 
@@ -134,7 +134,7 @@ impl Intersectable for XYRectangle {
 
 impl Shape for XYRectangle {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        panic!("XYRectangle does not have intersection intervals");
+        panic!("not a solid");
     }
 }
 
@@ -172,7 +172,7 @@ impl Intersectable for XZRectangle {
 
 impl Shape for XZRectangle {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        panic!("XZRectangle does not have intersection intervals");
+        panic!("not a solid");
     }
 }
 
@@ -210,6 +210,6 @@ impl Intersectable for ZYRectangle {
 
 impl Shape for ZYRectangle {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        panic!("ZYRectangle does not have intersection intervals");
+        panic!("not a solid");
     }
 }

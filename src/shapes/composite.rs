@@ -1,3 +1,4 @@
+use point::Point;
 use shapes::{Shape, Interval};
 use system::{Intersectable, Intersection, Ray};
 
@@ -19,6 +20,6 @@ impl Intersectable for Composite {
 
 impl Shape for Composite {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        panic!("Composite does not have intersection intervals");
+        panic!("not a solid");
     }
 }
