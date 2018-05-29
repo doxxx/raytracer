@@ -1,3 +1,4 @@
+use point::Point;
 use system::Intersectable;
 use system::Intersection;
 use system::Ray;
@@ -20,6 +21,14 @@ pub use self::sphere::*;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);
+
+pub fn first_positive_intersection(intervals: Vec<Interval>) -> Option<Intersection> {
+    intervals
+        .into_iter()
+        .flat_map(|Interval(a, b)| vec![a, b])
+        .skip_while(|i| i.t < 0.0)
+        .nth(0)
+}
 
 pub trait Shape: Intersectable + Send + Sync {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval>;

@@ -89,20 +89,7 @@ impl Intersectable for CSGUnion {
         //     return None;
         // }
 
-        if let Some(Interval(a, b)) = self.intersection_intervals(ray).into_iter().nth(0) {
-            if a.t < 0.0 {
-                if b.t < 0.0 {
-                    None
-                } else {
-                    Some(b)
-                }
-            }
-            else {
-                Some(a)
-            }
-        } else {
-            None
-        }
+        super::first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
