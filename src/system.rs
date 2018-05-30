@@ -165,7 +165,7 @@ impl<'a> RayHit<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Intersection {
     pub t: f64,
     pub n: Direction,

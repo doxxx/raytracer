@@ -19,7 +19,7 @@ pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);
 
 pub fn first_positive_intersection(intervals: Vec<Interval>) -> Option<Intersection> {

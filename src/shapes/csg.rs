@@ -24,6 +24,7 @@ impl Shape for CSGUnion {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let intervals_a = self.a.intersection_intervals(ray);
         let intervals_b = self.b.intersection_intervals(ray);
+
         if intervals_a.len() == 0 {
             return intervals_b;
         }
@@ -32,35 +33,35 @@ impl Shape for CSGUnion {
         }
 
         let mut intervals = Vec::new();
-        let mut iter_a = intervals_a.iter();
-        let mut iter_b = intervals_b.iter();
+        let mut iter_a = intervals_a.into_iter();
+        let mut iter_b = intervals_b.into_iter();
         let mut interval_a = iter_a.next();
         let mut interval_b = iter_b.next();
 
         while let (Some(Interval(a_start, a_end)), Some(Interval(b_start, b_end))) = (interval_a, interval_b) {
             if a_end < b_start {
                 // interval_a ends before interval_b starts
-                intervals.push(interval_a.unwrap().clone());
+                intervals.push(interval_a.unwrap());
                 interval_a = iter_a.next();
             } else if b_end < a_start {
                 // interval_b ends before interval_a starts
-                intervals.push(interval_b.unwrap().clone());
+                intervals.push(interval_b.unwrap());
                 interval_b = iter_b.next();
             } else {
                 // intervals intersect
-                let mut new_start = a_start.clone();
-                let mut new_end = a_end.clone();
-                if *b_start < new_start {
-                    new_start = b_start.clone();
+                let mut new_start = a_start;
+                let mut new_end = a_end;
+                if b_start < new_start {
+                    new_start = b_start;
                 }
-                if *b_end > new_end {
-                    new_end = b_end.clone();
+                if b_end > new_end {
+                    new_end = b_end;
                     interval_a = iter_a.next();
                     while let Some(Interval(a_start, a_end)) = interval_a {
-                        if *a_start > new_end {
+                        if a_start > new_end {
                             break;
                         }
-                        new_end = a_end.clone();
+                        new_end = a_end;
                         interval_a = iter_a.next();
                     }
                 }
