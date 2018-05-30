@@ -70,12 +70,18 @@ impl Shape for CSGUnion {
             }
         }
 
-        while let Some(interval_a) = iter_a.next() {
-            intervals.push(interval_a.clone());
+        if let Some(i) = interval_a {
+            intervals.push(i);
+        } else if let Some(i) = interval_b {
+            intervals.push(i);
         }
 
-        while let Some(interval_b) = iter_b.next() {
-            intervals.push(interval_b.clone());
+        while let Some(i) = iter_a.next() {
+            intervals.push(i);
+        }
+
+        while let Some(i) = iter_b.next() {
+            intervals.push(i);
         }
 
         intervals.sort_by(|a,b| a.partial_cmp(b).unwrap());
