@@ -108,8 +108,8 @@ pub struct CSGIntersection {
 }
 
 impl CSGIntersection {
-    pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGUnion {
-        CSGUnion {
+    pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGIntersection {
+        CSGIntersection {
             bounds: BoundingBox::new(Point::zero(), Point::zero()),
             a,
             b,
@@ -119,17 +119,54 @@ impl CSGIntersection {
 
 impl Shape for CSGIntersection {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        Vec::with_capacity(0)
+        let intervals_a = self.a.intersection_intervals(ray);
+        let intervals_b = self.b.intersection_intervals(ray);
+
+        if intervals_a.len() == 0 || intervals_b.len() == 0 {
+            return Vec::with_capacity(0);
+        }
+
+        let mut intervals = Vec::new();
+        let mut iter_a = intervals_a.into_iter();
+        let mut iter_b = intervals_b.into_iter();
+        let mut interval_a = iter_a.next();
+        let mut interval_b = iter_b.next();
+
+        while let (Some(Interval(a_start, a_end)), Some(Interval(b_start, b_end))) = (interval_a, interval_b) {
+            if a_end < b_start {
+                // interval_a ends before interval_b starts
+                interval_a = iter_a.next();
+            } else if b_end < a_start {
+                // interval_b ends before interval_a starts
+                interval_b = iter_b.next();
+            } else {
+                // intervals intersect
+                let new_interval = Interval(
+                    if a_start > b_start { a_start } else { b_start },
+                    if a_end < b_end { a_end } else { b_end },
+                );
+                intervals.push(new_interval);
+                if b_end >= a_end {
+                    interval_a = iter_a.next();
+                } else {
+                    interval_b = iter_b.next();
+                }
+            }
+        }
+
+        intervals.sort_by(|a,b| a.partial_cmp(b).unwrap());
+
+        intervals
     }
 }
 
 impl Intersectable for CSGIntersection {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        if !self.bounds.intersect(ray) {
-            return None;
-        }
+        // if !self.bounds.intersect(ray) {
+        //     return None;
+        // }
 
-        None
+        super::first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
