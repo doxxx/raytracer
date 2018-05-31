@@ -282,8 +282,10 @@ CLOSE_BRACE = T<"}">
 
 T<E> = HIDDEN* E HIDDEN*
 
-HIDDEN = WS / LINE_COMMENT
+HIDDEN = WS / LINE_COMMENT / BLOCK_COMMENT
 
 LINE_COMMENT = "//" [^\n]*
+
+BLOCK_COMMENT = "/*" [^*]* "*/"
 
 WS = #quiet<[ \n\r\t]> / #expected("whitespace")
