@@ -100,8 +100,8 @@ sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal b:plane_bidi? CLOSE_BRACE {
-    Box::new(Plane::new(o.unwrap_or(Point::zero()), n, b.is_some()))
+  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal CLOSE_BRACE {
+    Box::new(Plane::new(o.unwrap_or(Point::zero()), n))
   }
 
 origin -> Point
@@ -109,9 +109,6 @@ origin -> Point
 
 plane_normal -> Direction
   = T<"normal"> n:direction { n }
-
-plane_bidi -> ()
-  = T<"bidi">
 
 mesh -> Box<Shape>
   = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
@@ -122,18 +119,18 @@ mesh_file -> String
   = T<"file"> p:path { p }
 
 xyrect -> Box<Shape>
-  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 xzrect -> Box<Shape>
-  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 zyrect -> Box<Shape>
-  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 width -> f64
@@ -141,6 +138,9 @@ width -> f64
 
 height -> f64
   = T<"height"> h:FLOAT { h }
+
+reverse -> ()
+  = T<"reverse">
 
 cube -> Box<Shape>
   = T<"cube"> OPEN_BRACE p1:point p2: point CLOSE_BRACE {
