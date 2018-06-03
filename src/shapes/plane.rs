@@ -220,3 +220,43 @@ impl Shape for ZYRectangle {
         panic!("not a solid");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use direction::*;
+    use test_utils::*;
+
+    #[test]
+    pub fn front_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &1.0);
+        assert_approx_eq(&i.n, &Direction::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    pub fn back_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, -1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &1.0);
+        assert_approx_eq(&i.n, &Direction::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    pub fn non_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 1.0, 0.0), 0);
+        assert!(s.intersect(&r).is_none());
+    }
+
+    #[test]
+    pub fn intersection_behind_ray() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, -1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &-1.0);
+    }
+}
