@@ -5,7 +5,6 @@ use system::{Intersectable, Intersection, Ray};
 
 /// Constructive Solid Geometry Union
 pub struct CSGUnion {
-    bounds: BoundingBox,
     a: Box<Shape>,
     b: Box<Shape>,
 }
@@ -13,7 +12,6 @@ pub struct CSGUnion {
 impl CSGUnion {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGUnion {
         CSGUnion {
-            bounds: BoundingBox::new(Point::zero(), Point::zero()),
             a,
             b,
         }
@@ -102,7 +100,6 @@ impl Intersectable for CSGUnion {
 
 /// Constructive Solid Geometry Intersection
 pub struct CSGIntersection {
-    bounds: BoundingBox,
     a: Box<Shape>,
     b: Box<Shape>,
 }
@@ -110,7 +107,6 @@ pub struct CSGIntersection {
 impl CSGIntersection {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGIntersection {
         CSGIntersection {
-            bounds: BoundingBox::new(Point::zero(), Point::zero()),
             a,
             b,
         }
@@ -172,7 +168,6 @@ impl Intersectable for CSGIntersection {
 
 /// Constructive Solid Geometry Difference
 pub struct CSGDifference {
-    bounds: BoundingBox,
     a: Box<Shape>,
     b: Box<Shape>,
 }
@@ -180,7 +175,6 @@ pub struct CSGDifference {
 impl CSGDifference {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGDifference {
         CSGDifference {
-            bounds: BoundingBox::new(Point::zero(), Point::zero()),
             a,
             b,
         }
