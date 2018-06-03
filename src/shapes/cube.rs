@@ -6,7 +6,12 @@ use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 
 pub struct Cube {
-    sides: [Box<Shape>; 6],
+    min_x: ZYRectangle,
+    max_x: ZYRectangle,
+    min_y: XZRectangle,
+    max_y: XZRectangle,
+    min_z: XYRectangle,
+    max_z: XYRectangle,
 }
 
 impl Cube {
@@ -18,43 +23,41 @@ impl Cube {
         let max_y = p1.y.max(p2.y);
         let max_z = p1.z.max(p2.z);
         Cube {
-            sides: [
-                xyrect(min_x, min_y, max_x, max_y, min_z, true),
-                xyrect(min_x, min_y, max_x, max_y, max_z, false),
-                xzrect(min_x, min_z, max_x, max_z, min_y, true,),
-                xzrect(min_x, min_z, max_x, max_z, max_y, false),
-                zyrect(min_z, min_y, max_z, max_y, min_x, true),
-                zyrect(min_z, min_y, max_z, max_y, max_x, false),
-            ],
+            min_x: zyrect(min_z, min_y, max_z, max_y, min_x, true),
+            max_x: zyrect(min_z, min_y, max_z, max_y, max_x, false),
+            min_y: xzrect(min_x, min_z, max_x, max_z, min_y, true,),
+            max_y: xzrect(min_x, min_z, max_x, max_z, max_y, false),
+            min_z: xyrect(min_x, min_y, max_x, max_y, min_z, true),
+            max_z: xyrect(min_x, min_y, max_x, max_y, max_z, false),
         }
     }
 }
 
-fn xyrect(x0: f64, y0: f64, x1: f64, y1: f64, z: f64, reverse_normal: bool) -> Box<Shape> {
-    Box::new(XYRectangle::new(
+fn xyrect(x0: f64, y0: f64, x1: f64, y1: f64, z: f64, reverse_normal: bool) -> XYRectangle {
+    XYRectangle::new(
         Point::new((x1 - x0) / 2.0 + x0, (y1 - y0) / 2.0 + y0, z),
         x1 - x0,
         y1 - y0,
         reverse_normal,
-    ))
+    )
 }
 
-fn xzrect(x0: f64, z0: f64, x1: f64, z1: f64, y: f64, reverse_normal: bool) -> Box<Shape> {
-    Box::new(XZRectangle::new(
+fn xzrect(x0: f64, z0: f64, x1: f64, z1: f64, y: f64, reverse_normal: bool) -> XZRectangle {
+    XZRectangle::new(
         Point::new((x1 - x0) / 2.0 + x0, y, (z1 - z0) / 2.0 + z0),
         x1 - x0,
         z1 - z0,
         reverse_normal,
-    ))
+    )
 }
 
-fn zyrect(z0: f64, y0: f64, z1: f64, y1: f64, x: f64, reverse_normal: bool) -> Box<Shape> {
-    Box::new(ZYRectangle::new(
+fn zyrect(z0: f64, y0: f64, z1: f64, y1: f64, x: f64, reverse_normal: bool) -> ZYRectangle {
+    ZYRectangle::new(
         Point::new(x, (y1 - y0) / 2.0 + y0, (z1 - z0) / 2.0 + z0),
         z1 - z0,
         y1 - y0,
         reverse_normal,
-    ))
+    )
 }
 
 impl Intersectable for Cube {
@@ -65,19 +68,25 @@ impl Intersectable for Cube {
 
 impl Shape for Cube {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let mut is: Vec<Intersection> = self.sides.iter().flat_map(|s| s.intersect(ray)).collect();
+        let is = [
+            self.min_x.intersect(ray), self.max_x.intersect(ray),
+            self.min_y.intersect(ray), self.max_y.intersect(ray),
+            self.min_z.intersect(ray), self.max_z.intersect(ray),
+        ];
+        let is: Vec<Intersection> = is.into_iter().flat_map(|i| *i).collect();
+
         if is.len() > 2 {
             panic!("more than two intersections for cube");
         } else if is.len() == 2 {
-            let mut a = is.pop().unwrap();
-            let mut b = is.pop().unwrap();
+            let mut a = is[0];
+            let mut b = is[1];
             if a > b {
                 mem::swap(&mut a, &mut b);
             }
             b.n *= -1.0;
             vec![Interval(a, b)]
         } else if is.len() == 1 {
-            let i = is.pop().unwrap();
+            let i = is[0];
             vec![Interval(i.clone(), i.clone())]
         } else {
             Vec::with_capacity(0)
