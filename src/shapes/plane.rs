@@ -23,11 +23,11 @@ fn plane_intersect(o: Point, n: Direction, ray: &Ray) -> Option<f64> {
     if denom.abs() > 1e-6 {
         let w = o - ray.origin;
         let t = w.dot(n) / denom;
-            Some(t)
-        } else {
-            None
-        }
+        Some(t)
+    } else {
+        None
     }
+}
 
 pub struct Plane {
     origin: Point,
@@ -82,7 +82,7 @@ impl Intersectable for Plane {
 }
 
 impl Shape for Plane {
-    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
         panic!("not a solid");
     }
 }
@@ -128,7 +128,7 @@ impl Intersectable for XYRectangle {
 }
 
 impl Shape for XYRectangle {
-    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
         panic!("not a solid");
     }
 }
@@ -170,7 +170,7 @@ impl Intersectable for XZRectangle {
 }
 
 impl Shape for XZRectangle {
-    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
         panic!("not a solid");
     }
 }
@@ -212,7 +212,7 @@ impl Intersectable for ZYRectangle {
 }
 
 impl Shape for ZYRectangle {
-    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
         panic!("not a solid");
     }
 }

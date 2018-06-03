@@ -1,5 +1,3 @@
-use point::Point;
-use shapes::bounding_box::BoundingBox;
 use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 

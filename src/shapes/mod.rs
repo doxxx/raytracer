@@ -1,4 +1,3 @@
-use point::Point;
 use system::Intersectable;
 use system::Intersection;
 use system::Ray;

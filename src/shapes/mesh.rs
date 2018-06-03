@@ -112,7 +112,7 @@ impl Intersectable for Mesh {
 }
 
 impl Shape for Mesh {
-    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
         panic!("not a solid");
     }
 }
