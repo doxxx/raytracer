@@ -74,6 +74,7 @@ impl Shape for Cube {
             if a > b {
                 mem::swap(&mut a, &mut b);
             }
+            b.n *= -1.0;
             vec![Interval(a, b)]
         } else if is.len() == 1 {
             let i = is.pop().unwrap();

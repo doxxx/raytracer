@@ -23,15 +23,11 @@ fn plane_intersect(o: Point, n: Direction, ray: &Ray) -> Option<f64> {
     if denom.abs() > 1e-6 {
         let w = o - ray.origin;
         let t = w.dot(n) / denom;
-        if t >= 0.0 {
             Some(t)
         } else {
             None
         }
-    } else {
-        None
     }
-}
 
 pub struct Plane {
     origin: Point,
