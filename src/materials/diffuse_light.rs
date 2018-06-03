@@ -9,12 +9,13 @@ use materials::Material;
 
 #[derive(Clone)]
 pub struct DiffuseLight {
+    intensity: f64,
     texture: Texture,
 }
 
 impl DiffuseLight {
-    pub fn new(texture: Texture) -> DiffuseLight {
-        DiffuseLight { texture }
+    pub fn new(intensity: f64, texture: Texture) -> DiffuseLight {
+        DiffuseLight { intensity, texture }
     }
 }
 
@@ -22,7 +23,7 @@ impl Material for DiffuseLight {
     fn interact(&self, _context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction {
         SurfaceInteraction {
             absorbed: true,
-            emittance: self.texture.color_at_uv(si.uv),
+            emittance: self.intensity * self.texture.color_at_uv(si.uv),
             attenuation: Color::black(),
             scattered: Ray::primary(Point::zero(), Direction::zero(), 0),
         }

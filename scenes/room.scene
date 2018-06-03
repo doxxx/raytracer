@@ -16,8 +16,8 @@ object "sun" {
     radius 3
   }
   material {
-    diffuse_light texture {
-      solid color rgb <50, 50, 50>
+    diffuse_light intensity 50 texture {
+      solid color rgb <1, 1, 1>
     }
   }
 }
@@ -38,7 +38,7 @@ object "sky" {
     /*lambertian texture {
       solid color rgb <0.698, 1, 1>
     }*/
-    diffuse_light texture {
+    diffuse_light intensity 6 texture {
       solid color rgb <0.698, 1, 1>
     }
   }
@@ -76,7 +76,7 @@ object "room walls" {
   }
   material {
     lambertian texture {
-      solid color white
+      solid color rgb <0.8, 0.8, 0.8>
     }
   }
 }

@@ -179,8 +179,13 @@ ior -> f64
   = "ior" WS+ n:FLOAT { n }
 
 diffuse_light -> Box<Material>
-  = T<"diffuse_light"> texture:texture {
-    Box::new(DiffuseLight::new(texture))
+  = T<"diffuse_light"> i:intensity texture:texture {
+    Box::new(DiffuseLight::new(i, texture))
+  }
+
+intensity -> f64
+  = T<"intensity"> n:FLOAT {
+    n
   }
 
 object_transform -> Matrix44f

@@ -85,8 +85,8 @@ object {
         height 105
     }
     material {
-        diffuse_light texture {
-            solid color rgb <15, 15, 15>
+        diffuse_light intensity 15 texture {
+            solid color rgb <1, 1, 1>
         }
     }
     transform {

@@ -10,8 +10,8 @@ object {
     radius 1
   }
   material {
-    diffuse_light texture {
-      solid color rgb <6, 6, 6>
+    diffuse_light intensity 6 texture {
+      solid color rgb <1, 1, 1>
     }
   }
 }
