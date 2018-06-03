@@ -39,8 +39,8 @@ pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
     sdl_grammar::scene(&s, &options)
 }
 
-pub fn new_object(shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
-    Object::new("object", shape, material)
+pub fn new_object(name: Option<String>, shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
+    Object::new(&name.unwrap_or(String::from("object")), shape, material)
         .transform(transform.unwrap_or(Matrix44f::identity()))
 }
 

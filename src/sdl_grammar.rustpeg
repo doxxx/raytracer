@@ -45,14 +45,13 @@ fov -> f64
   = T<"fov"> f:FLOAT { f }
 
 pub object -> Object
-  = T<"object">
-    OPEN_BRACE
+  = T<"object"> name:string? OPEN_BRACE
     shape:object_shape
     material:object_material
     transform:object_transform?
     CLOSE_BRACE
   {
-    sdl::new_object(shape, material, transform)
+    sdl::new_object(name, shape, material, transform)
   }
 
 object_shape -> Box<Shape>
@@ -246,6 +245,9 @@ texture_image -> Texture
   }
 
 path -> String
+  = string
+
+string -> String
   = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
 
 pub point -> Point
