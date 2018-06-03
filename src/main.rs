@@ -18,6 +18,9 @@ mod system;
 mod texture;
 mod vector;
 
+#[cfg(test)]
+mod test_utils;
+
 mod sdl_grammar {
     include!(concat!(env!("OUT_DIR"), "/sdl_grammar.rs"));
 }

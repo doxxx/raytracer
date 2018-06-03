@@ -83,3 +83,88 @@ impl Shape for Cube {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use direction::*;
+    use test_utils::*;
+
+    #[test]
+    pub fn outside_intersection() {
+        let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 2.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+            .into_iter()
+            .flat_map(|Interval(a,b)| vec![a, b])
+            .collect();
+        let distances: Vec<f64> = intersections
+            .iter()
+            .map(|i| i.t)
+            .collect();
+        let normals: Vec<Direction> = intersections
+            .iter()
+            .map(|i| i.n)
+            .collect();
+        assert_approx_eq(&distances, &vec![
+            1.0,
+            3.0,
+        ]);
+        assert_approx_eq(&normals, &vec![
+            Direction::new(0.0, 0.0, 1.0),
+            Direction::new(0.0, 0.0, -1.0),
+        ]);
+    }
+
+    #[test]
+    pub fn coincident_intersection() {
+        let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+            .into_iter()
+            .flat_map(|Interval(a,b)| vec![a, b])
+            .collect();
+        let distances: Vec<f64> = intersections
+            .iter()
+            .map(|i| i.t)
+            .collect();
+        let normals: Vec<Direction> = intersections
+            .iter()
+            .map(|i| i.n)
+            .collect();
+        assert_approx_eq(&distances, &vec![
+            0.0,
+            2.0,
+        ]);
+        assert_approx_eq(&normals, &vec![
+            Direction::new(0.0, 0.0, 1.0),
+            Direction::new(0.0, 0.0, -1.0),
+        ]);
+    }
+
+    #[test]
+    pub fn inside_intersection() {
+        let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 0.9), Direction::new(0.0, 0.0, -1.0), 0);
+        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+            .into_iter()
+            .flat_map(|Interval(a,b)| vec![a, b])
+            .collect();
+        let distances: Vec<f64> = intersections
+            .iter()
+            .map(|i| i.t)
+            .collect();
+        let normals: Vec<Direction> = intersections
+            .iter()
+            .map(|i| i.n)
+            .collect();
+        assert_approx_eq(&distances, &vec![
+            -0.1,
+            1.9,
+        ]);
+        assert_approx_eq(&normals, &vec![
+            Direction::new(0.0, 0.0, 1.0),
+            Direction::new(0.0, 0.0, -1.0),
+        ]);
+    }
+}
