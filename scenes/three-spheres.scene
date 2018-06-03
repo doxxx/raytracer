@@ -57,7 +57,6 @@ object {
     origin <-4, 2, -5>
     width 4
     height 4
-    bidi
   }
   material {
     lambertian texture {
@@ -72,7 +71,6 @@ object {
     origin <4, 2, -5>
     width 4
     height 4
-    bidi
   }
   material {
     lambertian texture {
@@ -87,7 +85,6 @@ object {
     origin <0, 2, -7>
     width 8
     height 4
-    bidi
   }
   material {
     lambertian texture {

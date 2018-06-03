@@ -15,7 +15,6 @@ object {
         origin <0, 278, 278>
         width 555
         height 555
-        bidi
     }
     material {
         lambertian texture {
@@ -28,7 +27,6 @@ object {
     zyrect {
         width 555
         height 555
-        bidi
     }
     material {
         lambertian texture {
@@ -46,7 +44,6 @@ object {
         origin <278, 555, 278>
         width 555
         height 555
-        bidi
     }
     material {
         lambertian texture {
@@ -60,7 +57,6 @@ object {
         origin <278, 0, 278>
         width 555
         height 555
-        bidi
     }
     material {
         lambertian texture {
@@ -74,7 +70,6 @@ object {
         origin <278, 278, 555>
         width 555
         height 555
-        bidi
     }
     material {
         lambertian texture {

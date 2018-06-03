@@ -1,0 +1,59 @@
+camera {
+  origin <-2, 1, 3>
+  look_at <0, 1, 0>
+}
+
+// light
+object "light" {
+  sphere {
+    origin <7, 7, 7>
+    radius 5
+  }
+  material {
+    diffuse_light texture {
+      solid color rgb <3, 3, 3>
+    }
+  }
+}
+
+// floor
+object "floor" {
+  plane {
+    origin <0, 0, 0>
+    normal <0, 1, 0>
+  }
+  material {
+    lambertian texture {
+      solid color rgb <0.5, 0.8, 0.1>
+    }
+  }
+}
+
+// objects
+object "thing" {
+  difference {
+    intersection {
+      cube {
+        <-1, 0, -1>
+        <1, 2, 1>
+      }
+      sphere {
+        origin <0, 1, 0>
+        radius 1.4
+      }
+    }
+    sphere {
+      origin <0, 1, 0>
+      radius 1.35
+    }
+  }
+  material {
+    lambertian texture { solid color white }
+    //dielectric ior 1.5
+    //metal fuzz 0.0 texture { solid color rgb <0.8, 0.8, 0.1> }
+    //metal fuzz 0.1 texture { solid color rgb <0.5, 0.5, 0.5> }
+  }
+  transform {
+    translate <0, 0, 0>
+  }
+}
