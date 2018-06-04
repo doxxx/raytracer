@@ -5,8 +5,8 @@ use rand::Rng;
 
 use color::Color;
 use direction::{Direction, Dot};
-use materials::SurfaceInteraction;
-use system::{Ray, RenderContext, SurfaceInfo};
+use materials::MaterialInteraction;
+use system::{Ray, RayHit, RenderContext};
 
 use materials::Material;
 
@@ -23,43 +23,43 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn interact(&self, context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction {
-        let outside = si.incident.direction.dot(si.n) < 0.0;
-        let bias = si.n * context.options.bias;
+    fn interact(&self, context: &RenderContext, hit: &RayHit) -> MaterialInteraction {
+        let outside = hit.incident.direction.dot(hit.n) < 0.0;
+        let bias = hit.n * context.options.bias;
 
-        let kr = fresnel(si.incident.direction, si.n, self.ior);
+        let kr = fresnel(hit.incident.direction, hit.n, self.ior);
         let mut rng = rand::thread_rng();
-        if rng.gen::<f64>() < kr { 
+        if rng.gen::<f64>() < kr {
             // reflection
-            let reflected = si.incident.direction.reflect(si.n);
+            let reflected = hit.incident.direction.reflect(hit.n);
             let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
             let scattered = (reflected + fuzz).normalize();
-            SurfaceInteraction {
-                absorbed: false,
-                emittance: Color::black(),
-                attenuation: Color::white(),
-                scattered: Ray::primary(
-                    if outside { si.point + bias } else { si.point - bias },
+            MaterialInteraction::Scattered {
+                albedo: Color::white(),
+                dir: Ray::primary(
+                    if outside { hit.p + bias } else { hit.p - bias },
                     scattered,
-                    si.incident.depth + 1,
+                    hit.incident.depth + 1,
                 ),
             }
-        } else { 
+        } else {
             // refraction
-            let refracted = refract(si.incident.direction, si.n, self.ior);
+            let refracted = refract(hit.incident.direction, hit.n, self.ior);
             let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
             let scattered = (refracted + fuzz).normalize();
-            SurfaceInteraction {
-                absorbed: false,
-                emittance: Color::black(),
-                attenuation: Color::white(),
-                scattered: Ray::primary(
-                    if outside { si.point - bias } else { si.point + bias },
+            MaterialInteraction::Scattered {
+                albedo: Color::white(),
+                dir: Ray::primary(
+                    if outside { hit.p - bias } else { hit.p + bias },
                     scattered,
-                    si.incident.depth + 1,
+                    hit.incident.depth + 1,
                 ),
             }
         }
+    }
+
+    fn emit(&self, _context: &RenderContext, _hit: &RayHit) -> Color {
+        Color::black()
     }
 
     fn box_clone(&self) -> Box<Material> {

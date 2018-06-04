@@ -9,6 +9,7 @@ use rand::Rng;
 
 use color::Color;
 use direction::Direction;
+use materials::MaterialInteraction;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -115,37 +116,35 @@ impl Ray {
                 context.scene.options.background_color
             },
             Some(hit) => {
-                let si = SurfaceInfo {
-                    incident: *self,
-                    point: hit.i.point(self),
-                    n: hit.i.n.clone(),
-                    uv: hit.i.uv.clone(),
-                };
-
-                let i = hit.object.material.interact(context, &si);
-                if self.depth < context.options.max_depth && !i.absorbed {
-                    i.emittance + i.attenuation * i.scattered.cast(context)
-                } else {
-                    i.emittance
+                let emitted = hit.object.material.emit(context, &hit);
+                match hit.object.material.interact(context, &hit) {
+                    MaterialInteraction::Absorbed => emitted,
+                    MaterialInteraction::Scattered{albedo, dir} => {
+                        if self.depth < context.options.max_depth {
+                            emitted + albedo * dir.cast(context)
+                        } else {
+                            emitted
+                        }
+                    }
                 }
             }
         }
     }
 
-    pub fn trace<'a>(&self, objects: &'a [Object], max_distance: f64) -> Option<RayHit<'a>> {
+    pub fn trace<'a>(&'a self, objects: &'a [Object], max_distance: f64) -> Option<RayHit<'a>> {
         let mut nearest_distance = max_distance;
-        let mut nearest: Option<RayHit> = None;
+        let mut nearest: Option<(&Object, Intersection)> = None;
 
         for object in objects {
             if let Some(i) = object.intersect(self) {
                 if i.t < nearest_distance {
                     nearest_distance = i.t;
-                    nearest = Some(RayHit::new(&object, i));
+                    nearest = Some((&object, i));
                 }
             }
         }
 
-        nearest
+        nearest.map(|(o, i)| RayHit::new(self, o, i))
     }
 }
 
@@ -156,13 +155,25 @@ impl Transformable for Ray {
 }
 
 pub struct RayHit<'a> {
+    pub incident: &'a Ray,
     pub object: &'a Object,
-    pub i: Intersection,
+    pub t: f64,
+    pub n: Direction,
+    pub uv: Vector2f,
+    pub p: Point,
 }
 
+
 impl<'a> RayHit<'a> {
-    pub fn new(object: &Object, i: Intersection) -> RayHit {
-        RayHit { object, i }
+    pub fn new(ray: &'a Ray, object: &'a Object, i: Intersection) -> RayHit<'a> {
+        RayHit { 
+            incident: ray, 
+            object, 
+            t: i.t, 
+            n: i.n, 
+            uv: i.uv, 
+            p: ray.origin + ray.direction * i.t
+        }
     }
 }
 
@@ -196,13 +207,6 @@ pub trait Transformable {
 pub struct RenderContext {
     pub options: Options,
     pub scene: Scene,
-}
-
-pub struct SurfaceInfo {
-    pub incident: Ray,
-    pub point: Point,
-    pub n: Direction,
-    pub uv: Vector2f,
 }
 
 pub trait RenderProgress {

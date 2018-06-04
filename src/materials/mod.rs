@@ -1,9 +1,10 @@
 use color::Color;
 use system::Ray;
-use system::{RenderContext,SurfaceInfo};
+use system::{RayHit, RenderContext};
 
 pub trait Material: Send + Sync {
-    fn interact(&self, context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction;
+    fn interact(&self, context: &RenderContext, hit: &RayHit) -> MaterialInteraction;
+    fn emit(&self, context: &RenderContext, hit: &RayHit) -> Color;
     fn box_clone(&self) -> Box<Material>;
 }
 
@@ -13,19 +14,17 @@ impl Clone for Box<Material> {
     }
 }
 
-pub struct SurfaceInteraction {
-    pub absorbed: bool,
-    pub emittance: Color,
-    pub attenuation: Color,
-    pub scattered: Ray,
+pub enum MaterialInteraction {
+    Absorbed,
+    Scattered { albedo: Color, dir: Ray },
 }
 
-mod lambertian;
-mod metal;
 mod dielectric;
 mod diffuse_light;
+mod lambertian;
+mod metal;
 
-pub use self::lambertian::Lambertian;
-pub use self::metal::Metal;
 pub use self::dielectric::Dielectric;
 pub use self::diffuse_light::DiffuseLight;
+pub use self::lambertian::Lambertian;
+pub use self::metal::Metal;
