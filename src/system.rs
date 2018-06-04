@@ -7,9 +7,9 @@ use std::thread::spawn;
 use rand;
 use rand::Rng;
 
-use color::Color;
-use direction::Direction;
-use materials::MaterialInteraction;
+use color::*;
+use direction::*;
+use materials::*;
 use matrix::Matrix44f;
 use object::Object;
 use point::Point;
@@ -119,9 +119,55 @@ impl Ray {
                 let emitted = hit.object.material.emit(context, &hit);
                 match hit.object.material.interact(context, &hit) {
                     MaterialInteraction::Absorbed => emitted,
-                    MaterialInteraction::Scattered{albedo, dir} => {
+                    MaterialInteraction::Scattered{albedo, dir, pdf} => {
                         if self.depth < context.options.max_depth {
-                            emitted + albedo * dir.cast(context)
+                            let mut rng = rand::thread_rng();
+                            let lights: Vec<&Object> = context.scene.objects.iter()
+                                .filter(|o| o.material.kind() == MaterialKind::Emitting)
+                                .collect();
+                            let on_lights: Vec<Point> = lights.iter()
+                                .map(|l| l.position() + Point::new(rng.gen::<f64>() * 130.0 - 65.0, 0.0, rng.gen::<f64>() * 105.0 - 52.5))
+                                .collect();
+                            let to_lights: Vec<Direction> = on_lights.into_iter().map(|l| (l - hit.p)).collect();
+                            let light_distances: Vec<f64> = to_lights.iter().map(|d| d.length_squared()).collect();
+                            let to_lights: Vec<Direction> = to_lights.into_iter().map(|d| d.normalize()).filter(|d| d.dot(hit.n) >= 0.0).collect();
+                            if to_lights.len() == 0 {
+                                emitted
+                            } else {
+                                let light_areas: Vec<f64> = lights.iter().map(|l| 130.0 * 105.0).collect();
+                                let light_cosines: Vec<f64> = to_lights.iter().map(|d| d.y).collect();
+                                if light_cosines.iter().all(|c| *c < 0.000001) {
+                                    emitted
+                                } else {
+                                    let pdfs: Vec<f64> = light_cosines.iter()
+                                        .zip(light_areas).map(|(c,a)| c * a)
+                                        .zip(light_distances).map(|(ca, d)| d / ca)
+                                        .collect();
+                                    let scattered_rays: Vec<Ray> = to_lights.iter()
+                                        .map(|d| Ray::primary(hit.p, *d, self.depth+1))
+                                        .collect();
+                                    let scattering_pdfs: Vec<f64> = scattered_rays.iter()
+                                        .map(|r| hit.object.material.scattering_pdf(context, &hit, r))
+                                        .collect();
+                                    let scattering_colors: Vec<Color> = scattered_rays.iter()
+                                        .map(|r| r.cast(context))
+                                        .collect();
+                                    let scattering_colors: Vec<Color> = scattering_colors.into_iter()
+                                        .zip(scattering_pdfs.into_iter())
+                                        .map(|(c, spdf)| spdf * c)
+                                        .zip(pdfs.into_iter())
+                                        .map(|(c, pdf)| c / pdf)
+                                        .collect();
+                                    let num_scattering_colors = scattering_colors.len();
+
+                                    let avg_scattering_color = scattering_colors.into_iter().sum::<Color>() / num_scattering_colors as f64;
+                                    emitted + albedo * avg_scattering_color
+                                }
+                            }
+
+
+                            // let scattering_pdf = hit.object.material.scattering_pdf(context, &hit, &dir);
+                            // emitted + albedo * scattering_pdf * dir.cast(context) / pdf
                         } else {
                             emitted
                         }

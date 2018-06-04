@@ -1,5 +1,6 @@
 use materials::Material;
 use matrix::Matrix44f;
+use point::*;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
@@ -22,6 +23,10 @@ impl Object {
             world_to_object: Matrix44f::identity(),
             normal_to_world: Matrix44f::identity(),
         }
+    }
+
+    pub fn position(&self) -> Point {
+        Point::zero() * self.object_to_world
     }
 }
 

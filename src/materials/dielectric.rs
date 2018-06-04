@@ -5,10 +5,8 @@ use rand::Rng;
 
 use color::Color;
 use direction::{Direction, Dot};
-use materials::MaterialInteraction;
+use materials::*;
 use system::{Ray, RayHit, RenderContext};
-
-use materials::Material;
 
 #[derive(Clone)]
 pub struct Dielectric {
@@ -23,6 +21,10 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
+    fn kind(&self) -> MaterialKind {
+        MaterialKind::NonEmitting
+    }
+
     fn interact(&self, context: &RenderContext, hit: &RayHit) -> MaterialInteraction {
         let outside = hit.incident.direction.dot(hit.n) < 0.0;
         let bias = hit.n * context.options.bias;
@@ -41,6 +43,7 @@ impl Material for Dielectric {
                     scattered,
                     hit.incident.depth + 1,
                 ),
+                pdf: 0.0, // TODO
             }
         } else {
             // refraction
@@ -54,8 +57,13 @@ impl Material for Dielectric {
                     scattered,
                     hit.incident.depth + 1,
                 ),
+                pdf: 0.0, // TODO
             }
         }
+    }
+
+    fn scattering_pdf(&self, context: &RenderContext, hit: &RayHit, scattered: &Ray) -> f64 {
+        0.0 // TODO
     }
 
     fn emit(&self, _context: &RenderContext, _hit: &RayHit) -> Color {

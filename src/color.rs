@@ -1,4 +1,5 @@
 use std::f64;
+use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, Mul};
 
 #[derive(Debug, Copy, Clone)]
@@ -69,6 +70,12 @@ impl Div<f64> for Color {
 
     fn div(self, rhs: f64) -> Self::Output {
         Color::new(self.r / rhs, self.g / rhs, self.b / rhs)
+    }
+}
+
+impl Sum<Color> for Color {
+    fn sum<I: Iterator<Item=Color>>(iter: I) -> Self {
+        iter.fold(Color::black(), |acc, x| acc + x)
     }
 }
 
