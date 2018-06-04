@@ -1,6 +1,6 @@
 use direction::{Direction, Dot};
 use point::Point;
-use shapes::Shape;
+use shapes::{Shape, Interval};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -19,33 +19,26 @@ fn plane_uv(n: Direction) -> (Direction, Direction) {
 }
 
 fn plane_intersect(o: Point, n: Direction, ray: &Ray) -> Option<f64> {
-    let denom = n.dot(ray.direction);
-    if denom.abs() < 1e-6 {
-        return None;
+    let denom = ray.direction.dot(n);
+    if denom.abs() > 1e-6 {
+        let w = o - ray.origin;
+        let t = w.dot(n) / denom;
+        Some(t)
+    } else {
+        None
     }
-    let w = ray.origin - o;
-    let ndotw = n.dot(w);
-    if ndotw < 0.0 {
-        return None;
-    }
-    let t = -ndotw / denom;
-     if t < 0.0 {
-        return None;
-    }
-    Some(t)
 }
 
 pub struct Plane {
     origin: Point,
     normal: Direction,
     reverse_normal: Direction,
-    bidi: bool,
     uv: (Direction, Direction),
     reverse_uv: (Direction, Direction),
 }
 
 impl Plane {
-    pub fn new(origin: Point, normal: Direction, bidi: bool) -> Plane {
+    pub fn new(origin: Point, normal: Direction) -> Plane {
         let reverse_normal = normal * -1.0;
         let uv = plane_uv(normal);
         let reverse_uv = plane_uv(reverse_normal);
@@ -53,26 +46,24 @@ impl Plane {
             origin,
             normal,
             reverse_normal,
-            bidi,
             uv,
             reverse_uv,
         }
     }
 
-    fn bidi_intersect_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Option<Intersection> 
-        where F: FnOnce(&Point) -> bool 
+    fn intersect_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Option<Intersection> 
+        where F: FnOnce(Point) -> bool 
     {
         let mut n = self.normal;
         let mut uv = self.uv;
-        let mut t = plane_intersect(self.origin, n, ray);
-        if self.bidi && t.is_none() {
-            n = self.reverse_normal;
-            uv = self.reverse_uv;
-            t = plane_intersect(self.origin, n, ray);
-        }
+        let t = plane_intersect(self.origin, n, ray);
         if let Some(t) = t {
+            if ray.direction.dot(self.normal) > 0.0 {
+                n = self.reverse_normal;
+                uv = self.reverse_uv;
+            }
             let p = ray.origin + ray.direction * t;
-            if out_of_bounds(&p) {
+            if out_of_bounds(p) {
                 return None;
             }
             let op = p - self.origin;
@@ -86,11 +77,15 @@ impl Plane {
 
 impl Intersectable for Plane {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.bidi_intersect_with_bounds(ray, |_| false)
+        self.intersect_with_bounds(ray, |_| false)
     }
 }
 
-impl Shape for Plane {}
+impl Shape for Plane {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}
 
 pub struct XYRectangle {
     plane: Plane,
@@ -101,8 +96,12 @@ pub struct XYRectangle {
 }
 
 impl XYRectangle {
-    pub fn new(origin: Point, width: f64, height: f64, bidi: bool) -> XYRectangle {
-        let plane = Plane::new(origin, Direction::new(0.0, 0.0, 1.0), bidi);
+    pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> XYRectangle {
+        let mut normal = Direction::new(0.0, 0.0, 1.0);
+        if reverse_normal { 
+            normal *= -1.0; 
+        }
+        let plane = Plane::new(origin, normal);
         let x0 = origin.x - width / 2.0;
         let x1 = origin.x + width / 2.0;
         let y0 = origin.y - height / 2.0;
@@ -116,15 +115,23 @@ impl XYRectangle {
             y1,
         }
     }
+
+    fn out_of_bounds(&self, p: Point) -> bool {
+        p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1
+    }
 }
 
 impl Intersectable for XYRectangle {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.y < self.y0 || p.y > self.y1)
+        self.plane.intersect_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 
-impl Shape for XYRectangle {}
+impl Shape for XYRectangle {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}
 
 pub struct XZRectangle {
     plane: Plane,
@@ -135,8 +142,12 @@ pub struct XZRectangle {
 }
 
 impl XZRectangle {
-    pub fn new(origin: Point, width: f64, height: f64, bidi: bool) -> XZRectangle {
-        let plane = Plane::new(origin, Direction::new(0.0, 1.0, 0.0), bidi);
+    pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> XZRectangle {
+        let mut normal = Direction::new(0.0, 1.0, 0.0);
+        if reverse_normal { 
+            normal *= -1.0; 
+        }
+        let plane = Plane::new(origin, normal);
         let x0 = origin.x - (width / 2.0);
         let x1 = origin.x + width / 2.0;
         let z0 = origin.z - (height / 2.0);
@@ -154,11 +165,15 @@ impl XZRectangle {
 
 impl Intersectable for XZRectangle {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1)
+        self.plane.intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1)
     }
 }
 
-impl Shape for XZRectangle {}
+impl Shape for XZRectangle {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}
 
 pub struct ZYRectangle {
     plane: Plane,
@@ -169,8 +184,12 @@ pub struct ZYRectangle {
 }
 
 impl ZYRectangle {
-    pub fn new(origin: Point, width: f64, height: f64, bidi: bool) -> ZYRectangle {
-        let plane = Plane::new(origin, Direction::new(1.0, 0.0, 0.0), bidi);
+    pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> ZYRectangle {
+        let mut normal = Direction::new(1.0, 0.0, 0.0);
+        if reverse_normal { 
+            normal *= -1.0; 
+        }
+        let plane = Plane::new(origin, normal);
         let z0 = origin.z - (width / 2.0);
         let z1 = origin.z + width / 2.0;
         let y0 = origin.y - (height / 2.0);
@@ -188,8 +207,52 @@ impl ZYRectangle {
 
 impl Intersectable for ZYRectangle {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.bidi_intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1)
+        self.plane.intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1)
     }
 }
 
-impl Shape for ZYRectangle {}
+impl Shape for ZYRectangle {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use direction::*;
+    use test_utils::*;
+
+    #[test]
+    pub fn front_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &1.0);
+        assert_approx_eq(&i.n, &Direction::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    pub fn back_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, -1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &1.0);
+        assert_approx_eq(&i.n, &Direction::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    pub fn non_intersection() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 1.0, 0.0), 0);
+        assert!(s.intersect(&r).is_none());
+    }
+
+    #[test]
+    pub fn intersection_behind_ray() {
+        let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
+        let r = Ray::primary(Point::new(0.0, 0.0, -1.0), Direction::new(0.0, 0.0, -1.0), 0);
+        let i = s.intersect(&r).unwrap();
+        assert_approx_eq(&i.t, &-1.0);
+    }
+}

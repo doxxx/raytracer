@@ -45,24 +45,50 @@ fov -> f64
   = T<"fov"> f:FLOAT { f }
 
 pub object -> Object
-  = T<"object">
-    OPEN_BRACE
+  = T<"object"> name:string? OPEN_BRACE
     shape:object_shape
     material:object_material
     transform:object_transform?
     CLOSE_BRACE
   {
-    sdl::new_object(shape, material, transform)
+    sdl::new_object(name, shape, material, transform)
   }
 
 object_shape -> Box<Shape>
-  = sphere
-  / plane
+  = planar_shape
+  / solid_shape
   / mesh
+
+planar_shape -> Box<Shape>
+  = plane
   / xyrect
   / xzrect
   / zyrect
+
+solid_shape -> Box<Shape>
+  = sphere
   / cube
+  / csg
+
+csg -> Box<Shape>
+  = csg_union
+  / csg_intersection
+  / csg_difference
+
+csg_union -> Box<Shape>
+  = T<"union"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
+    Box::new(CSGUnion::new(a, b))
+  }
+
+csg_intersection -> Box<Shape>
+  = T<"intersection"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
+    Box::new(CSGIntersection::new(a, b))
+  }
+
+csg_difference -> Box<Shape>
+  = T<"difference"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
+    Box::new(CSGDifference::new(a, b))
+  }
 
 sphere -> Box<Shape>
   = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius CLOSE_BRACE {
@@ -73,8 +99,8 @@ sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal b:plane_bidi? CLOSE_BRACE {
-    Box::new(Plane::new(o.unwrap_or(Point::zero()), n, b.is_some()))
+  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal CLOSE_BRACE {
+    Box::new(Plane::new(o.unwrap_or(Point::zero()), n))
   }
 
 origin -> Point
@@ -82,9 +108,6 @@ origin -> Point
 
 plane_normal -> Direction
   = T<"normal"> n:direction { n }
-
-plane_bidi -> ()
-  = T<"bidi">
 
 mesh -> Box<Shape>
   = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
@@ -95,18 +118,18 @@ mesh_file -> String
   = T<"file"> p:path { p }
 
 xyrect -> Box<Shape>
-  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 xzrect -> Box<Shape>
-  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 zyrect -> Box<Shape>
-  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height b:plane_bidi? CLOSE_BRACE {
-    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, b.is_some()))
+  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
+    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
   }
 
 width -> f64
@@ -114,6 +137,9 @@ width -> f64
 
 height -> f64
   = T<"height"> h:FLOAT { h }
+
+reverse -> ()
+  = T<"reverse">
 
 cube -> Box<Shape>
   = T<"cube"> OPEN_BRACE p1:point p2: point CLOSE_BRACE {
@@ -153,8 +179,13 @@ ior -> f64
   = "ior" WS+ n:FLOAT { n }
 
 diffuse_light -> Box<Material>
-  = T<"diffuse_light"> texture:texture {
-    Box::new(DiffuseLight::new(texture))
+  = T<"diffuse_light"> i:intensity texture:texture {
+    Box::new(DiffuseLight::new(i, texture))
+  }
+
+intensity -> f64
+  = T<"intensity"> n:FLOAT {
+    n
   }
 
 object_transform -> Matrix44f
@@ -219,6 +250,9 @@ texture_image -> Texture
   }
 
 path -> String
+  = string
+
+string -> String
   = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
 
 pub point -> Point
@@ -255,8 +289,10 @@ CLOSE_BRACE = T<"}">
 
 T<E> = HIDDEN* E HIDDEN*
 
-HIDDEN = WS / LINE_COMMENT
+HIDDEN = WS / LINE_COMMENT / BLOCK_COMMENT
 
 LINE_COMMENT = "//" [^\n]*
+
+BLOCK_COMMENT = "/*" [^*]* "*/"
 
 WS = #quiet<[ \n\r\t]> / #expected("whitespace")

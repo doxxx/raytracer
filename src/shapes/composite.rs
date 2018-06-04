@@ -1,4 +1,4 @@
-use shapes::Shape;
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
@@ -7,9 +7,7 @@ pub struct Composite {
 
 impl Composite {
     pub fn new(shapes: Vec<Box<Shape>>) -> Composite {
-        Composite {
-            shapes,
-        }
+        Composite { shapes }
     }
 }
 
@@ -19,4 +17,8 @@ impl Intersectable for Composite {
     }
 }
 
-impl Shape for Composite {}
+impl Shape for Composite {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}

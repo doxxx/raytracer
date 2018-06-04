@@ -1,9 +1,9 @@
 use std::f64;
 
-use direction::{Dot, Direction};
+use direction::{Direction, Dot};
 use point::Point;
-use shapes::Shape;
 use shapes::bounding_box::BoundingBox;
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -21,7 +21,12 @@ pub struct MeshTriangle {
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Point>, normals: Vec<Direction>, triangles: Vec<MeshTriangle>, smooth_shading: bool) -> Mesh {
+    pub fn new(
+        vertices: Vec<Point>,
+        normals: Vec<Direction>,
+        triangles: Vec<MeshTriangle>,
+        smooth_shading: bool,
+    ) -> Mesh {
         let mut min = Point::zero();
         let mut max = Point::zero();
 
@@ -99,20 +104,15 @@ impl Intersectable for Mesh {
             return None;
         }
 
-        let mut nearest = None;
-
-        for triangle in &self.triangles {
-            let i = self.intersect_triangle(ray, triangle);
-            if let Some(i) = i {
-                nearest = match nearest {
-                    None => Some(i),
-                    Some(n) => if i.t < n.t { Some(i) } else { Some(n) },
-                }
-            }
-        }
-
-        nearest
+        self.triangles
+            .iter()
+            .filter_map(|triangle| self.intersect_triangle(ray, triangle))
+            .nth(0)
     }
 }
 
-impl Shape for Mesh {}
+impl Shape for Mesh {
+    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
+        panic!("not a solid");
+    }
+}

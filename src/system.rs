@@ -1,3 +1,4 @@
+use std::cmp;
 use std::f64;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
@@ -135,11 +136,10 @@ impl Ray {
         let mut nearest: Option<RayHit> = None;
 
         for object in objects {
-            let intersection = object.intersect(self);
-            if let Some(intersection) = intersection {
-                if intersection.t < nearest_distance {
-                    nearest_distance = intersection.t;
-                    nearest = Some(RayHit::new(&object, intersection));
+            if let Some(i) = object.intersect(self) {
+                if i.t < nearest_distance {
+                    nearest_distance = i.t;
+                    nearest = Some(RayHit::new(&object, i));
                 }
             }
         }
@@ -165,7 +165,7 @@ impl<'a> RayHit<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Intersection {
     pub t: f64,
     pub n: Direction,
@@ -175,6 +175,12 @@ pub struct Intersection {
 impl Intersection {
     pub fn point(&self, ray: &Ray) -> Point {
         ray.origin + ray.direction * self.t
+    }
+}
+
+impl cmp::PartialOrd for Intersection {
+    fn partial_cmp(&self, other: &Intersection) -> Option<cmp::Ordering> {
+        self.t.partial_cmp(&other.t)
     }
 }
 

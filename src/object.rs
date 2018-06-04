@@ -44,14 +44,19 @@ impl Transformable for Object {
 impl Intersectable for Object {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let object_ray = ray.transform(self.world_to_object);
-        self.shape.intersect(&object_ray).map(|i| {
+        self.shape.intersect(&object_ray).and_then(|i| {
+            if i.t < 0.0 {
+                return None;
+            }
             let object_hit_point = i.point(&object_ray);
             let world_hit_point = object_hit_point * self.object_to_world;
-            Intersection {
-                t: (world_hit_point - ray.origin).length(),
-                n: i.n * self.normal_to_world,
+            let t = (world_hit_point - ray.origin).length();
+            let n = i.n * self.normal_to_world;
+            Some(Intersection {
+                t,
+                n,
                 uv: i.uv,
-            }
+            })
         })
     }
 }
