@@ -29,7 +29,7 @@ impl Material for Dielectric {
 
         let kr = fresnel(si.incident.direction, si.n, self.ior);
         let mut rng = rand::thread_rng();
-        if rng.next_f64() < kr { 
+        if rng.gen::<f64>() < kr { 
             // reflection
             let reflected = si.incident.direction.reflect(si.n);
             let fuzz = self.fuzz * Direction::uniform_sphere_distribution();

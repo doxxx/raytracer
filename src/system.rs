@@ -65,8 +65,9 @@ impl Camera {
         Ray::primary(origin, (dir_point - origin).normalize(), 0)
     }
 
-    fn random_pixel_ray(&self, rng: &mut rand::Rng, x: u32, y: u32) -> Ray {
-        self.pixel_ray(x as f64 + rng.next_f64(), y as f64 + rng.next_f64())
+    fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
+        let mut rng = rand::thread_rng();
+        self.pixel_ray(x as f64 + rng.gen::<f64>(), y as f64 + rng.gen::<f64>())
     }
 }
 
@@ -212,8 +213,8 @@ pub trait RenderProgress {
     fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
 }
 
-fn color_at_pixel(context: &RenderContext, rng: &mut Rng, x: u32, y: u32) -> Color {
-    context.scene.camera.random_pixel_ray(rng, x, y).cast(&context)
+fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
+    context.scene.camera.random_pixel_ray(x, y).cast(&context)
 }
 
 fn update_row(renderbuf: &mut Vec<Vec<Color>>, y: u32, new_row: &Vec<Color>) {
@@ -257,11 +258,10 @@ where T: RenderProgress,
             let tx = tx.clone();
 
             spawn(move || {
-                let mut rng = rand::thread_rng();
                 loop {
                     let y = rows.lock().unwrap().pop();
                     if let Some(y) = y {
-                        let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, &mut rng, x, y)).collect();
+                        let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
 
                         {
                             let mut renderbuf = renderbuf.lock().unwrap();

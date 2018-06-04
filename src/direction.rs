@@ -29,9 +29,9 @@ impl Direction {
         let mut rng = rand::thread_rng();
 
         loop {
-            let x = rng.next_f64() * 2.0 - 1.0;
-            let y = rng.next_f64() * 2.0 - 1.0;
-            let z = rng.next_f64() * 2.0 - 1.0;
+            let x = rng.gen::<f64>() * 2.0 - 1.0;
+            let y = rng.gen::<f64>() * 2.0 - 1.0;
+            let z = rng.gen::<f64>() * 2.0 - 1.0;
             let d = x.powi(2) + y.powi(2) + z.powi(2);
             if d <= 1.0 {
                 let d = d.sqrt();
