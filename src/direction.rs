@@ -1,3 +1,4 @@
+use std::f64;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use rand;
@@ -28,16 +29,13 @@ impl Direction {
     pub fn uniform_sphere_distribution() -> Direction {
         let mut rng = rand::thread_rng();
 
-        loop {
-            let x = rng.gen::<f64>() * 2.0 - 1.0;
-            let y = rng.gen::<f64>() * 2.0 - 1.0;
-            let z = rng.gen::<f64>() * 2.0 - 1.0;
-            let d = x.powi(2) + y.powi(2) + z.powi(2);
-            if d <= 1.0 {
-                let d = d.sqrt();
-                return Direction::new(x/d, y/d, z/d)
-            }
-        }
+        let theta = 2.0 * f64::consts::PI * rng.gen::<f64>();
+        let phi = (1.0 - 2.0 * rng.gen::<f64>()).acos();
+        let x = phi.sin() * theta.cos();
+        let y = phi.sin() * theta.sin();
+        let z = phi.cos();
+
+        Direction::new(x, y, z)
      }
  
      pub fn cross(&self, rhs: Direction) -> Direction {
