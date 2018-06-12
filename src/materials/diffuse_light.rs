@@ -1,8 +1,6 @@
 use color::Color;
-use direction::Direction;
-use materials::SurfaceInteraction;
-use point::Point;
-use system::{Ray, RenderContext, SurfaceInfo};
+use materials::ScatteredRay;
+use system::{RayHit, RenderContext};
 use texture::{ColorSource, Texture};
 
 use materials::Material;
@@ -20,13 +18,12 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn interact(&self, _context: &RenderContext, si: &SurfaceInfo) -> SurfaceInteraction {
-        SurfaceInteraction {
-            absorbed: true,
-            emittance: self.intensity * self.texture.color_at_uv(si.uv),
-            attenuation: Color::black(),
-            scattered: Ray::primary(Point::zero(), Direction::zero(), 0),
-        }
+    fn scatter(&self, _context: &RenderContext, _hit: &RayHit) -> Option<ScatteredRay> {
+        None
+    }
+
+    fn emit(&self, _context: &RenderContext, hit: &RayHit) -> Color {
+        self.intensity * self.texture.color_at_uv(hit.uv)
     }
 
     fn box_clone(&self) -> Box<Material> {
