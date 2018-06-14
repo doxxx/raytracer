@@ -4,6 +4,7 @@ use system::Ray;
 
 pub mod bounding_box;
 pub mod composite;
+pub mod homogenous_medium;
 pub mod csg;
 pub mod cube;
 pub mod mesh;
@@ -12,6 +13,7 @@ pub mod sphere;
 
 pub use self::bounding_box::*;
 pub use self::composite::*;
+pub use self::homogenous_medium::*;
 pub use self::csg::*;
 pub use self::cube::*;
 pub use self::mesh::*;
@@ -20,6 +22,12 @@ pub use self::sphere::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);
+
+pub fn skip_negative_intervals(intervals: Vec<Interval>) -> impl Iterator<Item = Interval> {
+    intervals
+        .into_iter()
+        .skip_while(|Interval(a, b)| a.t < 0.0 && b.t < 0.0)
+}
 
 pub fn first_positive_intersection(intervals: Vec<Interval>) -> Option<Intersection> {
     intervals

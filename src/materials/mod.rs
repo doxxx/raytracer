@@ -1,7 +1,7 @@
 use color::Color;
 use direction::Direction;
 use point::Point;
-use system::{RenderContext, RayHit};
+use system::{RayHit, RenderContext};
 
 pub trait Material: Send + Sync {
     fn scatter(&self, context: &RenderContext, hit: &RayHit) -> Option<ScatteredRay>;
@@ -23,10 +23,12 @@ pub struct ScatteredRay {
 
 mod dielectric;
 mod diffuse_light;
+mod isotropic;
 mod lambertian;
 mod metal;
 
 pub use self::dielectric::Dielectric;
 pub use self::diffuse_light::DiffuseLight;
+pub use self::isotropic::Isotropic;
 pub use self::lambertian::Lambertian;
 pub use self::metal::Metal;

@@ -69,6 +69,7 @@ solid_shape -> Box<Shape>
   = sphere
   / cube
   / csg
+  / homogenous_medium
 
 csg -> Box<Shape>
   = csg_union
@@ -146,6 +147,16 @@ cube -> Box<Shape>
     Box::new(Cube::new(p1, p2))
   }
 
+homogenous_medium -> Box<Shape>
+  = T<"homogenous_medium"> OPEN_BRACE density:density boundary:solid_shape CLOSE_BRACE {
+    Box::new(HomogenousMedium::new(boundary, density))
+  }
+
+density -> f64
+  = T<"density"> f:FLOAT {
+    f
+  }
+
 object_material -> Box<Material>
   = T<"material"> OPEN_BRACE material:material CLOSE_BRACE {
     material
@@ -156,6 +167,7 @@ material -> Box<Material>
     / metal
     / dielectric
     / diffuse_light
+    / isotropic
 
 lambertian -> Box<Material>
   = T<"lambertian"> texture:texture {
@@ -186,6 +198,11 @@ diffuse_light -> Box<Material>
 intensity -> f64
   = T<"intensity"> n:FLOAT {
     n
+  }
+
+isotropic -> Box<Material>
+  = T<"isotropic"> texture:texture {
+    Box::new(Isotropic::new(texture))
   }
 
 object_transform -> Matrix44f
