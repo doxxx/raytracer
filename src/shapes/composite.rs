@@ -18,7 +18,9 @@ impl Intersectable for Composite {
 }
 
 impl Shape for Composite {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        let mut is: Vec<Interval> = self.shapes.iter().flat_map(|s| s.intersection_intervals(ray)).collect();
+        is.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        is
     }
 }

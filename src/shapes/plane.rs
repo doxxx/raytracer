@@ -1,6 +1,6 @@
 use direction::{Direction, Dot};
 use point::Point;
-use shapes::{Shape, Interval};
+use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray};
 use vector::Vector2f;
 
@@ -51,8 +51,9 @@ impl Plane {
         }
     }
 
-    fn intersect_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Option<Intersection> 
-        where F: FnOnce(Point) -> bool 
+    fn intersect_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Option<Intersection>
+    where
+        F: FnOnce(Point) -> bool,
     {
         let mut n = self.normal;
         let mut uv = self.uv;
@@ -73,6 +74,15 @@ impl Plane {
 
         None
     }
+
+    fn intersection_intervals_with_bounds<F>(&self, ray: &Ray, out_of_bounds: F) -> Vec<Interval>
+    where
+        F: FnOnce(Point) -> bool,
+    {
+        self.intersect_with_bounds(ray, out_of_bounds)
+            .map(|i| vec![Interval(i, i.clone())])
+            .unwrap_or(Vec::with_capacity(0))
+    }
 }
 
 impl Intersectable for Plane {
@@ -82,8 +92,8 @@ impl Intersectable for Plane {
 }
 
 impl Shape for Plane {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        self.intersection_intervals_with_bounds(ray, |_| false)
     }
 }
 
@@ -98,8 +108,8 @@ pub struct XYRectangle {
 impl XYRectangle {
     pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> XYRectangle {
         let mut normal = Direction::new(0.0, 0.0, 1.0);
-        if reverse_normal { 
-            normal *= -1.0; 
+        if reverse_normal {
+            normal *= -1.0;
         }
         let plane = Plane::new(origin, normal);
         let x0 = origin.x - width / 2.0;
@@ -107,13 +117,7 @@ impl XYRectangle {
         let y0 = origin.y - height / 2.0;
         let y1 = origin.y + height / 2.0;
 
-        XYRectangle {
-            plane,
-            x0,
-            x1,
-            y0,
-            y1,
-        }
+        XYRectangle { plane, x0, x1, y0, y1 }
     }
 
     fn out_of_bounds(&self, p: Point) -> bool {
@@ -128,8 +132,9 @@ impl Intersectable for XYRectangle {
 }
 
 impl Shape for XYRectangle {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        self.plane
+            .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 
@@ -144,8 +149,8 @@ pub struct XZRectangle {
 impl XZRectangle {
     pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> XZRectangle {
         let mut normal = Direction::new(0.0, 1.0, 0.0);
-        if reverse_normal { 
-            normal *= -1.0; 
+        if reverse_normal {
+            normal *= -1.0;
         }
         let plane = Plane::new(origin, normal);
         let x0 = origin.x - (width / 2.0);
@@ -153,25 +158,24 @@ impl XZRectangle {
         let z0 = origin.z - (height / 2.0);
         let z1 = origin.z + height / 2.0;
 
-        XZRectangle {
-            plane,
-            x0,
-            x1,
-            z0,
-            z1,
-        }
+        XZRectangle { plane, x0, x1, z0, z1 }
+    }
+
+    fn out_of_bounds(&self, p: Point) -> bool {
+        p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1
     }
 }
 
 impl Intersectable for XZRectangle {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.intersect_with_bounds(ray, |p| p.x < self.x0 || p.x > self.x1 || p.z < self.z0 || p.z > self.z1)
+        self.plane.intersect_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 
 impl Shape for XZRectangle {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        self.plane
+            .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 
@@ -186,8 +190,8 @@ pub struct ZYRectangle {
 impl ZYRectangle {
     pub fn new(origin: Point, width: f64, height: f64, reverse_normal: bool) -> ZYRectangle {
         let mut normal = Direction::new(1.0, 0.0, 0.0);
-        if reverse_normal { 
-            normal *= -1.0; 
+        if reverse_normal {
+            normal *= -1.0;
         }
         let plane = Plane::new(origin, normal);
         let z0 = origin.z - (width / 2.0);
@@ -195,25 +199,24 @@ impl ZYRectangle {
         let y0 = origin.y - (height / 2.0);
         let y1 = origin.y + height / 2.0;
 
-        ZYRectangle {
-            plane,
-            z0,
-            z1,
-            y0,
-            y1,
-        }
+        ZYRectangle { plane, z0, z1, y0, y1 }
+    }
+
+    fn out_of_bounds(&self, p: Point) -> bool {
+        p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1
     }
 }
 
 impl Intersectable for ZYRectangle {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.plane.intersect_with_bounds(ray, |p| p.z < self.z0 || p.z > self.z1 || p.y < self.y0 || p.y > self.y1)
+        self.plane.intersect_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 
 impl Shape for ZYRectangle {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        self.plane
+            .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))
     }
 }
 

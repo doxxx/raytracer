@@ -4,18 +4,18 @@ use system::Ray;
 
 pub mod bounding_box;
 pub mod composite;
-pub mod homogenous_medium;
 pub mod csg;
 pub mod cube;
+pub mod homogenous_medium;
 pub mod mesh;
 pub mod plane;
 pub mod sphere;
 
 pub use self::bounding_box::*;
 pub use self::composite::*;
-pub use self::homogenous_medium::*;
 pub use self::csg::*;
 pub use self::cube::*;
+pub use self::homogenous_medium::*;
 pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
@@ -35,6 +35,10 @@ pub fn first_positive_intersection(intervals: Vec<Interval>) -> Option<Intersect
         .flat_map(|Interval(a, b)| vec![a, b])
         .skip_while(|i| i.t < 0.0)
         .nth(0)
+}
+
+pub fn first_intersection(intervals: Vec<Interval>) -> Option<Intersection> {
+    intervals.into_iter().nth(0).map(|i| i.0)
 }
 
 pub trait Shape: Intersectable + Send + Sync {

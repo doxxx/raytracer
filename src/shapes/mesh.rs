@@ -112,7 +112,12 @@ impl Intersectable for Mesh {
 }
 
 impl Shape for Mesh {
-    fn intersection_intervals(&self, _ray: &Ray) -> Vec<Interval> {
-        panic!("not a solid");
+    fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        // TODO: find all triangle intersections
+        // TODO: if even then assume closed shape and pair intersections as intervals
+        // TODO: or maybe require a flag to indicate whether mesh is closed
+        self.intersect(ray)
+            .map(|i| vec![Interval(i, i.clone())])
+            .unwrap_or(Vec::with_capacity(0))
     }
 }
