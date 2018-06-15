@@ -1,7 +1,9 @@
 use direction::{Direction, Dot};
+use matrix::Matrix44f;
+use object::Transformation;
 use point::Point;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
 
 fn plane_uv(n: Direction) -> (Direction, Direction) {
@@ -35,6 +37,7 @@ pub struct Plane {
     reverse_normal: Direction,
     uv: (Direction, Direction),
     reverse_uv: (Direction, Direction),
+    tx: Transformation,
 }
 
 impl Plane {
@@ -48,6 +51,7 @@ impl Plane {
             reverse_normal,
             uv,
             reverse_uv,
+            tx: Transformation::new(),
         }
     }
 
@@ -92,6 +96,14 @@ impl Intersectable for Plane {
 }
 
 impl Shape for Plane {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         self.intersection_intervals_with_bounds(ray, |_| false)
     }
@@ -132,6 +144,14 @@ impl Intersectable for XYRectangle {
 }
 
 impl Shape for XYRectangle {
+    fn transform(&mut self, m: Matrix44f) {
+        self.plane.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        self.plane.transformation()
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         self.plane
             .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))
@@ -173,6 +193,14 @@ impl Intersectable for XZRectangle {
 }
 
 impl Shape for XZRectangle {
+    fn transform(&mut self, m: Matrix44f) {
+        self.plane.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        self.plane.transformation()
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         self.plane
             .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))
@@ -214,6 +242,14 @@ impl Intersectable for ZYRectangle {
 }
 
 impl Shape for ZYRectangle {
+    fn transform(&mut self, m: Matrix44f) {
+        self.plane.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        self.plane.transformation()
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         self.plane
             .intersection_intervals_with_bounds(ray, |p| self.out_of_bounds(p))

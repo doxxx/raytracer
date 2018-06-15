@@ -40,8 +40,9 @@ pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
 }
 
 pub fn new_object(name: Option<String>, shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
-    Object::new(&name.unwrap_or(String::from("object")), shape, material)
-        .transform(transform.unwrap_or(Matrix44f::identity()))
+    let mut o = Object::new(&name.unwrap_or(String::from("object")), shape, material);
+    o.transform(transform.unwrap_or(Matrix44f::identity()));
+    o
 }
 
 pub fn load_image(path: &str) -> image::DynamicImage {

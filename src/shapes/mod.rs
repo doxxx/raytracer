@@ -1,3 +1,6 @@
+use matrix::Matrix44f;
+use system::Transformable;
+use object::Transformation;
 use system::Intersectable;
 use system::Intersection;
 use system::Ray;
@@ -42,7 +45,10 @@ pub fn first_intersection(intervals: Vec<Interval>) -> Option<Intersection> {
 }
 
 pub trait Shape: Intersectable + Send + Sync {
+    fn transform(&mut self, m: Matrix44f);
+    fn transformation(&self) -> &Transformation;
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval>;
+
 }
 
 impl Intersectable for [Box<Shape>] {

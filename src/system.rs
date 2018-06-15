@@ -140,8 +140,9 @@ impl Ray {
 }
 
 impl Transformable for Ray {
-    fn transform(self, m: Matrix44f) -> Self {
-        Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed(), self.depth)
+    fn transform(&mut self, m: Matrix44f) {
+        self.origin = self.origin * m;
+        self.direction = self.direction * m.inverse().transposed();
     }
 }
 
@@ -187,7 +188,7 @@ pub trait Intersectable {
 }
 
 pub trait Transformable {
-    fn transform(self, m: Matrix44f) -> Self;
+    fn transform(&mut self, m: Matrix44f);
 }
 
 pub struct RenderContext {

@@ -1,5 +1,7 @@
+use matrix::Matrix44f;
+use object::Transformation;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Composite {
     shapes: Vec<Box<Shape>>,
@@ -18,6 +20,16 @@ impl Intersectable for Composite {
 }
 
 impl Shape for Composite {
+    fn transform(&mut self, m: Matrix44f) {
+        for s in &mut self.shapes {
+            s.transform(m);
+        }
+    }
+    
+    fn transformation(&self) -> &Transformation {
+        self.shapes[0].transformation()
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let mut is: Vec<Interval> = self.shapes.iter().flat_map(|s| s.intersection_intervals(ray)).collect();
         is.sort_by(|a, b| a.partial_cmp(b).unwrap());

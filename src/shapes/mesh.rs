@@ -1,18 +1,21 @@
+use matrix::Matrix44f;
+use object::Transformation;
 use std::f64;
 
 use direction::{Direction, Dot};
 use point::Point;
 use shapes::bounding_box::BoundingBox;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
 
 pub struct Mesh {
-    pub vertices: Vec<Point>,
-    pub normals: Vec<Direction>,
-    pub triangles: Vec<MeshTriangle>,
-    pub bounding_box: BoundingBox,
-    pub smooth_shading: bool,
+    vertices: Vec<Point>,
+    normals: Vec<Direction>,
+    triangles: Vec<MeshTriangle>,
+    bounding_box: BoundingBox,
+    smooth_shading: bool,
+    tx: Transformation,
 }
 
 pub struct MeshTriangle {
@@ -45,6 +48,7 @@ impl Mesh {
             triangles,
             bounding_box: BoundingBox::new(min, max),
             smooth_shading,
+            tx: Transformation::new(),
         }
     }
 
@@ -112,6 +116,14 @@ impl Intersectable for Mesh {
 }
 
 impl Shape for Mesh {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         // TODO: find all triangle intersections
         // TODO: if even then assume closed shape and pair intersections as intervals
