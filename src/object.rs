@@ -53,21 +53,13 @@ impl Transformable for Object {
 impl Intersectable for Object {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let tx = self.shape.transformation();
-        let mut object_ray = ray.clone();
-        object_ray.transform(tx.world_to_object);
+        let object_ray = ray.to_object(tx);
         self.shape.intersect(&object_ray).and_then(|i| {
             if i.t < 0.0 {
-                return None;
+                None
+            } else {
+                Some(i.to_world(ray, &object_ray, tx))
             }
-            let object_hit_point = i.point(&object_ray);
-            let world_hit_point = object_hit_point * tx.object_to_world;
-            let t = (world_hit_point - ray.origin).length();
-            let n = i.n * tx.normal_to_world;
-            Some(Intersection {
-                t,
-                n,
-                uv: i.uv,
-            })
         })
     }
 }
