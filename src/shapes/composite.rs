@@ -1,7 +1,7 @@
 use matrix::Matrix44f;
 use object::Transformation;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
+use system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
     shapes: Vec<Box<Shape>>,

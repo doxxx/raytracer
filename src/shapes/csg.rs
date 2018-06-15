@@ -1,6 +1,6 @@
 use matrix::Matrix44f;
 use object::Transformation;
-use shapes::{Interval, Shape};
+use shapes::{first_positive_intersection, Interval, Shape};
 use system::{Intersectable, Intersection, Ray, Transformable};
 
 /// Constructive Solid Geometry Union
@@ -100,7 +100,7 @@ impl Intersectable for CSGUnion {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
@@ -174,7 +174,7 @@ impl Intersectable for CSGIntersection {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
@@ -274,6 +274,6 @@ impl Intersectable for CSGDifference {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }

@@ -2,7 +2,7 @@ use matrix::Matrix44f;
 use object::Transformation;
 use std::mem;
 
-use super::{XYRectangle, XZRectangle, ZYRectangle};
+use shapes::{XYRectangle, XZRectangle, ZYRectangle};
 use point::Point;
 use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray, Transformable};
