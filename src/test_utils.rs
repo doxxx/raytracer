@@ -44,14 +44,13 @@ impl ApproxEq for Direction {
     }
 }
 
-pub fn assert_approx_eq<T>(a: &T, b: &T)
-where
-    T: ApproxEq,
-{
-    if !a.approx_eq(b) {
-        panic!(
-            "assertion failed: `(left == right)`\n   left: `{:?}`,\n  right: `{:?}`",
-            a, b,
-        )
-    }
+macro_rules! assert_approx_eq {
+    ($a:expr, $b:expr) => {
+        if !$a.approx_eq($b) {
+            panic!(
+                "assertion failed: `(left == right)`\n   left: `{:?}`,\n  right: `{:?}`",
+                $a, $b,
+            )
+        }
+    };
 }

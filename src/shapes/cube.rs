@@ -116,11 +116,11 @@ mod tests {
             .iter()
             .map(|i| i.n)
             .collect();
-        assert_approx_eq(&distances, &vec![
+        assert_approx_eq!(&distances, &vec![
             1.0,
             3.0,
         ]);
-        assert_approx_eq(&normals, &vec![
+        assert_approx_eq!(&normals, &vec![
             Direction::new(0.0, 0.0, 1.0),
             Direction::new(0.0, 0.0, -1.0),
         ]);
@@ -142,11 +142,11 @@ mod tests {
             .iter()
             .map(|i| i.n)
             .collect();
-        assert_approx_eq(&distances, &vec![
+        assert_approx_eq!(&distances, &vec![
             0.0,
             2.0,
         ]);
-        assert_approx_eq(&normals, &vec![
+        assert_approx_eq!(&normals, &vec![
             Direction::new(0.0, 0.0, 1.0),
             Direction::new(0.0, 0.0, -1.0),
         ]);
@@ -168,11 +168,11 @@ mod tests {
             .iter()
             .map(|i| i.n)
             .collect();
-        assert_approx_eq(&distances, &vec![
+        assert_approx_eq!(&distances, &vec![
             -0.1,
             1.9,
         ]);
-        assert_approx_eq(&normals, &vec![
+        assert_approx_eq!(&normals, &vec![
             Direction::new(0.0, 0.0, 1.0),
             Direction::new(0.0, 0.0, -1.0),
         ]);
