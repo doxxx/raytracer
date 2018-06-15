@@ -62,7 +62,7 @@ fn zyrect(z0: f64, y0: f64, z1: f64, y1: f64, x: f64, reverse_normal: bool) -> Z
 
 impl Intersectable for Cube {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        super::first_intersection(self.intersection_intervals(ray))
     }
 }
 
