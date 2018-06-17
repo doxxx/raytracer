@@ -3,13 +3,35 @@ use matrix::Matrix44f;
 use shapes::Shape;
 use system::{Intersection, Ray, Intersectable, Transformable};
 
+#[derive(Clone)]
+pub struct Transformation {
+    pub object_to_world: Matrix44f,
+    pub world_to_object: Matrix44f,
+    pub normal_to_world: Matrix44f,
+}
+
+impl Transformation {
+    pub fn new() -> Transformation {
+        Transformation {
+            object_to_world: Matrix44f::identity(),
+            world_to_object: Matrix44f::identity(),
+            normal_to_world: Matrix44f::identity(),
+        }
+    }
+}
+
+impl Transformable for Transformation {
+    fn transform(&mut self, m: Matrix44f) {
+        self.object_to_world = self.object_to_world * m;
+        self.world_to_object = self.object_to_world.inverse();
+        self.normal_to_world = self.world_to_object.transposed();
+    }
+}
+
 pub struct Object {
     pub name: String,
     pub shape: Box<Shape>,
     pub material: Box<Material>,
-    object_to_world: Matrix44f,
-    world_to_object: Matrix44f,
-    normal_to_world: Matrix44f,
 }
 
 impl Object {
@@ -18,45 +40,26 @@ impl Object {
             name: String::from(name),
             shape,
             material,
-            object_to_world: Matrix44f::identity(),
-            world_to_object: Matrix44f::identity(),
-            normal_to_world: Matrix44f::identity(),
         }
     }
 }
 
 impl Transformable for Object {
-    fn transform(self, m: Matrix44f) -> Self {
-        let object_to_world = self.object_to_world * m;
-        let world_to_object = object_to_world.inverse();
-        let normal_to_world = world_to_object.transposed();
-        Object {
-            name: self.name,
-            shape: self.shape,
-            material: self.material,
-            object_to_world,
-            world_to_object,
-            normal_to_world,
-        }
+    fn transform(&mut self, m: Matrix44f) {
+        self.shape.transform(m);
     }
 }
 
 impl Intersectable for Object {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        let object_ray = ray.transform(self.world_to_object);
+        let tx = self.shape.transformation();
+        let object_ray = ray.to_object(tx);
         self.shape.intersect(&object_ray).and_then(|i| {
             if i.t < 0.0 {
-                return None;
+                None
+            } else {
+                Some(i.to_world(ray, &object_ray, tx))
             }
-            let object_hit_point = i.point(&object_ray);
-            let world_hit_point = object_hit_point * self.object_to_world;
-            let t = (world_hit_point - ray.origin).length();
-            let n = i.n * self.normal_to_world;
-            Some(Intersection {
-                t,
-                n,
-                uv: i.uv,
-            })
         })
     }
 }

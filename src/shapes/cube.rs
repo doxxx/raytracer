@@ -1,9 +1,11 @@
+use matrix::Matrix44f;
+use object::Transformation;
 use std::mem;
 
-use super::{XYRectangle, XZRectangle, ZYRectangle};
+use shapes::{XYRectangle, XZRectangle, ZYRectangle};
 use point::Point;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Cube {
     min_x: ZYRectangle,
@@ -12,6 +14,7 @@ pub struct Cube {
     max_y: XZRectangle,
     min_z: XYRectangle,
     max_z: XYRectangle,
+    tx: Transformation,
 }
 
 impl Cube {
@@ -29,6 +32,7 @@ impl Cube {
             max_y: xzrect(min_x, min_z, max_x, max_z, max_y, false),
             min_z: xyrect(min_x, min_y, max_x, max_y, min_z, true),
             max_z: xyrect(min_x, min_y, max_x, max_y, max_z, false),
+            tx: Transformation::new(),
         }
     }
 }
@@ -67,6 +71,14 @@ impl Intersectable for Cube {
 }
 
 impl Shape for Cube {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let is = [
             self.min_x.intersect(ray), self.max_x.intersect(ray),

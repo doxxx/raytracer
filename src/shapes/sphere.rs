@@ -2,14 +2,17 @@ use std::f64;
 use std::mem;
 
 use direction::Dot;
+use matrix::Matrix44f;
+use object::Transformation;
 use point::Point;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
 
 pub struct Sphere {
     origin: Point,
     radius_squared: f64,
+    tx: Transformation,
 }
 
 impl Sphere {
@@ -17,6 +20,7 @@ impl Sphere {
         Sphere {
             origin,
             radius_squared: radius.powi(2),
+            tx: Transformation::new(),
         }
     }
 
@@ -58,6 +62,14 @@ impl Intersectable for Sphere {
 }
 
 impl Shape for Sphere {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let l = ray.origin - self.origin;
         let a = ray.direction.dot(ray.direction);
@@ -69,7 +81,10 @@ impl Shape for Sphere {
                 mem::swap(&mut t0, &mut t1);
             }
 
-            vec![Interval(self.intersection_for_t(ray, t0), self.intersection_for_t(ray, t1))]
+            vec![Interval(
+                self.intersection_for_t(ray, t0),
+                self.intersection_for_t(ray, t1),
+            )]
         } else {
             Vec::with_capacity(0)
         }
@@ -86,77 +101,53 @@ mod tests {
     pub fn outside_intersection() {
         let s = Sphere::new(Point::zero(), 1.0);
         let r = Ray::primary(Point::new(0.0, 0.0, 2.0), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(&distances, &vec![
-            1.0,
-            3.0,
-        ]);
-        assert_approx_eq!(&normals, &vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(&distances, &vec![1.0, 3.0]);
+        assert_approx_eq!(
+            &normals,
+            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+        );
     }
 
     #[test]
     pub fn coincident_intersection() {
         let s = Sphere::new(Point::zero(), 1.0);
         let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(&distances, &vec![
-            0.0,
-            2.0,
-        ]);
-        assert_approx_eq!(&normals, &vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(&distances, &vec![0.0, 2.0]);
+        assert_approx_eq!(
+            &normals,
+            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+        );
     }
 
     #[test]
     pub fn inside_intersection() {
         let s = Sphere::new(Point::zero(), 1.0);
         let r = Ray::primary(Point::new(0.0, 0.0, 0.9), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(&distances, &vec![
-            -0.1,
-            1.9,
-        ]);
-        assert_approx_eq!(&normals, &vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(&distances, &vec![-0.1, 1.9]);
+        assert_approx_eq!(
+            &normals,
+            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+        );
     }
 }

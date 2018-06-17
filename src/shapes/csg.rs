@@ -1,25 +1,52 @@
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use matrix::Matrix44f;
+use object::Transformation;
+use shapes::{first_positive_intersection, Interval, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
+
+fn csg_intersection_intervals(a: &Box<Shape>, b: &Box<Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
+    let tx_a = a.transformation();
+    let tx_b = b.transformation();
+    let ray_a = ray.to_object(tx_a);
+    let ray_b = ray.to_object(tx_b);
+    let intervals_a = a.intersection_intervals(&ray_a);
+    let intervals_b = b.intersection_intervals(&ray_b);
+
+    let intervals_a: Vec<Interval> = intervals_a
+        .into_iter()
+        .map(|i| i.to_world(ray, &ray_a, tx_a))
+        .collect();
+    let intervals_b: Vec<Interval> = intervals_b
+        .into_iter()
+        .map(|i| i.to_world(ray, &ray_b, tx_b))
+        .collect();
+
+    (intervals_a, intervals_b)
+}
 
 /// Constructive Solid Geometry Union
 pub struct CSGUnion {
     a: Box<Shape>,
     b: Box<Shape>,
+    tx: Transformation,
 }
 
 impl CSGUnion {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGUnion {
-        CSGUnion {
-            a,
-            b,
-        }
+        CSGUnion { a, b, tx: Transformation::new() }
     }
 }
 
 impl Shape for CSGUnion {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 {
             return intervals_b;
@@ -80,7 +107,7 @@ impl Shape for CSGUnion {
             intervals.push(i);
         }
 
-        intervals.sort_by(|a,b| a.partial_cmp(b).unwrap());
+        intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         intervals
     }
@@ -92,7 +119,7 @@ impl Intersectable for CSGUnion {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
@@ -100,21 +127,26 @@ impl Intersectable for CSGUnion {
 pub struct CSGIntersection {
     a: Box<Shape>,
     b: Box<Shape>,
+    tx: Transformation,
 }
 
 impl CSGIntersection {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGIntersection {
-        CSGIntersection {
-            a,
-            b,
-        }
+        CSGIntersection { a, b, tx: Transformation::new() }
     }
 }
 
 impl Shape for CSGIntersection {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 || intervals_b.len() == 0 {
             return Vec::with_capacity(0);
@@ -148,7 +180,7 @@ impl Shape for CSGIntersection {
             }
         }
 
-        intervals.sort_by(|a,b| a.partial_cmp(b).unwrap());
+        intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         intervals
     }
@@ -160,7 +192,7 @@ impl Intersectable for CSGIntersection {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }
 
@@ -168,21 +200,26 @@ impl Intersectable for CSGIntersection {
 pub struct CSGDifference {
     a: Box<Shape>,
     b: Box<Shape>,
+    tx: Transformation,
 }
 
 impl CSGDifference {
     pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGDifference {
-        CSGDifference {
-            a,
-            b,
-        }
+        CSGDifference { a, b, tx: Transformation::new() }
     }
 }
 
 impl Shape for CSGDifference {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 {
             return Vec::with_capacity(0);
@@ -211,7 +248,7 @@ impl Shape for CSGDifference {
             } else if b_start <= a_start && b_end < a_end {
                 // interval_b overlaps interval_a start
                 let mut new_start = b_end;
-                new_start.n *=-1.0;
+                new_start.n *= -1.0;
                 interval_a = Some(Interval(new_start, a_end));
                 interval_b = iter_b.next();
             } else if b_start < a_end && b_end < a_end {
@@ -242,7 +279,7 @@ impl Shape for CSGDifference {
             intervals.push(i);
         }
 
-        intervals.sort_by(|a,b| a.partial_cmp(b).unwrap());
+        intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         intervals
     }
@@ -254,6 +291,6 @@ impl Intersectable for CSGDifference {
         //     return None;
         // }
 
-        super::first_positive_intersection(self.intersection_intervals(ray))
+        first_positive_intersection(self.intersection_intervals(ray))
     }
 }

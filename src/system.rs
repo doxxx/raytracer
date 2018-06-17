@@ -11,6 +11,7 @@ use color::Color;
 use direction::Direction;
 use matrix::Matrix44f;
 use object::Object;
+use object::Transformation;
 use point::Point;
 use sdl::Scene;
 use vector::Vector2f;
@@ -108,6 +109,11 @@ impl Ray {
         }
     }
 
+    pub fn to_object(&self, tx: &Transformation) -> Ray {
+        let mut object_ray = self.clone();
+        object_ray.transform(tx.world_to_object);
+        object_ray
+    }
 
     pub fn cast(&self, context: &RenderContext) -> Color {
         if self.depth >= context.options.max_depth {
@@ -140,8 +146,9 @@ impl Ray {
 }
 
 impl Transformable for Ray {
-    fn transform(self, m: Matrix44f) -> Self {
-        Ray::new(self.kind, self.origin * m, self.direction * m.inverse().transposed(), self.depth)
+    fn transform(&mut self, m: Matrix44f) {
+        self.origin = self.origin * m;
+        self.direction = self.direction * m.inverse().transposed();
     }
 }
 
@@ -174,6 +181,16 @@ impl Intersection {
     pub fn point(&self, ray: &Ray) -> Point {
         ray.origin + ray.direction * self.t
     }
+
+    pub fn to_world(&self, ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Intersection {
+        let object_hit_point = self.point(&object_ray);
+        let world_hit_point = object_hit_point * tx.object_to_world;
+        Intersection {
+            t: (world_hit_point - ray.origin).length(),
+            n: self.n * tx.normal_to_world,
+            uv: self.uv,
+        }
+    }
 }
 
 impl cmp::PartialOrd for Intersection {
@@ -187,7 +204,7 @@ pub trait Intersectable {
 }
 
 pub trait Transformable {
-    fn transform(self, m: Matrix44f) -> Self;
+    fn transform(&mut self, m: Matrix44f);
 }
 
 pub struct RenderContext {

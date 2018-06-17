@@ -1,21 +1,28 @@
+use matrix::Matrix44f;
+use object::Transformation;
 use std::f64;
 
 use rand;
 use rand::Rng;
 
 use direction::*;
-use shapes::{Interval, Shape, skip_negative_intervals};
-use system::{Intersectable, Intersection, Ray};
+use shapes::{skip_negative_intervals, Interval, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
 
 pub struct HomogenousMedium {
     boundary: Box<Shape>,
     density: f64,
+    tx: Transformation,
 }
 
 impl HomogenousMedium {
     pub fn new(boundary: Box<Shape>, density: f64) -> HomogenousMedium {
-        HomogenousMedium { boundary, density }
+        HomogenousMedium {
+            boundary,
+            density,
+            tx: Transformation::new(),
+        }
     }
 }
 
@@ -48,6 +55,14 @@ impl Intersectable for HomogenousMedium {
 }
 
 impl Shape for HomogenousMedium {
+    fn transform(&mut self, m: Matrix44f) {
+        self.tx.transform(m);
+    }
+
+    fn transformation(&self) -> &Transformation {
+        &self.tx
+    }
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         self.boundary.intersection_intervals(ray)
     }

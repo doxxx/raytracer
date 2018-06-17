@@ -12,10 +12,8 @@ use matrix::Matrix44f;
 use object::Object;
 use point::Point;
 use sdl_grammar;
-use shapes::Shape;
-use shapes::composite::Composite;
-use shapes::mesh::{Mesh,MeshTriangle};
-use system::{Camera,Transformable,Options};
+use shapes::{Composite, Mesh, MeshTriangle, Shape};
+use system::{Camera, Options};
 
 pub struct Scene {
     pub options: SceneOptions,
@@ -39,9 +37,13 @@ pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
     sdl_grammar::scene(&s, &options)
 }
 
-pub fn new_object(name: Option<String>, shape: Box<Shape>, material: Box<Material>, transform: Option<Matrix44f>) -> Object {
+pub fn new_object(name: Option<String>, shape: Box<Shape>, material: Box<Material>) -> Object {
     Object::new(&name.unwrap_or(String::from("object")), shape, material)
-        .transform(transform.unwrap_or(Matrix44f::identity()))
+}
+
+pub fn transform_shape(mut shape: Box<Shape>, transform: Option<Matrix44f>) -> Box<Shape> {
+    shape.transform(transform.unwrap_or(Matrix44f::identity()));
+    shape
 }
 
 pub fn load_image(path: &str) -> image::DynamicImage {

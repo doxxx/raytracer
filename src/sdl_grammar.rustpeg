@@ -48,10 +48,9 @@ pub object -> Object
   = T<"object"> name:string? OPEN_BRACE
     shape:object_shape
     material:object_material
-    transform:object_transform?
     CLOSE_BRACE
   {
-    sdl::new_object(name, shape, material, transform)
+    sdl::new_object(name, shape, material)
   }
 
 object_shape -> Box<Shape>
@@ -77,31 +76,31 @@ csg -> Box<Shape>
   / csg_difference
 
 csg_union -> Box<Shape>
-  = T<"union"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
-    Box::new(CSGUnion::new(a, b))
+  = T<"union"> OPEN_BRACE a:solid_shape b:solid_shape transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(CSGUnion::new(a, b)), transform)
   }
 
 csg_intersection -> Box<Shape>
-  = T<"intersection"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
-    Box::new(CSGIntersection::new(a, b))
+  = T<"intersection"> OPEN_BRACE a:solid_shape b:solid_shape transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(CSGIntersection::new(a, b)), transform)
   }
 
 csg_difference -> Box<Shape>
-  = T<"difference"> OPEN_BRACE a:solid_shape b:solid_shape CLOSE_BRACE {
-    Box::new(CSGDifference::new(a, b))
+  = T<"difference"> OPEN_BRACE a:solid_shape b:solid_shape transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(CSGDifference::new(a, b)), transform)
   }
 
 sphere -> Box<Shape>
-  = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius CLOSE_BRACE {
-    Box::new(Sphere::new(o.unwrap_or(Point::zero()), r))
+  = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Sphere::new(o.unwrap_or(Point::zero()), r)), transform)
   }
 
 sphere_radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 plane -> Box<Shape>
-  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal CLOSE_BRACE {
-    Box::new(Plane::new(o.unwrap_or(Point::zero()), n))
+  = T<"plane"> OPEN_BRACE o:origin? n:plane_normal transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Plane::new(o.unwrap_or(Point::zero()), n)), transform)
   }
 
 origin -> Point
@@ -111,26 +110,26 @@ plane_normal -> Direction
   = T<"normal"> n:direction { n }
 
 mesh -> Box<Shape>
-  = T<"mesh"> OPEN_BRACE p:mesh_file CLOSE_BRACE {
-    sdl::load_mesh_file(&p)
+  = T<"mesh"> OPEN_BRACE p:mesh_file transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(sdl::load_mesh_file(&p), transform)
   }
 
 mesh_file -> String
   = T<"file"> p:path { p }
 
 xyrect -> Box<Shape>
-  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
-    Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
+  = T<"xyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(XYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some())), transform)
   }
 
 xzrect -> Box<Shape>
-  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
-    Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
+  = T<"xzrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(XZRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some())), transform)
   }
 
 zyrect -> Box<Shape>
-  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? CLOSE_BRACE {
-    Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some()))
+  = T<"zyrect"> OPEN_BRACE o:origin? w:width h:height r:reverse? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(ZYRectangle::new(o.unwrap_or(Point::zero()), w, h, r.is_some())), transform)
   }
 
 width -> f64
@@ -143,13 +142,13 @@ reverse -> ()
   = T<"reverse">
 
 cube -> Box<Shape>
-  = T<"cube"> OPEN_BRACE p1:point p2: point CLOSE_BRACE {
-    Box::new(Cube::new(p1, p2))
+  = T<"cube"> OPEN_BRACE p1:point p2: point transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Cube::new(p1, p2)), transform)
   }
 
 homogenous_medium -> Box<Shape>
-  = T<"homogenous_medium"> OPEN_BRACE density:density boundary:solid_shape CLOSE_BRACE {
-    Box::new(HomogenousMedium::new(boundary, density))
+  = T<"homogenous_medium"> OPEN_BRACE density:density boundary:solid_shape transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(HomogenousMedium::new(boundary, density)), transform)
   }
 
 density -> f64
@@ -205,7 +204,7 @@ isotropic -> Box<Material>
     Box::new(Isotropic::new(texture))
   }
 
-object_transform -> Matrix44f
+transforms -> Matrix44f
   = T<"transform"> OPEN_BRACE transforms:transform* CLOSE_BRACE {
     sdl::combine_transforms(transforms)
   }
