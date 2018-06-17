@@ -39,15 +39,15 @@ object {
   xzrect {
     width 8
     height 4
+    transform {
+      rotate_x 180
+      translate <0, 4, -5>
+    }
   }
   material {
     lambertian texture {
       solid color rgb <1, 1, 1>
     }
-  }
-  transform {
-    rotate_x 180
-    translate <0, 4, -5>
   }
 }
 
@@ -97,26 +97,26 @@ object {
 object {
   sphere {
     radius 0.9
+    transform {
+      rotate_y -90.0
+      translate <0.0, 1.0, -5.0>
+    }
   }
   material {
     lambertian texture {
       image "earth.jpg" 1.0
     }
   }
-  transform {
-    rotate_y -90.0
-    translate <0.0, 1.0, -5.0>
-  }
 }
 object {
   sphere {
     radius 1.0
+    transform {
+      translate <0.0, 1.0, -5.0>
+    }
   }
   material {
     dielectric ior 1.5
-  }
-  transform {
-    translate <0.0, 1.0, -5.0>
   }
 }
 
@@ -149,14 +149,14 @@ object {
   cube {
     <-0.5, 0.0, -0.5>
     <0.5, 1.0, 0.5>
+    transform {
+      scale <0.5, 0.5, 0.5>
+      translate <-2.0, 0.0, -3.5>
+    }
   }
   material {
     lambertian texture {
       solid color rgb <0.8, 0.1, 0.1>
     }
-  }
-  transform {
-    scale <0.5, 0.5, 0.5>
-    translate <-2.0, 0.0, -3.5>
   }
 }

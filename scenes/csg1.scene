@@ -38,13 +38,20 @@ object "thing" {
         <1, 2, 1>
       }
       sphere {
-        origin <0, 1, 0>
-        radius 1.4
+        origin <0, 0, 0>
+        radius 1
+        transform {
+          scale <1.4, 1.4, 1.4>
+          translate <0, 1, 0>
+        }
       }
     }
     sphere {
       origin <0, 1, 0>
       radius 1.35
+      transform {
+        translate <0, 0, 0>
+      }
     }
   }
   material {
@@ -52,8 +59,5 @@ object "thing" {
     //dielectric ior 1.5
     //metal fuzz 0.0 texture { solid color rgb <0.8, 0.8, 0.1> }
     //metal fuzz 0.1 texture { solid color rgb <0.5, 0.5, 0.5> }
-  }
-  transform {
-    translate <0, 0, 0>
   }
 }

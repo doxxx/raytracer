@@ -27,15 +27,15 @@ object {
     zyrect {
         width 555
         height 555
+        transform {
+            //rotate_z 180
+            translate <555, 278, 278>
+        }
     }
     material {
         lambertian texture {
             solid color rgb <0.12, 0.45, 0.15>
         }
-    }
-    transform {
-        //rotate_z 180
-        translate <555, 278, 278>
     }
 }
 
@@ -83,15 +83,15 @@ object {
     xzrect {
         width 130
         height 105
+        transform {
+            rotate_x 180
+            translate <278, 554, 278>
+        }
     }
     material {
         diffuse_light intensity 15 texture {
             solid color rgb <1, 1, 1>
         }
-    }
-    transform {
-        rotate_x 180
-        translate <278, 554, 278>
     }
 }
 
@@ -101,15 +101,15 @@ object {
     cube {
         <0, 0, 0>
         <165, 165, 165>
+        transform {
+            rotate_y -18
+            translate <130, 0, 65>
+        }
     }
     material {
         lambertian texture {
             solid color rgb <0.73, 0.73, 0.73>
         }
-    }
-    transform {
-        rotate_y -18
-        translate <130, 0, 65>
     }
 }
 
@@ -117,14 +117,14 @@ object {
     cube {
         <0, 0, 0>
         <165, 330, 165>
+        transform {
+            rotate_y 15
+            translate <265, 0, 295>
+        }
     }
     material {
         lambertian texture {
             solid color rgb <0.73, 0.73, 0.73>
         }
-    }
-    transform {
-        rotate_y 15
-        translate <265, 0, 295>
     }
 }
