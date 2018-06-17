@@ -3,6 +3,26 @@ use object::Transformation;
 use shapes::{first_positive_intersection, Interval, Shape};
 use system::{Intersectable, Intersection, Ray, Transformable};
 
+fn csg_intersection_intervals(a: &Box<Shape>, b: &Box<Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
+    let tx_a = a.transformation();
+    let tx_b = b.transformation();
+    let ray_a = ray.to_object(tx_a);
+    let ray_b = ray.to_object(tx_b);
+    let intervals_a = a.intersection_intervals(&ray_a);
+    let intervals_b = b.intersection_intervals(&ray_b);
+
+    let intervals_a: Vec<Interval> = intervals_a
+        .into_iter()
+        .map(|i| i.to_world(ray, &ray_a, tx_a))
+        .collect();
+    let intervals_b: Vec<Interval> = intervals_b
+        .into_iter()
+        .map(|i| i.to_world(ray, &ray_b, tx_b))
+        .collect();
+
+    (intervals_a, intervals_b)
+}
+
 /// Constructive Solid Geometry Union
 pub struct CSGUnion {
     a: Box<Shape>,
@@ -26,8 +46,7 @@ impl Shape for CSGUnion {
     }
 
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 {
             return intervals_b;
@@ -127,8 +146,7 @@ impl Shape for CSGIntersection {
     }
 
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 || intervals_b.len() == 0 {
             return Vec::with_capacity(0);
@@ -201,8 +219,7 @@ impl Shape for CSGDifference {
     }
 
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let intervals_a = self.a.intersection_intervals(ray);
-        let intervals_b = self.b.intersection_intervals(ray);
+        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
 
         if intervals_a.len() == 0 {
             return Vec::with_capacity(0);

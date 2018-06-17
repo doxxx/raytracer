@@ -23,6 +23,15 @@ pub use self::sphere::*;
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);
 
+impl Interval {
+    pub fn to_world(self, ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Interval {
+        Interval(
+                self.0.to_world(ray, &object_ray, tx),
+                self.1.to_world(ray, &object_ray, tx)
+        )
+    }
+}
+
 pub fn skip_negative_intervals(intervals: Vec<Interval>) -> impl Iterator<Item = Interval> {
     intervals
         .into_iter()
