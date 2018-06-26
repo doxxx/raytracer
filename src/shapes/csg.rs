@@ -3,7 +3,7 @@ use crate::object::Transformation;
 use crate::shapes::{first_positive_intersection, Interval, Shape};
 use crate::system::{Intersectable, Intersection, Ray, Transformable};
 
-fn csg_intersection_intervals(a: &Box<Shape>, b: &Box<Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
+fn csg_intersection_intervals(a: &Box<dyn Shape>, b: &Box<dyn Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
     let tx_a = a.transformation();
     let tx_b = b.transformation();
     let ray_a = ray.to_object(tx_a);
@@ -25,13 +25,13 @@ fn csg_intersection_intervals(a: &Box<Shape>, b: &Box<Shape>, ray: &Ray) -> (Vec
 
 /// Constructive Solid Geometry Union
 pub struct CSGUnion {
-    a: Box<Shape>,
-    b: Box<Shape>,
+    a: Box<dyn Shape>,
+    b: Box<dyn Shape>,
     tx: Transformation,
 }
 
 impl CSGUnion {
-    pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGUnion {
+    pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGUnion {
         CSGUnion { a, b, tx: Transformation::new() }
     }
 }
@@ -125,13 +125,13 @@ impl Intersectable for CSGUnion {
 
 /// Constructive Solid Geometry Intersection
 pub struct CSGIntersection {
-    a: Box<Shape>,
-    b: Box<Shape>,
+    a: Box<dyn Shape>,
+    b: Box<dyn Shape>,
     tx: Transformation,
 }
 
 impl CSGIntersection {
-    pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGIntersection {
+    pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGIntersection {
         CSGIntersection { a, b, tx: Transformation::new() }
     }
 }
@@ -198,13 +198,13 @@ impl Intersectable for CSGIntersection {
 
 /// Constructive Solid Geometry Difference
 pub struct CSGDifference {
-    a: Box<Shape>,
-    b: Box<Shape>,
+    a: Box<dyn Shape>,
+    b: Box<dyn Shape>,
     tx: Transformation,
 }
 
 impl CSGDifference {
-    pub fn new(a: Box<Shape>, b: Box<Shape>) -> CSGDifference {
+    pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGDifference {
         CSGDifference { a, b, tx: Transformation::new() }
     }
 }

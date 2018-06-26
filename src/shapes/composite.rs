@@ -4,11 +4,11 @@ use crate::shapes::{Interval, Shape};
 use crate::system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
-    shapes: Vec<Box<Shape>>,
+    shapes: Vec<Box<dyn Shape>>,
 }
 
 impl Composite {
-    pub fn new(shapes: Vec<Box<Shape>>) -> Composite {
+    pub fn new(shapes: Vec<Box<dyn Shape>>) -> Composite {
         Composite { shapes }
     }
 }

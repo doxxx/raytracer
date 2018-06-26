@@ -26,7 +26,7 @@ impl Material for DiffuseLight {
         self.intensity * self.texture.color_at_uv(hit.uv)
     }
 
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
 }

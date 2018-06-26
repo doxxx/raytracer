@@ -11,13 +11,13 @@ use crate::system::{Intersectable, Intersection, Ray, Transformable};
 use crate::vector::Vector2f;
 
 pub struct HomogenousMedium {
-    boundary: Box<Shape>,
+    boundary: Box<dyn Shape>,
     density: f64,
     tx: Transformation,
 }
 
 impl HomogenousMedium {
-    pub fn new(boundary: Box<Shape>, density: f64) -> HomogenousMedium {
+    pub fn new(boundary: Box<dyn Shape>, density: f64) -> HomogenousMedium {
         HomogenousMedium {
             boundary,
             density,

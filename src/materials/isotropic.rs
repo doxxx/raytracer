@@ -30,7 +30,7 @@ impl Material for Isotropic {
         Color::black()
     }
 
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
 }

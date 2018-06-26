@@ -30,12 +30,12 @@ impl Transformable for Transformation {
 
 pub struct Object {
     pub name: String,
-    pub shape: Box<Shape>,
-    pub material: Box<Material>,
+    pub shape: Box<dyn Shape>,
+    pub material: Box<dyn Material>,
 }
 
 impl Object {
-    pub fn new(name: &str, shape: Box<Shape>, material: Box<Material>) -> Object {
+    pub fn new(name: &str, shape: Box<dyn Shape>, material: Box<dyn Material>) -> Object {
         Object {
             name: String::from(name),
             shape,

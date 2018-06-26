@@ -57,7 +57,7 @@ pub trait Shape: Intersectable + Send + Sync {
 
 }
 
-impl Intersectable for [Box<Shape>] {
+impl Intersectable for [Box<dyn Shape>] {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         if self.len() == 0 {
             return None;
