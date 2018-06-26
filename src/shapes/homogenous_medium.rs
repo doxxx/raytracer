@@ -1,14 +1,14 @@
-use matrix::Matrix44f;
-use object::Transformation;
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
 use std::f64;
 
 use rand;
 use rand::Rng;
 
-use direction::*;
-use shapes::{skip_negative_intervals, Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
-use vector::Vector2f;
+use crate::direction::*;
+use crate::shapes::{skip_negative_intervals, Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use crate::vector::Vector2f;
 
 pub struct HomogenousMedium {
     boundary: Box<Shape>,

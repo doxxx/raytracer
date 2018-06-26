@@ -1,6 +1,6 @@
-use matrix::Matrix44f;
-use object::Transformation;
-use system::{Intersectable, Intersection, Ray};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::system::{Intersectable, Intersection, Ray};
 
 pub mod bounding_box;
 pub mod composite;
