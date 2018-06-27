@@ -1,14 +1,14 @@
-use matrix::Matrix44f;
-use object::Transformation;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray};
 
 pub struct Composite {
-    shapes: Vec<Box<Shape>>,
+    shapes: Vec<Box<dyn Shape>>,
 }
 
 impl Composite {
-    pub fn new(shapes: Vec<Box<Shape>>) -> Composite {
+    pub fn new(shapes: Vec<Box<dyn Shape>>) -> Composite {
         Composite { shapes }
     }
 }

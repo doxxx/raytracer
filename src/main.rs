@@ -1,10 +1,4 @@
-extern crate image;
-extern crate clap;
-extern crate wavefront_obj;
-extern crate pbr;
-extern crate num_cpus;
-extern crate time;
-extern crate rand;
+#![feature(rust_2018_preview)]
 
 #[cfg(test)]
 #[macro_use]
@@ -33,9 +27,9 @@ use std::fs::File;
 use clap::{App, Arg};
 use pbr::ProgressBar;
 
-use color::Color;
-use system::Options;
-use system::RenderProgress;
+use crate::color::Color;
+use crate::system::Options;
+use crate::system::RenderProgress;
 
 fn u16_validator(s: String) -> Result<(), String> {
     if s.parse::<u16>().is_ok() { return Ok(()); }

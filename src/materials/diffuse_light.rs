@@ -1,9 +1,9 @@
-use color::Color;
-use materials::ScatteredRay;
-use system::{RayHit, RenderContext};
-use texture::{ColorSource, Texture};
+use crate::color::Color;
+use crate::materials::ScatteredRay;
+use crate::system::{RayHit, RenderContext};
+use crate::texture::{ColorSource, Texture};
 
-use materials::Material;
+use crate::materials::Material;
 
 #[derive(Clone)]
 pub struct DiffuseLight {
@@ -26,7 +26,7 @@ impl Material for DiffuseLight {
         self.intensity * self.texture.color_at_uv(hit.uv)
     }
 
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
 }

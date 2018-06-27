@@ -5,15 +5,15 @@ use std::fs::File;
 use image;
 use wavefront_obj;
 
-use color::Color;
-use direction::Direction;
-use materials::Material;
-use matrix::Matrix44f;
-use object::Object;
-use point::Point;
-use sdl_grammar;
-use shapes::{Composite, Mesh, MeshTriangle, Shape};
-use system::{Camera, Options};
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::materials::Material;
+use crate::matrix::Matrix44f;
+use crate::object::Object;
+use crate::point::Point;
+use crate::sdl_grammar;
+use crate::shapes::{Composite, Mesh, MeshTriangle, Shape};
+use crate::system::{Camera, Options};
 
 pub struct Scene {
     pub options: SceneOptions,
@@ -37,11 +37,11 @@ pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
     sdl_grammar::scene(&s, &options)
 }
 
-pub fn new_object(name: Option<String>, shape: Box<Shape>, material: Box<Material>) -> Object {
+pub fn new_object(name: Option<String>, shape: Box<dyn Shape>, material: Box<dyn Material>) -> Object {
     Object::new(&name.unwrap_or(String::from("object")), shape, material)
 }
 
-pub fn transform_shape(mut shape: Box<Shape>, transform: Option<Matrix44f>) -> Box<Shape> {
+pub fn transform_shape(mut shape: Box<dyn Shape>, transform: Option<Matrix44f>) -> Box<dyn Shape> {
     shape.transform(transform.unwrap_or(Matrix44f::identity()));
     shape
 }
@@ -52,7 +52,7 @@ pub fn load_image(path: &str) -> image::DynamicImage {
     image::load(r, image::JPEG).expect("could not decode image file")
 }
 
-pub fn load_mesh_file(path: &str) -> Box<Shape> {
+pub fn load_mesh_file(path: &str) -> Box<dyn Shape> {
     let mut obj_file = File::open(path).expect("could not open object file");
     let mut obj_file_contents = String::new();
     obj_file.read_to_string(&mut obj_file_contents).expect("could not read object file");
@@ -60,7 +60,7 @@ pub fn load_mesh_file(path: &str) -> Box<Shape> {
     convert_objs(&obj_set)
 }
 
-fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Box<Shape> {
+fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Box<dyn Shape> {
     let shapes: Vec<Mesh> = objs.objects.iter().map(|o| {
         let vertices = o.vertices.iter().map(|v| Point::new(v.x, v.y, v.z)).collect();
         let normals = o.normals.iter().map(|n| Direction::new(n.x, n.y, n.z)).collect();
@@ -79,7 +79,7 @@ fn convert_objs(objs: &wavefront_obj::obj::ObjSet) -> Box<Shape> {
         Mesh::new(vertices, normals, triangles, true)
     }).collect();
 
-    let shapes: Vec<Box<Shape>> = shapes.into_iter().map(|m| Box::new(m) as Box<Shape>).collect();
+    let shapes: Vec<Box<dyn Shape>> = shapes.into_iter().map(|m| Box::new(m) as Box<dyn Shape>).collect();
 
     Box::new(Composite::new(shapes))
 }

@@ -1,6 +1,6 @@
-use matrix::Matrix44f;
-use object::Transformation;
-use system::{Intersectable, Intersection, Ray};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::system::{Intersectable, Intersection, Ray};
 
 pub mod bounding_box;
 pub mod composite;
@@ -57,7 +57,7 @@ pub trait Shape: Intersectable + Send + Sync {
 
 }
 
-impl Intersectable for [Box<Shape>] {
+impl Intersectable for [Box<dyn Shape>] {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         if self.len() == 0 {
             return None;

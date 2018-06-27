@@ -1,7 +1,7 @@
-use materials::Material;
-use matrix::Matrix44f;
-use shapes::Shape;
-use system::{Intersection, Ray, Intersectable, Transformable};
+use crate::materials::Material;
+use crate::matrix::Matrix44f;
+use crate::shapes::Shape;
+use crate::system::{Intersection, Ray, Intersectable, Transformable};
 
 #[derive(Clone)]
 pub struct Transformation {
@@ -30,12 +30,12 @@ impl Transformable for Transformation {
 
 pub struct Object {
     pub name: String,
-    pub shape: Box<Shape>,
-    pub material: Box<Material>,
+    pub shape: Box<dyn Shape>,
+    pub material: Box<dyn Material>,
 }
 
 impl Object {
-    pub fn new(name: &str, shape: Box<Shape>, material: Box<Material>) -> Object {
+    pub fn new(name: &str, shape: Box<dyn Shape>, material: Box<dyn Material>) -> Object {
         Object {
             name: String::from(name),
             shape,

@@ -1,13 +1,13 @@
-use matrix::Matrix44f;
-use object::Transformation;
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
 use std::f64;
 
-use direction::{Direction, Dot};
-use point::Point;
-use shapes::bounding_box::BoundingBox;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
-use vector::Vector2f;
+use crate::direction::{Direction, Dot};
+use crate::point::Point;
+use crate::shapes::bounding_box::BoundingBox;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use crate::vector::Vector2f;
 
 pub struct Mesh {
     vertices: Vec<Point>,

@@ -1,15 +1,15 @@
-use color::Color;
-use direction::Direction;
-use point::Point;
-use system::{RayHit, RenderContext};
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::point::Point;
+use crate::system::{RayHit, RenderContext};
 
 pub trait Material: Send + Sync {
     fn scatter(&self, context: &RenderContext, hit: &RayHit) -> Option<ScatteredRay>;
     fn emit(&self, context: &RenderContext, hit: &RayHit) -> Color;
-    fn box_clone(&self) -> Box<Material>;
+    fn box_clone(&self) -> Box<dyn Material>;
 }
 
-impl Clone for Box<Material> {
+impl Clone for Box<dyn Material> {
     fn clone(&self) -> Self {
         self.box_clone()
     }

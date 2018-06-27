@@ -1,10 +1,9 @@
 use std::f64;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use rand;
 use rand::Rng;
 
-use point::Point;
+use crate::point::Point;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Direction {

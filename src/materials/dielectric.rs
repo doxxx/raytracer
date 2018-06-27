@@ -3,12 +3,12 @@ use std::mem;
 use rand;
 use rand::Rng;
 
-use color::Color;
-use direction::{Direction, Dot};
-use materials::ScatteredRay;
-use system::{RenderContext, RayHit};
+use crate::color::Color;
+use crate::direction::{Direction, Dot};
+use crate::materials::ScatteredRay;
+use crate::system::{RenderContext, RayHit};
 
-use materials::Material;
+use crate::materials::Material;
 
 #[derive(Clone)]
 pub struct Dielectric {
@@ -57,7 +57,7 @@ impl Material for Dielectric {
         Color::black()
     }
 
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
 }
