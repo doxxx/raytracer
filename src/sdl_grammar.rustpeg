@@ -92,8 +92,8 @@ csg_difference -> Box<Shape>
   }
 
 sphere -> Box<Shape>
-  = T<"sphere"> OPEN_BRACE o:origin? r:radius transform:transforms? CLOSE_BRACE {
-    sdl::transform_shape(Box::new(Sphere::new(o.unwrap_or(Point::zero()), r)), transform)
+  = T<"sphere"> OPEN_BRACE o:origin? r:radius? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Sphere::new(o.unwrap_or(Point::zero()), r.unwrap_or(1.0))), transform)
   }
 
 radius -> f64
