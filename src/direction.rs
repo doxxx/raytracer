@@ -14,11 +14,11 @@ pub struct Direction {
 
 impl Direction {
     pub fn new(x: f64, y: f64, z: f64) -> Direction {
-        Direction {
-            x,
-            y,
-            z,
-        }
+        Direction { x, y, z }
+    }
+
+    pub fn from_tuple((x, y, z): (f64, f64, f64)) -> Direction {
+        Direction { x, y, z }
     }
 
     pub fn zero() -> Direction {

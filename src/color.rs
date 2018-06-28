@@ -13,6 +13,10 @@ impl Color {
         Color { r, g, b }
     }
 
+    pub fn from_tuple((r, g, b): (f64, f64, f64)) -> Color {
+        Color { r, g, b }
+    }
+
     pub fn black() -> Color { Color::new(0.0, 0.0, 0.0) }
     pub fn white() -> Color { Color::new(1.0, 1.0, 1.0) }
     pub fn red() -> Color { Color::new(1.0, 0.0, 0.0) }

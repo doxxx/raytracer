@@ -278,13 +278,19 @@ string -> String
   = "\"" s:$([^"]*) "\"" WS* { String::from_str(s).unwrap() }
 
 pub point -> Point
-  = v:vec3 { Point::new(v.0, v.1, v.2) }
+  = v:vec3 { Point::from_tuple(v) }
 
 pub direction -> Direction
-  = v:vec3 { Direction::new(v.0, v.1, v.2) }
+  = v:vec3     { Direction::from_tuple(v) }
+  / T<"down">  { Direction::new(0.0, -1.0, 0.0) }
+  / T<"up">    { Direction::new(0.0, 1.0, 0.0) }
+  / T<"left">  { Direction::new(-1.0, 0.0, 0.0) }
+  / T<"right"> { Direction::new(1.0, 0.0, 0.0) }
+  / T<"back">  { Direction::new(0.0, 0.0, -1.0) }
+  / T<"front"> { Direction::new(0.0, 0.0, 1.0) }
 
 pub color -> Color
-  = T<("color"/"colour")> c:(std_color / rgb_color) { Color::new(c.0, c.1, c.2) }
+  = T<("color"/"colour")> c:(std_color / rgb_color) { Color::from_tuple(c) }
 
 std_color -> (f64, f64, f64)
   = T<"white">   { (1.0, 1.0, 1.0) }
@@ -300,7 +306,14 @@ rgb_color -> (f64, f64, f64)
   = T<"rgb"> WS* v:vec3 { v }
 
 pub vec3 -> (f64, f64, f64)
+  = full_vec3
+  / short_vec3
+
+pub full_vec3 -> (f64, f64, f64)
   = T<"<"> a:FLOAT T<","> b:FLOAT T<","> c: FLOAT T<">"> { (a, b, c) }
+
+pub short_vec3 -> (f64, f64, f64)
+  = T<"<"> n:FLOAT T<">"> { (n, n, n) }
 
 pub FLOAT -> f64
   = #quiet<s:$("-"?([0-9]+)("."[0-9]+([eE][0-9]+)?)?) WS* { f64::from_str(s).unwrap() }>
