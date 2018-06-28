@@ -66,6 +66,7 @@ planar_shape -> Box<Shape>
 
 solid_shape -> Box<Shape>
   = sphere
+  / cylinder
   / cube
   / csg
   / homogenous_medium
@@ -91,12 +92,17 @@ csg_difference -> Box<Shape>
   }
 
 sphere -> Box<Shape>
-  = T<"sphere"> OPEN_BRACE o:origin? r:sphere_radius transform:transforms? CLOSE_BRACE {
+  = T<"sphere"> OPEN_BRACE o:origin? r:radius transform:transforms? CLOSE_BRACE {
     sdl::transform_shape(Box::new(Sphere::new(o.unwrap_or(Point::zero()), r)), transform)
   }
 
-sphere_radius -> f64
+radius -> f64
   = T<"radius"> r:FLOAT { r }
+
+cylinder -> Box<Shape>
+  = T<"cylinder"> OPEN_BRACE o:origin? r:radius? h:height? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Cylinder::new(o.unwrap_or(Point::zero()), r.unwrap_or(1.0), h.unwrap_or(1.0))), transform)
+  }
 
 plane -> Box<Shape>
   = T<"plane"> OPEN_BRACE o:origin? n:plane_normal transform:transforms? CLOSE_BRACE {

@@ -1,0 +1,86 @@
+options {
+    background color rgb <0, 0, 0>
+}
+
+camera {
+  origin <0, 3, 5>
+  look_at <0, 1, 0>
+}
+
+// light
+object "light" {
+  sphere {
+    origin <7, 7, 7>
+    radius 5
+  }
+  material {
+    diffuse_light intensity 3 texture {
+      solid color rgb <1, 1, 1>
+    }
+  }
+}
+
+// floor
+object "floor" {
+  plane {
+    origin <0, 0, 0>
+    normal <0, 1, 0>
+  }
+  material {
+    lambertian texture {
+      pattern { 
+        checkerboard
+        color rgb <0.5, 0.1, 0.1>
+        color rgb <0.1, 0.1, 0.5>
+        1
+      }
+    }
+  }
+}
+
+// objects
+object "thing" {
+  /*difference {
+    cube {
+      <-1, -1, -1>
+      <1, 1, 1>
+    }
+    cylinder {
+      transform {
+        translate <1, 0, 0>
+      }
+    }
+
+    transform {
+      rotate_y -90
+      translate <0, 1, 0>
+    }
+  }*/
+
+  cylinder {
+    //radius 2
+    //height 2
+    transform {
+      translate <-0.5, 0.5, 0>
+    }
+  }
+  
+  material {
+    lambertian texture { solid color white }
+    //dielectric ior 1.5
+  }
+}
+
+object {
+  cube {
+    <0, 0, 0>
+    <1, 1, 1>
+    transform {
+      translate <0.5, 0, 0>
+    }
+  }
+  material {
+    lambertian texture { solid color white }
+    //dielectric ior 1.5
+  }
+}
