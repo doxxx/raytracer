@@ -1,0 +1,54 @@
+options {
+    background color black
+}
+
+camera {
+  origin <0, 3, 5>
+  look_at <0, 1, 0>
+}
+
+// light
+object "light" {
+  sphere {
+    origin <7>
+    radius 5
+  }
+  material {
+    diffuse_light intensity 3 texture {
+      solid color white
+    }
+  }
+}
+
+// floor
+object "floor" {
+  plane {
+    origin <0>
+    normal up
+  }
+  material {
+    lambertian texture {
+      pattern { 
+        checkerboard
+        color rgb <0.5, 0.1, 0.1>
+        color rgb <0.1, 0.1, 0.5>
+        1
+      }
+    }
+  }
+}
+
+// objects
+object {
+  sphere {
+    transform {
+      scale <1, 1, 1>
+      translate <0, 0.5, 0>
+    }
+  }
+  
+  material {
+    lambertian texture { solid color white }
+  }
+
+}

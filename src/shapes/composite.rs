@@ -1,38 +1,46 @@
 use matrix::Matrix44f;
 use object::Transformation;
 use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray};
+use system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Composite {
     shapes: Vec<Box<dyn Shape>>,
+    tx: Transformation,
 }
 
 impl Composite {
     pub fn new(shapes: Vec<Box<dyn Shape>>) -> Composite {
-        Composite { shapes }
+        Composite { shapes, tx: Transformation::new() }
     }
 }
 
 impl Intersectable for Composite {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        self.shapes.intersect(ray)
+        if self.shapes.len() == 0 {
+            return None;
+        }
+
+        let object_ray = ray.to_object(&self.tx);
+
+        self.shapes.iter()
+            .flat_map(|s| s.intersect(&object_ray))
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .map(|i| i.to_world(ray, &object_ray, &self.tx))
     }
 }
 
 impl Shape for Composite {
     fn transform(&mut self, m: Matrix44f) {
-        for s in &mut self.shapes {
-            s.transform(m);
-        }
+        self.tx.transform(m);
     }
     
-    fn transformation(&self) -> &Transformation {
-        self.shapes[0].transformation()
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let mut is: Vec<Interval> = self.shapes.iter().flat_map(|s| s.intersection_intervals(ray)).collect();
+        let object_ray = ray.to_object(&self.tx);
+        let mut is: Vec<Interval> = self.shapes
+            .iter()
+            .flat_map(|s| s.intersection_intervals(&object_ray))
+            .collect();
         is.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        is
+        is.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
     }
 }

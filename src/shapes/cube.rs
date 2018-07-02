@@ -75,15 +75,12 @@ impl Shape for Cube {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
+        let object_ray = ray.to_object(&self.tx);
         let is = [
-            self.min_x.intersect(ray), self.max_x.intersect(ray),
-            self.min_y.intersect(ray), self.max_y.intersect(ray),
-            self.min_z.intersect(ray), self.max_z.intersect(ray),
+            self.min_x.intersect(&object_ray), self.max_x.intersect(&object_ray),
+            self.min_y.intersect(&object_ray), self.max_y.intersect(&object_ray),
+            self.min_z.intersect(&object_ray), self.max_z.intersect(&object_ray),
         ];
         let is: Vec<Intersection> = is.into_iter().flat_map(|i| *i).collect();
 
@@ -96,10 +93,10 @@ impl Shape for Cube {
                 mem::swap(&mut a, &mut b);
             }
             b.n *= -1.0;
-            vec![Interval(a, b)]
+            vec![Interval(a, b).to_world(ray, &object_ray, &self.tx)]
         } else if is.len() == 1 {
             let i = is[0];
-            vec![Interval(i.clone(), i.clone())]
+            vec![Interval(i.clone(), i.clone()).to_world(ray, &object_ray, &self.tx)]
         } else {
             Vec::with_capacity(0)
         }

@@ -154,9 +154,10 @@ impl Matrix44f {
         }
 
         s
+
     }
 
-    pub fn transposed(&self) -> Matrix44f {
+    pub fn transpose(&self) -> Matrix44f {
         let mut t = Matrix44f::zero();
         for i in 0..4 {
             for j in 0..4 {

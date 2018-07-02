@@ -148,7 +148,9 @@ impl Ray {
 impl Transformable for Ray {
     fn transform(&mut self, m: Matrix44f) {
         self.origin = self.origin * m;
-        self.direction = self.direction * m.inverse().transposed();
+        self.direction = (self.direction * m).normalize();
+        self.inverse_direction = 1.0 / self.direction;
+        self.sign = self.inverse_direction.sign();
     }
 }
 
@@ -182,13 +184,13 @@ impl Intersection {
         ray.origin + ray.direction * self.t
     }
 
-    pub fn to_world(&self, ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Intersection {
+    pub fn to_world(&self, world_ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Intersection {
         let object_hit_point = self.point(&object_ray);
         let world_hit_point = object_hit_point * tx.object_to_world;
         let tsign = self.t.signum();
         Intersection {
-            t: tsign * (world_hit_point - ray.origin).length(), 
-            n: self.n * tx.normal_to_world,
+            t: tsign * (world_hit_point - world_ray.origin).length(),
+            n: (self.n * tx.object_to_world.inverse().transpose()).normalize(),
             uv: self.uv,
         }
     }

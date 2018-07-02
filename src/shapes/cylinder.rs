@@ -52,13 +52,10 @@ impl Shape for Cylinder {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let o = ray.origin;
-        let d = ray.direction;
+        let object_ray = ray.to_object(&self.tx);
+        let o = object_ray.origin;
+        let d = object_ray.direction;
         let a = d.x.powi(2) + d.z.powi(2);
         let b = 2.0 * o.x * d.x + 2.0 * o.z * d.z;
         let c = o.x.powi(2) + o.z.powi(2) - self.radius.powi(2);
@@ -90,60 +87,60 @@ impl Shape for Cylinder {
         } else if y0 > max_y {
             // top cap
             let Interval(top_i, _) = top_cap
-                .intersection_intervals(ray)
+                .intersection_intervals(&object_ray)
                 .pop()
                 .expect("expected one interval from top cap intersection");
             if y1 > min_y && y1 < max_y {
                 // and back side
-                vec![Interval(top_i, self.side_intersection(o, d, t1, y1))]
+                vec![Interval(top_i, self.side_intersection(o, d, t1, y1)).to_world(ray, &object_ray, &self.tx)]
             } else {
                 // and bottom cap
                 assert!(y1 < min_y);
                 let Interval(bottom_i, _) = bottom_cap
-                    .intersection_intervals(ray)
+                    .intersection_intervals(&object_ray)
                     .pop()
                     .expect("expected one interval from bottom cap intersection");
-                vec![Interval(top_i, bottom_i)]
+                vec![Interval(top_i, bottom_i).to_world(ray, &object_ray, &self.tx)]
             }
         } else if y0 < min_y {
             // bottom cap
             let Interval(bottom_i, _) = bottom_cap
-                .intersection_intervals(ray)
+                .intersection_intervals(&object_ray)
                 .pop()
                 .expect("expected one interval from bottom cap intersection");
             if y1 > min_y && y1 < max_y {
                 // and back side
-                vec![Interval(bottom_i, self.side_intersection(o, d, t1, y1))]
+                vec![Interval(bottom_i, self.side_intersection(o, d, t1, y1)).to_world(ray, &object_ray, &self.tx)]
             } else {
                 // and top cap
                 assert!(y1 > max_y);
                 let Interval(top_i, _) = top_cap
-                    .intersection_intervals(ray)
+                    .intersection_intervals(&object_ray)
                     .pop()
                     .expect("expected one interval from top cap intersection");
-                vec![Interval(bottom_i, top_i)]
+                vec![Interval(bottom_i, top_i).to_world(ray, &object_ray, &self.tx)]
             }
         } else {
             // front side
             let front_i = self.side_intersection(o, d, t0, y0);
             if y1 > min_y && y1 < max_y {
                 // and back side
-                vec![Interval(front_i, self.side_intersection(o, d, t1, y1))]
+                vec![Interval(front_i, self.side_intersection(o, d, t1, y1)).to_world(ray, &object_ray, &self.tx)]
             } else if y1 < min_y {
                 // and bottom cap
                 let Interval(bottom_i, _) = bottom_cap
-                    .intersection_intervals(ray)
+                    .intersection_intervals(&object_ray)
                     .pop()
                     .expect("expected one interval from bottom cap intersection");
-                vec![Interval(front_i, bottom_i)]
+                vec![Interval(front_i, bottom_i).to_world(ray, &object_ray, &self.tx)]
             } else {
                 // and top cap
                 assert!(y1 > max_y);
                 let Interval(top_i, _) = top_cap
-                    .intersection_intervals(ray)
+                    .intersection_intervals(&object_ray)
                     .pop()
                     .expect("expected one interval from top cap intersection");
-                vec![Interval(front_i, top_i)]
+                vec![Interval(front_i, top_i).to_world(ray, &object_ray, &self.tx)]
             }
         }
     }
