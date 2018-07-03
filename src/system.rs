@@ -185,8 +185,9 @@ impl Intersection {
     pub fn to_world(&self, ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Intersection {
         let object_hit_point = self.point(&object_ray);
         let world_hit_point = object_hit_point * tx.object_to_world;
+        let tsign = self.t.signum();
         Intersection {
-            t: (world_hit_point - ray.origin).length(),
+            t: tsign * (world_hit_point - ray.origin).length(), 
             n: self.n * tx.normal_to_world,
             uv: self.uv,
         }
