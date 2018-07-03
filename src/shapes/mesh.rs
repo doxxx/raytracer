@@ -52,6 +52,21 @@ impl Mesh {
         }
     }
 
+    fn intersect_triangles(&self, ray: &Ray) -> Vec<Intersection> {
+        if !self.bounding_box.intersect(ray) {
+            return Vec::with_capacity(0);
+        }
+
+        let mut is = self.triangles
+            .iter()
+            .filter_map(|triangle| self.intersect_triangle(ray, triangle))
+            .collect::<Vec<Intersection>>();
+        
+        is.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+
+        is
+    }
+
     fn intersect_triangle(&self, ray: &Ray, triangle: &MeshTriangle) -> Option<Intersection> {
         let v0 = self.vertices[triangle.vertex_indices[0]];
         let v1 = self.vertices[triangle.vertex_indices[1]];
@@ -104,14 +119,7 @@ impl Mesh {
 
 impl Intersectable for Mesh {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        if !self.bounding_box.intersect(ray) {
-            return None;
-        }
-
-        self.triangles
-            .iter()
-            .filter_map(|triangle| self.intersect_triangle(ray, triangle))
-            .nth(0)
+        self.intersect_triangles(ray).into_iter().nth(0)
     }
 }
 
@@ -128,8 +136,11 @@ impl Shape for Mesh {
         // TODO: find all triangle intersections
         // TODO: if even then assume closed shape and pair intersections as intervals
         // TODO: or maybe require a flag to indicate whether mesh is closed
-        self.intersect(ray)
+        self.intersect_triangles(ray)
+            .into_iter()
+            .nth(0)
             .map(|i| vec![Interval(i, i.clone())])
             .unwrap_or(Vec::with_capacity(0))
+        
     }
 }
