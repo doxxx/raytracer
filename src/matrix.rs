@@ -247,6 +247,8 @@ impl PartialEq for Matrix44f {
 #[cfg(test)]
 mod tests {
     use super::Matrix44f;
+    use direction::Direction;
+    use point::Point;
     use test_utils::ApproxEq;
 
     #[test]
@@ -278,5 +280,104 @@ mod tests {
         assert_approx_eq!(actual, expected);
         let identity = m * actual;
         assert_approx_eq!(identity, Matrix44f::identity());
+    }
+
+    #[test]
+    pub fn point_translation() {
+        let p = Point::new(0.1, 2.3, 4.5);
+        let m = Matrix44f::translation(Direction::new(1.2, 3.4, 5.6));
+        let actual = p * m;
+        let expected = Point::new(1.3, 5.7, 10.1);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_rotation_x() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let m = Matrix44f::rotation_x(90.0);
+        let actual = p * m;
+        let expected = Point::new(0.0, 0.0, 1.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_rotation_y() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_y(90.0);
+        let actual = p * m;
+        let expected = Point::new(0.0, 0.0, -1.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_rotation_z() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_z(90.0);
+        let actual = p * m;
+        let expected = Point::new(0.0, 1.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_scaling() {
+        let p = Point::new(1.0, 1.0, 1.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 3.0, 4.0));
+        let actual = p * m;
+        let expected = Point::new(2.0, 3.0, 4.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_translation_then_rotation() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::translation(Direction::new(2.0, 0.0, 0.0)) * Matrix44f::rotation_z(90.0);
+        let actual = p * m;
+        let expected = Point::new(0.0, 3.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_rotation_then_translation() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_z(90.0) * Matrix44f::translation(Direction::new(2.0, 0.0, 0.0));
+        let actual = p * m;
+        let expected = Point::new(2.0, 1.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_scaling_then_rotation() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::rotation_y(90.0);
+        let actual = p * m;
+        let expected = Point::new(0.0, 0.0, -2.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_rotation_then_scaling() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_y(90.0) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let actual = p * m;
+        let expected = Point::new(0.0, 0.0, -2.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_scaling_then_translation() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
+        let actual = p * m;
+        let expected = Point::new(2.0, 4.0, 3.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn point_translation_then_scaling() {
+        let p = Point::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let actual = p * m;
+        let expected = Point::new(2.0, 8.0, 6.0);
+        assert_approx_eq!(actual, expected);
     }
 }
