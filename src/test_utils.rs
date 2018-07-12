@@ -46,7 +46,7 @@ impl ApproxEq for Direction {
 
 macro_rules! assert_approx_eq {
     ($a:expr, $b:expr) => {
-        if !$a.approx_eq($b) {
+        if !$a.approx_eq(&$b) {
             panic!(
                 "assertion failed: `(left == right)`\n   left: `{:?}`,\n  right: `{:?}`",
                 $a, $b,

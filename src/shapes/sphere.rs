@@ -108,10 +108,10 @@ mod tests {
             .collect();
         let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
         let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
-        assert_approx_eq!(&distances, &vec![1.0, 3.0]);
+        assert_approx_eq!(distances, vec![1.0, 3.0]);
         assert_approx_eq!(
-            &normals,
-            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
         );
     }
 
@@ -126,10 +126,10 @@ mod tests {
             .collect();
         let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
         let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
-        assert_approx_eq!(&distances, &vec![0.0, 2.0]);
+        assert_approx_eq!(distances, vec![0.0, 2.0]);
         assert_approx_eq!(
-            &normals,
-            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
         );
     }
 
@@ -144,10 +144,10 @@ mod tests {
             .collect();
         let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
         let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
-        assert_approx_eq!(&distances, &vec![-0.1, 1.9]);
+        assert_approx_eq!(distances, vec![-0.1, 1.9]);
         assert_approx_eq!(
-            &normals,
-            &vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0)]
         );
     }
 }

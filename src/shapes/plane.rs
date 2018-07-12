@@ -267,8 +267,8 @@ mod tests {
         let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
         let i = s.intersect(&r).unwrap();
-        assert_approx_eq!(&i.t, &1.0);
-        assert_approx_eq!(&i.n, &Direction::new(0.0, 0.0, 1.0));
+        assert_approx_eq!(i.t, 1.0);
+        assert_approx_eq!(i.n, Direction::new(0.0, 0.0, 1.0));
     }
 
     #[test]
@@ -276,8 +276,8 @@ mod tests {
         let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, -1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
         let i = s.intersect(&r).unwrap();
-        assert_approx_eq!(&i.t, &1.0);
-        assert_approx_eq!(&i.n, &Direction::new(0.0, 0.0, 1.0));
+        assert_approx_eq!(i.t, 1.0);
+        assert_approx_eq!(i.n, Direction::new(0.0, 0.0, 1.0));
     }
 
     #[test]
@@ -292,6 +292,6 @@ mod tests {
         let s = Plane::new(Point::zero(), Direction::new(0.0, 0.0, 1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, -1.0), Direction::new(0.0, 0.0, -1.0), 0);
         let i = s.intersect(&r).unwrap();
-        assert_approx_eq!(&i.t, &-1.0);
+        assert_approx_eq!(i.t, -1.0);
     }
 }
