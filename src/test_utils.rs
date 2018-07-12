@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use direction::Direction;
 use matrix::Matrix44f;
+use point::Point;
 
 const TEST_EPSILON: f64 = 0.000001;
 
@@ -46,6 +47,15 @@ impl ApproxEq for Matrix44f {
 }
 
 impl ApproxEq for Direction {
+    fn approx_eq(&self, other: &Self) -> bool {
+        let a = [self.x, self.y, self.z];
+        let b = [other.x, other.y, other.z];
+
+        a.approx_eq(&b)
+    }
+}
+
+impl ApproxEq for Point {
     fn approx_eq(&self, other: &Self) -> bool {
         let a = [self.x, self.y, self.z];
         let b = [other.x, other.y, other.z];
