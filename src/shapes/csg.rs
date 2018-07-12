@@ -3,26 +3,6 @@ use object::Transformation;
 use shapes::{first_positive_intersection, Interval, Shape};
 use system::{Intersectable, Intersection, Ray, Transformable};
 
-fn csg_intersection_intervals(a: &Box<dyn Shape>, b: &Box<dyn Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
-    let tx_a = a.transformation();
-    let tx_b = b.transformation();
-    let ray_a = ray.to_object(tx_a);
-    let ray_b = ray.to_object(tx_b);
-    let intervals_a = a.intersection_intervals(&ray_a);
-    let intervals_b = b.intersection_intervals(&ray_b);
-
-    let intervals_a: Vec<Interval> = intervals_a
-        .into_iter()
-        .map(|i| i.to_world(ray, &ray_a, tx_a))
-        .collect();
-    let intervals_b: Vec<Interval> = intervals_b
-        .into_iter()
-        .map(|i| i.to_world(ray, &ray_b, tx_b))
-        .collect();
-
-    (intervals_a, intervals_b)
-}
-
 /// Constructive Solid Geometry Union
 pub struct CSGUnion {
     a: Box<dyn Shape>,
@@ -41,12 +21,10 @@ impl Shape for CSGUnion {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
+        let object_ray = ray.to_object(&self.tx);
+        let intervals_a = self.a.intersection_intervals(&object_ray);
+        let intervals_b = self.b.intersection_intervals(&object_ray);
 
         if intervals_a.len() == 0 {
             return intervals_b;
@@ -109,7 +87,7 @@ impl Shape for CSGUnion {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals
+        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
     }
 }
 
@@ -141,12 +119,10 @@ impl Shape for CSGIntersection {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
+        let object_ray = ray.to_object(&self.tx);
+        let intervals_a = self.a.intersection_intervals(&object_ray);
+        let intervals_b = self.b.intersection_intervals(&object_ray);
 
         if intervals_a.len() == 0 || intervals_b.len() == 0 {
             return Vec::with_capacity(0);
@@ -182,7 +158,7 @@ impl Shape for CSGIntersection {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals
+        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
     }
 }
 
@@ -214,12 +190,10 @@ impl Shape for CSGDifference {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let (intervals_a, intervals_b) = csg_intersection_intervals(&self.a, &self.b, ray);
+        let object_ray = ray.to_object(&self.tx);
+        let intervals_a = self.a.intersection_intervals(&object_ray);
+        let intervals_b = self.b.intersection_intervals(&object_ray);
 
         if intervals_a.len() == 0 {
             return Vec::with_capacity(0);
@@ -281,7 +255,7 @@ impl Shape for CSGDifference {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals
+        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
     }
 }
 

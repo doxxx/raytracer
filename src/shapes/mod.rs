@@ -26,10 +26,10 @@ pub use self::sphere::*;
 pub struct Interval(Intersection, Intersection);
 
 impl Interval {
-    pub fn to_world(self, ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Interval {
+    pub fn to_world(self, world_ray: &Ray, object_ray: &Ray, tx: &Transformation) -> Interval {
         Interval(
-                self.0.to_world(ray, &object_ray, tx),
-                self.1.to_world(ray, &object_ray, tx)
+            self.0.to_world(world_ray, &object_ray, tx),
+            self.1.to_world(world_ray, &object_ray, tx),
         )
     }
 }
@@ -54,9 +54,7 @@ pub fn first_intersection(intervals: Vec<Interval>) -> Option<Intersection> {
 
 pub trait Shape: Intersectable + Send + Sync {
     fn transform(&mut self, m: Matrix44f);
-    fn transformation(&self) -> &Transformation;
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval>;
-
 }
 
 impl Intersectable for [Box<dyn Shape>] {

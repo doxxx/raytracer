@@ -66,14 +66,11 @@ impl Shape for Sphere {
         self.tx.transform(m);
     }
 
-    fn transformation(&self) -> &Transformation {
-        &self.tx
-    }
-
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
-        let l = ray.origin - self.origin;
-        let a = ray.direction.dot(ray.direction);
-        let b = 2.0 * ray.direction.dot(l);
+        let object_ray = ray.to_object(&self.tx);
+        let l = object_ray.origin - self.origin;
+        let a = object_ray.direction.dot(object_ray.direction);
+        let b = 2.0 * object_ray.direction.dot(l);
         let c = l.dot(l) - self.radius_squared;
 
         if let Some((mut t0, mut t1)) = solve_quadratic(a, b, c) {
@@ -82,8 +79,8 @@ impl Shape for Sphere {
             }
 
             vec![Interval(
-                self.intersection_for_t(ray, t0),
-                self.intersection_for_t(ray, t1),
+                self.intersection_for_t(&object_ray, t0).to_world(ray, &object_ray, &self.tx),
+                self.intersection_for_t(&object_ray, t1).to_world(ray, &object_ray, &self.tx),
             )]
         } else {
             Vec::with_capacity(0)
