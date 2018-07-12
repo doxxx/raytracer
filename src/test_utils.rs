@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use direction::Direction;
+use matrix::Matrix44f;
 
 const TEST_EPSILON: f64 = 0.000001;
 
@@ -32,6 +33,15 @@ where
 {
     fn approx_eq(&self, other: &Self) -> bool {
         self.as_slice().approx_eq(other.as_slice())
+    }
+}
+
+impl ApproxEq for Matrix44f {
+    fn approx_eq(&self, other: &Self) -> bool {
+        self.row(0).approx_eq(&other.row(0))
+            && self.row(1).approx_eq(&other.row(1))
+            && self.row(2).approx_eq(&other.row(2))
+            && self.row(3).approx_eq(&other.row(3))
     }
 }
 

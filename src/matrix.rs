@@ -75,6 +75,10 @@ impl Matrix44f {
         ])
     }
 
+    pub fn row(&self, i: usize) -> [f64; 4] {
+        self.0[i]
+    }
+
     pub fn inverse(&self) -> Matrix44f {
         let mut s = Matrix44f::identity();
         let mut t = self.clone();
@@ -240,8 +244,9 @@ impl PartialEq for Matrix44f {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::Matrix44f;
+    use test_utils::ApproxEq;
 
     #[test]
     fn inverse_identity() {
@@ -269,8 +274,8 @@ mod test {
             ],
         );
         let actual = m.inverse();
-        assert_eq!(actual, expected);
+        assert_approx_eq!(actual, expected);
         let identity = m * actual;
-        assert_eq!(identity, Matrix44f::identity());
+        assert_approx_eq!(identity, Matrix44f::identity());
     }
 }
