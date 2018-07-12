@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::direction::Direction;
+use direction::Direction;
 
 const TEST_EPSILON: f64 = 0.000001;
 

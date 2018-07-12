@@ -1,7 +1,7 @@
-use crate::matrix::Matrix44f;
-use crate::object::Transformation;
-use crate::shapes::{first_positive_intersection, Interval, Shape};
-use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use matrix::Matrix44f;
+use object::Transformation;
+use shapes::{first_positive_intersection, Interval, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
 
 fn csg_intersection_intervals(a: &Box<dyn Shape>, b: &Box<dyn Shape>, ray: &Ray) -> (Vec<Interval>, Vec<Interval>) {
     let tx_a = a.transformation();

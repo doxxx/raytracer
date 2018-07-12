@@ -1,13 +1,13 @@
 use std::f64;
 use std::mem;
 
-use crate::direction::{Direction, Dot};
-use crate::matrix::Matrix44f;
-use crate::object::Transformation;
-use crate::point::Point;
-use crate::shapes::{Interval, Plane, Shape};
-use crate::system::{Intersectable, Intersection, Ray, Transformable};
-use crate::vector::Vector2f;
+use direction::{Direction, Dot};
+use matrix::Matrix44f;
+use object::Transformation;
+use point::Point;
+use shapes::{Interval, Plane, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
+use vector::Vector2f;
 
 pub struct Cylinder {
     origin: Point,

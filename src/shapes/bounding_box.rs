@@ -1,5 +1,5 @@
-use crate::point::Point;
-use crate::system::Ray;
+use point::Point;
+use system::Ray;
 
 pub struct BoundingBox {
     bounds: [Point; 2],

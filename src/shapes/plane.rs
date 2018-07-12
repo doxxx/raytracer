@@ -1,10 +1,10 @@
-use crate::direction::{Direction, Dot};
-use crate::matrix::Matrix44f;
-use crate::object::Transformation;
-use crate::point::Point;
-use crate::shapes::{Interval, Shape};
-use crate::system::{Intersectable, Intersection, Ray, Transformable};
-use crate::vector::Vector2f;
+use direction::{Direction, Dot};
+use matrix::Matrix44f;
+use object::Transformation;
+use point::Point;
+use shapes::{Interval, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
+use vector::Vector2f;
 
 fn plane_uv(n: Direction) -> (Direction, Direction) {
     let mut u = n.cross(Direction::new(1.0, 0.0, 0.0));
@@ -259,8 +259,8 @@ impl Shape for ZYRectangle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::direction::*;
-    use crate::test_utils::*;
+    use direction::*;
+    use test_utils::*;
 
     #[test]
     pub fn front_intersection() {

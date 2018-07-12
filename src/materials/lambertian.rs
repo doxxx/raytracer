@@ -1,10 +1,10 @@
-use crate::color::Color;
-use crate::direction::Direction;
-use crate::materials::ScatteredRay;
-use crate::system::{RayHit, RenderContext};
-use crate::texture::{ColorSource, Texture};
+use color::Color;
+use direction::Direction;
+use materials::ScatteredRay;
+use system::{RayHit, RenderContext};
+use texture::{ColorSource, Texture};
 
-use crate::materials::Material;
+use materials::Material;
 
 #[derive(Clone)]
 pub struct Lambertian {

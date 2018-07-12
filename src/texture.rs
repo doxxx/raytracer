@@ -3,8 +3,8 @@ use std::fmt;
 
 use image::{Pixel,DynamicImage,GenericImage};
 
-use crate::color::Color;
-use crate::vector::Vector2f;
+use color::Color;
+use vector::Vector2f;
 
 pub trait ColorSource {
     fn color_at_uv(&self, uv: Vector2f) -> Color;

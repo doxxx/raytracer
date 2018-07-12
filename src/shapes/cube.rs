@@ -1,11 +1,11 @@
-use crate::matrix::Matrix44f;
-use crate::object::Transformation;
+use matrix::Matrix44f;
+use object::Transformation;
 use std::mem;
 
-use crate::shapes::{XYRectangle, XZRectangle, ZYRectangle};
-use crate::point::Point;
-use crate::shapes::{Interval, Shape};
-use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use shapes::{XYRectangle, XZRectangle, ZYRectangle};
+use point::Point;
+use shapes::{Interval, Shape};
+use system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Cube {
     min_x: ZYRectangle,
@@ -109,8 +109,8 @@ impl Shape for Cube {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::direction::*;
-    use crate::test_utils::*;
+    use direction::*;
+    use test_utils::*;
 
     #[test]
     pub fn outside_intersection() {

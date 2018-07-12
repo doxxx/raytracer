@@ -1,7 +1,4 @@
-cargo-features = ["edition"]
-
 [package]
-edition = "2018"
 name = "raytracer"
 version = "0.1.0"
 authors = ["Gordon Tyler <gordon@doxxx.net>"]

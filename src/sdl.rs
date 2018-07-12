@@ -5,15 +5,15 @@ use std::fs::File;
 use image;
 use wavefront_obj;
 
-use crate::color::Color;
-use crate::direction::Direction;
-use crate::materials::Material;
-use crate::matrix::Matrix44f;
-use crate::object::Object;
-use crate::point::Point;
-use crate::sdl_grammar;
-use crate::shapes::{Composite, Mesh, MeshTriangle, Shape};
-use crate::system::{Camera, Options};
+use color::Color;
+use direction::Direction;
+use materials::Material;
+use matrix::Matrix44f;
+use object::Object;
+use point::Point;
+use sdl_grammar;
+use shapes::{Composite, Mesh, MeshTriangle, Shape};
+use system::{Camera, Options};
 
 pub struct Scene {
     pub options: SceneOptions,

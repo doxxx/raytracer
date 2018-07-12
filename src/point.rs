@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::direction::Direction;
+use direction::Direction;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Point {

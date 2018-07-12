@@ -2,8 +2,8 @@ use std::cmp::PartialEq;
 use std::f64;
 use std::ops::{Index, IndexMut, Mul};
 
-use crate::direction::Direction;
-use crate::point::Point;
+use direction::Direction;
+use point::Point;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix44f(pub [[f64; 4]; 4]);

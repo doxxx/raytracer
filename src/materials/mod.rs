@@ -1,7 +1,7 @@
-use crate::color::Color;
-use crate::direction::Direction;
-use crate::point::Point;
-use crate::system::{RayHit, RenderContext};
+use color::Color;
+use direction::Direction;
+use point::Point;
+use system::{RayHit, RenderContext};
 
 pub trait Material: Send + Sync {
     fn scatter(&self, context: &RenderContext, hit: &RayHit) -> Option<ScatteredRay>;
