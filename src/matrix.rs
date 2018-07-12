@@ -380,4 +380,103 @@ mod tests {
         let expected = Point::new(2.0, 8.0, 6.0);
         assert_approx_eq!(actual, expected);
     }
+
+    #[test]
+    pub fn dir_translation() {
+        let d = Direction::new(0.1, 2.3, 4.5);
+        let m = Matrix44f::translation(Direction::new(1.2, 3.4, 5.6));
+        let actual = d * m;
+        let expected = d;
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_rotation_x() {
+        let d = Direction::new(0.0, 1.0, 0.0);
+        let m = Matrix44f::rotation_x(90.0);
+        let actual = d * m;
+        let expected = Direction::new(0.0, 0.0, 1.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_rotation_y() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_y(90.0);
+        let actual = d * m;
+        let expected = Direction::new(0.0, 0.0, -1.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_rotation_z() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_z(90.0);
+        let actual = d * m;
+        let expected = Direction::new(0.0, 1.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_scaling() {
+        let d = Direction::new(1.0, 1.0, 1.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 3.0, 4.0));
+        let actual = d * m;
+        let expected = Direction::new(2.0, 3.0, 4.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_translation_then_rotation() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::translation(Direction::new(2.0, 0.0, 0.0)) * Matrix44f::rotation_z(90.0);
+        let actual = d * m;
+        let expected = Direction::new(0.0, 1.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_rotation_then_translation() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_z(90.0) * Matrix44f::translation(Direction::new(2.0, 0.0, 0.0));
+        let actual = d * m;
+        let expected = Direction::new(0.0, 1.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_scaling_then_rotation() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::rotation_y(90.0);
+        let actual = d * m;
+        let expected = Direction::new(0.0, 0.0, -2.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_rotation_then_scaling() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::rotation_y(90.0) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let actual = d * m;
+        let expected = Direction::new(0.0, 0.0, -2.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_scaling_then_translation() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
+        let actual = d * m;
+        let expected = Direction::new(2.0, 0.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
+
+    #[test]
+    pub fn dir_translation_then_scaling() {
+        let d = Direction::new(1.0, 0.0, 0.0);
+        let m = Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let actual = d * m;
+        let expected = Direction::new(2.0, 0.0, 0.0);
+        assert_approx_eq!(actual, expected);
+    }
 }
