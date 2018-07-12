@@ -221,9 +221,9 @@ impl Mul<Matrix44f> for Direction {
     
     fn mul(self, rhs: Matrix44f) -> Self::Output {
         Direction::new(
-            self.x * rhs[0][0] + self.y * rhs[1][0] + self.z * rhs[2][0] + rhs[3][0],
-            self.x * rhs[0][1] + self.y * rhs[1][1] + self.z * rhs[2][1] + rhs[3][1],
-            self.x * rhs[0][2] + self.y * rhs[1][2] + self.z * rhs[2][2] + rhs[3][2],
+            self.x * rhs[0][0] + self.y * rhs[1][0] + self.z * rhs[2][0],
+            self.x * rhs[0][1] + self.y * rhs[1][1] + self.z * rhs[2][1],
+            self.x * rhs[0][2] + self.y * rhs[1][2] + self.z * rhs[2][2],
         )
     }
 }
