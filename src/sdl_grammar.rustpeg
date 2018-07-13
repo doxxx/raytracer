@@ -100,8 +100,8 @@ radius -> f64
   = T<"radius"> r:FLOAT { r }
 
 cylinder -> Box<Shape>
-  = T<"cylinder"> OPEN_BRACE o:origin? r:radius? h:height? transform:transforms? CLOSE_BRACE {
-    sdl::transform_shape(Box::new(Cylinder::new(o.unwrap_or(Point::zero()), r.unwrap_or(1.0), h.unwrap_or(1.0))), transform)
+  = T<"cylinder"> OPEN_BRACE r:radius? h:height? transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Cylinder::new(r.unwrap_or(1.0), h.unwrap_or(1.0))), transform)
   }
 
 plane -> Box<Shape>

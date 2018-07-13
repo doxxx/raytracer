@@ -1,7 +1,7 @@
 use std::f64;
 use std::mem;
 
-use direction::{Direction, Dot};
+use direction::Direction;
 use matrix::Matrix44f;
 use object::Transformation;
 use point::Point;
@@ -10,16 +10,14 @@ use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
 
 pub struct Cylinder {
-    origin: Point,
     radius: f64,
     height: f64,
     tx: Transformation,
 }
 
 impl Cylinder {
-    pub fn new(origin: Point, radius: f64, height: f64) -> Cylinder {
+    pub fn new(radius: f64, height: f64) -> Cylinder {
         Cylinder {
-            origin,
             radius,
             height,
             tx: Transformation::new(),
