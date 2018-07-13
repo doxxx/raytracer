@@ -2,15 +2,15 @@ use matrix::Matrix44f;
 use object::Transformation;
 use system::{Intersectable, Intersection, Ray};
 
-pub mod bounding_box;
-pub mod composite;
-pub mod csg;
-pub mod cube;
-pub mod cylinder;
-pub mod homogenous_medium;
-pub mod mesh;
-pub mod plane;
-pub mod sphere;
+mod bounding_box;
+mod composite;
+mod csg;
+mod cube;
+mod cylinder;
+mod homogenous_medium;
+mod mesh;
+mod plane;
+mod sphere;
 
 pub use self::bounding_box::*;
 pub use self::composite::*;
