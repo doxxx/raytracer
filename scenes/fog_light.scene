@@ -1,0 +1,84 @@
+camera {
+  origin <0, 2, 0>
+  look_at <0, 2, -5>
+}
+
+object "ground" {
+    plane {
+        origin <0, 0, 0>
+        normal up
+    }
+    material {
+        lambertian texture {
+            solid color rgb <0.3, 0.3, 0.3>
+        }
+    }
+}
+
+object "light" {
+    xzrect {
+        origin <0, 4, -5>
+        width 1
+        height 1
+    }
+    material {
+        diffuse_light intensity 100 texture {
+            solid color white
+        }
+    }
+}
+
+object "light receptacle" {
+    difference {
+        cube {
+            <-0.5, 0, -0.5>
+            <0.5, 0.3, 0.5>
+        }
+        cube {
+            <-0.4, -0.1, -0.4>
+            <0.4, 0.2, 0.4>
+        }
+        transform {
+            translate <0, 3.81, -5>
+        }
+    }
+    /*
+    xzrect {
+        origin <0, 4.01, -5>
+        width 1
+        height 1
+    }
+    */
+    material {
+        lambertian texture {
+            solid color black
+        }
+    }
+}
+
+object "fog" {
+  homogenous_medium {
+    density 0.001
+    cube {
+      <-10, 0, -10>
+      <10, 10, 10>
+    }
+  }
+  material {
+    isotropic texture {
+      solid color white
+    }
+  }
+}
+
+object "thing" {
+    sphere {
+        origin <0, 1, -5>
+        radius 1
+    }
+    material {
+        metal fuzz 0.1 texture {
+            solid color rgb <0.8, 0.8, 0.1>
+        }
+    }
+}
