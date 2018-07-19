@@ -1,11 +1,10 @@
 use std::cmp;
 use std::f64;
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc;
-use std::thread::spawn;
+use std::sync::Arc;
 
 use rand;
 use rand::Rng;
+use rayon::prelude::*;
 
 use color::Color;
 use direction::Direction;
@@ -227,11 +226,12 @@ fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
     context.scene.camera.random_pixel_ray(x, y).cast(&context)
 }
 
-fn update_row(renderbuf: &mut Vec<Vec<Color>>, y: u32, new_row: &Vec<Color>) {
-    let row = &mut renderbuf[y as usize];
-    for i in 0..row.len() {
-        row[i] = row[i] + new_row[i];
-    }
+fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
+    let mut renderbuf: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
+    let mut renderbuf_row: Vec<Color> = Vec::with_capacity(width as usize);
+    renderbuf_row.resize(width as usize, Color::black());
+    renderbuf.resize(height as usize, renderbuf_row);
+    renderbuf
 }
 
 pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
@@ -239,63 +239,24 @@ where T: RenderProgress,
 {
     progress.render_started(&options);
 
-    // pre-allocate render buffer
-    let width = options.width;
-    let height = options.height;
-    let mut renderbuf: Vec<Vec<Color>> = Vec::with_capacity(height as usize);
-    let mut renderbuf_row: Vec<Color> = Vec::with_capacity(width as usize);
-    renderbuf_row.resize(width as usize, Color::black());
-    renderbuf.resize(height as usize, renderbuf_row);
+    let mut renderbuf = alloc_render_buf(options.width, options.height);
 
     let context = Arc::new(RenderContext {
         options,
         scene,
     });
-    let renderbuf = Arc::new(Mutex::new(renderbuf));
 
     for current_sample in 0..options.samples {
         progress.sample_started(&options);
 
-        let rows: Arc<Mutex<Vec<u32>>> = Arc::new(Mutex::new((0..height).collect()));
-        let (tx, rx) = mpsc::channel();
-
-        // Spawn threads for rendering rows.
-        // Each thread pulls a row index, renders the row, and sends the row index when finished.
-        for _ in 0..options.num_threads {
-            let context = context.clone();
-            let rows = rows.clone();
-            let renderbuf = renderbuf.clone();
-            let tx = tx.clone();
-
-            spawn(move || {
-                loop {
-                    let y = rows.lock().unwrap().pop();
-                    if let Some(y) = y {
-                        let row: Vec<Color> = (0..width).map(|x| color_at_pixel(&context, x, y)).collect();
-
-                        {
-                            let mut renderbuf = renderbuf.lock().unwrap();
-                            update_row(&mut renderbuf, y, &row);
-                        }
-
-                        let _ = tx.send(y);
-                    } else {
-                        break;
-                    }
-                }
+        renderbuf.par_iter_mut().enumerate().for_each(|(y, row)| {
+            row.iter_mut().enumerate().for_each(|(x, pixel)| {
+                pixel.add(&color_at_pixel(&context, x as u32, y as u32));
             });
-        }
+        });
 
-        // Wait for all the rows to be rendered.
-        for _ in 0..height {
-            let _ = rx.recv();
-            progress.row_finished(&options);
-        }
-
-        let renderbuf = renderbuf.lock().unwrap();
         progress.sample_finished(&options, &renderbuf, current_sample + 1);
     }
 
-    let renderbuf = renderbuf.lock().unwrap();
     progress.render_finished(&options, &renderbuf, options.samples)
 }

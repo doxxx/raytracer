@@ -26,6 +26,12 @@ impl Color {
     pub fn gamma_2(&self) -> Color {
         Color::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
     }
+
+    pub fn add(&mut self, rhs: &Color) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+    }
 }
 
 impl Add for Color {

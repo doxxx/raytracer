@@ -5,6 +5,7 @@ extern crate pbr;
 extern crate num_cpus; 
 extern crate time; 
 extern crate rand; 
+extern crate rayon;
 
 #[cfg(test)]
 #[macro_use]
@@ -32,6 +33,7 @@ use std::fs::File;
 
 use clap::{App, Arg};
 use pbr::ProgressBar;
+use rayon::ThreadPoolBuilder;
 
 use color::Color;
 use system::Options;
@@ -53,7 +55,7 @@ fn usize_validator(s: String) -> Result<(), String> {
 }
 
 fn main() {
-    let default_cpus = format!("{}", num_cpus::get() - 1);
+    let default_cpus = format!("{}", num_cpus::get());
     let app = App::new("raytracer")
         .version("0.1.0")
         .author("Gordon Tyler <gordon@doxxx.net>")
@@ -123,6 +125,11 @@ fn main() {
     };
 
     let mut progress = CliRenderProgress::new("out.png");
+
+    ThreadPoolBuilder::new()
+        .num_threads(options.num_threads)
+        .build_global()
+        .expect("could not configure threadpool");
 
     system::render(options, scene, &mut progress);
 }
