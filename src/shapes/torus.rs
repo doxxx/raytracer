@@ -92,6 +92,8 @@ impl Shape for Torus {
                 self.intersection_for(&object_ray, *b),
             )],
             [a, b, c] => {
+                panic!("three roots");
+                /*
                 let ai = self.intersection_for(&object_ray, *a);
                 let bi = self.intersection_for(&object_ray, *b);
                 let ci = self.intersection_for(&object_ray, *c);
@@ -115,6 +117,7 @@ impl Shape for Torus {
                 }
                 
                 vec![]
+                */
             }
             [a, b, c, d] => vec![
                 Interval(
