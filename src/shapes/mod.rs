@@ -11,6 +11,7 @@ mod homogenous_medium;
 mod mesh;
 mod plane;
 mod sphere;
+mod torus;
 
 pub use self::bounding_box::*;
 pub use self::composite::*;
@@ -21,6 +22,7 @@ pub use self::homogenous_medium::*;
 pub use self::mesh::*;
 pub use self::plane::*;
 pub use self::sphere::*;
+pub use self::torus::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Interval(Intersection, Intersection);

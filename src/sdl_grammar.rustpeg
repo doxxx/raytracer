@@ -67,6 +67,7 @@ planar_shape -> Box<Shape>
 solid_shape -> Box<Shape>
   = sphere
   / cylinder
+  / torus
   / cube
   / csg
   / homogenous_medium
@@ -102,6 +103,11 @@ radius -> f64
 cylinder -> Box<Shape>
   = T<"cylinder"> OPEN_BRACE r:radius? h:height? transform:transforms? CLOSE_BRACE {
     sdl::transform_shape(Box::new(Cylinder::new(r.unwrap_or(1.0), h.unwrap_or(1.0))), transform)
+  }
+
+torus -> Box<Shape>
+  = T<"torus"> OPEN_BRACE r1:radius r2:radius transform:transforms? CLOSE_BRACE {
+    sdl::transform_shape(Box::new(Torus::new(r1, r2)), transform)
   }
 
 plane -> Box<Shape>
