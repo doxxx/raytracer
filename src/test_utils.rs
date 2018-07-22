@@ -24,6 +24,9 @@ where
     T: ApproxEq,
 {
     fn approx_eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
         self.iter().zip(other.iter()).all(|(a, b)| a.approx_eq(b))
     }
 }
