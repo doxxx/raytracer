@@ -6,11 +6,14 @@ extern crate num_cpus;
 extern crate time; 
 extern crate rand; 
 extern crate rayon;
+extern crate num_complex;
+extern crate num_traits;
 
 #[cfg(test)]
 #[macro_use]
 mod test_utils;
 
+mod algebra;
 mod color;
 mod direction;
 mod materials;
