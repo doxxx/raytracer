@@ -25,7 +25,7 @@ fn is_zero(c: Complex<f64>) -> bool {
 }
 
 fn filter_real(c: Vec<Complex<f64>>) -> Vec<f64> {
-    c.into_iter().filter(|c| c.im < TOLERANCE).map(|c| c.re).collect()
+    c.into_iter().filter(|c| c.im.abs() < TOLERANCE).map(|c| c.re).collect()
 }
 
 fn cbrt(c: Complex<f64>, n: isize) -> Complex<f64> {
@@ -164,7 +164,7 @@ mod tests {
         for k in 0..found.len() {
             let mut ok = false;
             for f in 0..found.len() {
-                if (!used[f] && is_zero(known[k] - found[f])) {
+                if !used[f] && is_zero(known[k] - found[f]) {
                     ok = true;
                     used[f] = true;
                     break;
