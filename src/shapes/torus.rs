@@ -88,32 +88,23 @@ impl Shape for Torus {
                 self.intersection_for(&object_ray, *b),
             )],
             [a, b, c] => {
-                panic!("three roots");
-                /*
-                let ai = self.intersection_for(&object_ray, *a);
-                let bi = self.intersection_for(&object_ray, *b);
-                let ci = self.intersection_for(&object_ray, *c);
-                let a_dot = ai.n.dot(d);
-                let b_dot = bi.n.dot(d);
-                let c_dot = ci.n.dot(d);
+                // Calculate the Intersections and determine the facing of their surface normals.
+                // -1 means facing towards ray origin.
+                // +1 means facing away from ray origin.
+                let is: Vec<(Intersection, isize)> = [*a, *b, *c]
+                    .into_iter()
+                    .map(|&t| self.intersection_for(&object_ray, t))
+                    .map(|i| (i, i.n.dot(d).signum() as isize))
+                    .collect();
 
-                let mut rng = rand::thread_rng();
-                if rng.gen::<f64>() < 0.001 {
-                    println!("\n\n\n\
-                              o: {:?}\n\
-                              d: {:?}\n\
-                              ai: {:?}\n\
-                              bi: {:?}\n\
-                              ci: {:?}\n\
-                              a dot d: {:?}\n\
-                              b dot d: {:?}\n\
-                              c dot d: {:?}\n\
-                              \n\n\n", 
-                              o, d, ai, bi, ci, a_dot, b_dot, c_dot);
+                match is.as_slice() {
+                    // [] [ -- pair and single
+                    [(ai, -1), (bi, 1), (ci, -1)] => vec![Interval(*ai, *bi), Interval(*ci, ci.clone())],
+                    // ] [] -- single and pair
+                    [(ai, 1), (bi, -1), (ci, 1)] => vec![Interval(*ai, ai.clone()), Interval(*bi, *ci)],
+                    // wtf?!
+                    _ => panic!("unhandled three roots solution for torus intersection: {:?}", [a, b, c]),
                 }
-                
-                vec![]
-                */
             }
             [a, b, c, d] => vec![
                 Interval(
