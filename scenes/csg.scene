@@ -32,25 +32,36 @@ object "floor" {
 // objects
 object "thing" {
   difference {
-    intersection {
-      cube {
-        <-1, 0, -1>
-        <1, 2, 1>
+    difference {
+      intersection {
+        cube {
+          <-1, 0, -1>
+          <1, 2, 1>
+        }
+        sphere {
+          origin <0, 0, 0>
+          radius 1
+          transform {
+            scale <1.4, 1.4, 1.4>
+            translate <0, 1, 0>
+          }
+        }
       }
       sphere {
-        origin <0, 0, 0>
-        radius 1
+        origin <0, 1, 0>
+        radius 1.35
         transform {
-          scale <1.4, 1.4, 1.4>
-          translate <0, 1, 0>
+          translate <0, 0, 0>
         }
       }
     }
-    sphere {
-      origin <0, 1, 0>
-      radius 1.35
+    torus {
+      radius 1
+      radius 0.2
       transform {
-        translate <0, 0, 0>
+        translate <-1.75, 0, 0>
+        rotate_y 45
+        translate <0, 1, 0>
       }
     }
   }
