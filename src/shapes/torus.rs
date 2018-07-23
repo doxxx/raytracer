@@ -1,13 +1,9 @@
 use std::f64;
 
-use rand;
-use rand::Rng;
-
 use algebra::solve_quartic_f64;
 use direction::{Direction, Dot};
 use matrix::Matrix44f;
 use object::Transformation;
-use point::Point;
 use shapes::{Interval, Shape};
 use system::{Intersectable, Intersection, Ray, Transformable};
 use vector::Vector2f;
@@ -66,12 +62,12 @@ impl Shape for Torus {
         let S = self.radius2;
 
         let T = 4.0 * R * R;
-        let G = T * (d.x*d.x + d.y*d.y);
+        let G = T * (d.x * d.x + d.y * d.y);
         let H = 2.0 * T * (o.x * d.x + o.y * d.y);
-        let I = T * (o.x*o.x + o.y*o.y);
+        let I = T * (o.x * o.x + o.y * o.y);
         let J = d.length_squared();
         let K = 2.0 * o.to_dir().dot(d);
-        let L = o.to_dir().length_squared() + R*R - S*S;
+        let L = o.to_dir().length_squared() + R * R - S * S;
 
         let mut roots: Vec<f64> =
             solve_quartic_f64(J * J, 2.0 * J * K, 2.0 * J * L + K * K - G, 2.0 * K * L - H, L * L - I)
