@@ -6,6 +6,8 @@ Adapted to Rust by Gordon Tyler.
 
 */
 
+#![allow(non_snake_case)]
+
 use num_complex::Complex;
 use std::f64::consts::PI;
 

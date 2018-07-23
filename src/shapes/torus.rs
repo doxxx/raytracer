@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use std::f64;
 
 use algebra::solve_quartic_f64;
