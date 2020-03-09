@@ -82,7 +82,7 @@ impl Shape for Cube {
             self.min_y.intersect(&object_ray), self.max_y.intersect(&object_ray),
             self.min_z.intersect(&object_ray), self.max_z.intersect(&object_ray),
         ];
-        let is: Vec<Intersection> = is.into_iter().flat_map(|i| *i).collect();
+        let is: Vec<Intersection> = is.iter().flat_map(|i| *i).collect();
 
         if is.len() > 2 {
             panic!("more than two intersections for cube");

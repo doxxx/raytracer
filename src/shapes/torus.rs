@@ -94,7 +94,7 @@ impl Shape for Torus {
                 // -1 means facing towards ray origin.
                 // +1 means facing away from ray origin.
                 let is: Vec<(Intersection, isize)> = [*a, *b, *c]
-                    .into_iter()
+                    .iter()
                     .map(|&t| self.intersection_for(&object_ray, t))
                     .map(|i| (i, i.n.dot(d).signum() as isize))
                     .collect();

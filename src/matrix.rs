@@ -1,5 +1,4 @@
 use std::cmp::PartialEq;
-use std::f64;
 use std::ops::{Index, IndexMut, Mul};
 
 use direction::Direction;
@@ -228,7 +227,7 @@ impl Mul<Matrix44f> for Direction {
     }
 }
 
-const EPSILON: f64 = (f64::EPSILON * 100.0);
+const EPSILON: f64 = f64::EPSILON * 100.0;
 
 impl PartialEq for Matrix44f {
     fn eq(&self, other: &Self) -> bool {
