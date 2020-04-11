@@ -2,8 +2,8 @@ use std::cmp;
 use std::f64;
 use std::sync::Arc;
 
-use rand;
-use rand::Rng;
+use rand::prelude::*;
+use rand::distributions::Uniform;
 use rayon::prelude::*;
 
 use color::Color;
@@ -67,7 +67,10 @@ impl Camera {
 
     fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
         let mut rng = rand::thread_rng();
-        self.pixel_ray(x as f64 + rng.gen::<f64>(), y as f64 + rng.gen::<f64>())
+        let dist = Uniform::new(0.0, 1.0);
+        let rand_x: f64 = rng.sample(dist);
+        let rand_y: f64 = rng.sample(dist);
+        self.pixel_ray(x as f64 + rand_x, y as f64 + rand_y)
     }
 }
 
