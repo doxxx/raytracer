@@ -67,9 +67,9 @@ impl Camera {
 
     fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
         let mut rng = rand::thread_rng();
-        let dist = Uniform::new(0.0, 1.0);
-        let rand_x: f64 = rng.sample(dist);
-        let rand_y: f64 = rng.sample(dist);
+        let dist = Uniform::new(-0.5, 0.5);
+        let rand_x: f64 = 0.5 + rng.sample(dist);
+        let rand_y: f64 = 0.5 + rng.sample(dist);
         self.pixel_ray(x as f64 + rand_x, y as f64 + rand_y)
     }
 }
