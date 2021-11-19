@@ -19,4 +19,3 @@ peg = "0.7.0"
 [profile.release]
 lto = "fat"
 codegen-units = 1
-target-cpu = "native"
