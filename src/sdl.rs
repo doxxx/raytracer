@@ -33,8 +33,8 @@ impl SceneOptions {
     }
 }
 
-pub fn parse(options: &Options, s: &str) -> sdl_grammar::ParseResult<Scene> {
-    sdl_grammar::scene(&s, &options)
+pub fn parse(options: &Options, s: &str) -> Result<Scene,String> {
+    sdl_grammar::sdl_grammar::scene(&s, &options).map_err(|err| err.to_string())
 }
 
 pub fn new_object(name: Option<String>, shape: Box<dyn Shape>, material: Box<dyn Material>) -> Object {

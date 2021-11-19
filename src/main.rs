@@ -25,10 +25,7 @@ mod shapes;
 mod system;
 mod texture;
 mod vector;
-
-mod sdl_grammar {
-    include!(concat!(env!("OUT_DIR"), "/sdl_grammar.rs"));
-}
+mod sdl_grammar;
 
 use std::io::Stdout;
 use std::io::prelude::*;
