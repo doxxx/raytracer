@@ -25,12 +25,13 @@ pub struct Options {
     pub samples: u16,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 pub struct Camera {
     width: f64,
     height: f64,
     fov_factor: f64,
     camera_to_world: Matrix44f,
+    uniform_dist: Uniform<f64>,
 }
 
 impl Camera {
@@ -51,6 +52,7 @@ impl Camera {
             height,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world,
+            uniform_dist: Uniform::new(-0.5, 0.5),
         }
     }
 
@@ -67,9 +69,8 @@ impl Camera {
 
     fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
         let mut rng = rand::thread_rng();
-        let dist = Uniform::new(-0.5, 0.5);
-        let rand_x: f64 = 0.5 + rng.sample(dist);
-        let rand_y: f64 = 0.5 + rng.sample(dist);
+        let rand_x: f64 = 0.5 + rng.sample(self.uniform_dist);
+        let rand_y: f64 = 0.5 + rng.sample(self.uniform_dist);
         self.pixel_ray(x as f64 + rand_x, y as f64 + rand_y)
     }
 }
