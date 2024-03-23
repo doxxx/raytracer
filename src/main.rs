@@ -31,7 +31,7 @@ use std::io::Stdout;
 use std::io::prelude::*;
 use std::fs::File;
 
-use clap::{App, Arg};
+use clap::Parser;
 use pbr::ProgressBar;
 use rayon::ThreadPoolBuilder;
 
@@ -39,99 +39,57 @@ use color::Color;
 use system::Options;
 use system::RenderProgress;
 
-fn u16_validator(s: String) -> Result<(), String> {
-    if s.parse::<u16>().is_ok() { return Ok(()); }
-    Err(String::from("The value must be a positive number."))
-}
+#[derive(Parser)]
+#[command(version = "0.1.0", author = "Gordon Tyler <gordon@doxxx.net>", about = "Simple ray tracer")]
+struct CommandLineOptions {
+    /// Image width
+    #[arg(short, long, default_value = "1024", value_parser = clap::value_parser!(u32).range(1..))]
+    width: u32,
 
-fn u32_validator(s: String) -> Result<(), String> {
-    if s.parse::<u32>().is_ok() { return Ok(()); }
-    Err(String::from("The value must be a positive number."))
-}
+    /// Image height
+    #[arg(short, long, default_value = "768", value_parser = clap::value_parser!(u32).range(1..))]
+    height: u32,
 
-fn usize_validator(s: String) -> Result<(), String> {
-    if s.parse::<usize>().is_ok() { return Ok(()); }
-    Err(String::from("The value must be a positive number."))
+    /// Number of render threads
+    #[arg(short, long, value_parser = clap::value_parser!(usize))]
+    num_threads: Option<usize>,
+
+    /// Number of samples per camera pixel
+    #[arg(short, long, default_value = "1", value_parser = clap::value_parser!(u16).range(1..))]
+    samples: u16,
+
+    /// The file describing the scene to render
+    #[arg(required = true)]
+    scene: String,
 }
 
 fn main() {
-    let default_cpus = format!("{}", num_cpus::get());
-    let app = App::new("raytracer")
-        .version("0.1.0")
-        .author("Gordon Tyler <gordon@doxxx.net>")
-        .about("Simple ray tracer")
-        .arg(
-            Arg::with_name("width")
-                .short("w")
-                .value_name("WIDTH")
-                .help("Image width")
-                .takes_value(true)
-                .validator(u32_validator)
-                .default_value("1024"),
-        )
-        .arg(
-            Arg::with_name("height")
-                .short("h")
-                .value_name("HEIGHT")
-                .help("Image height")
-                .takes_value(true)
-                .validator(u32_validator)
-                .default_value("768"),
-        )
-        .arg(
-            Arg::with_name("num_threads")
-                .short("t")
-                .value_name("THREADS")
-                .help("Number of render threads")
-                .takes_value(true)
-                .validator(usize_validator)
-                .default_value(&default_cpus)
-        )
-        .arg(
-            Arg::with_name("samples")
-                .short("s")
-                .help("Number of samples per camera pixel")
-                .takes_value(true)
-                .validator(u16_validator)
-                .default_value("1")
-        )
-        .arg(
-            Arg::with_name("scene")
-                .value_name("FILE")
-                .help("The file describing the scene to render")
-                .required(true)
-                .index(1)
-        );
-    let args = app.get_matches();
+    let opts: CommandLineOptions = CommandLineOptions::parse();
 
-    let w: u32 = args.value_of("width").unwrap().parse().expect("ERROR: Bad width!");
-    let h: u32 = args.value_of("height").unwrap().parse().expect("ERROR: Bad height!");
-    let samples: u16 = args.value_of("samples").unwrap().parse().expect("ERROR: Bad samples!");
-
-    let options = Options {
-        num_threads: args.value_of("num_threads").unwrap().parse().unwrap(),
-        width: w,
-        height: h,
+    let rendering_options = Options {
+        num_threads: opts.num_threads.unwrap_or_else(num_cpus::get),
+        width: opts.width,
+        height: opts.height,
         bias: 1e-4,
         max_depth: 50,
-        samples: samples,
+        samples: opts.samples,
     };
 
     let scene = {
-        let mut f = File::open(args.value_of("scene").unwrap()).expect("could not open scene file");
+        let mut f = File::open(&opts.scene).expect("could not open scene file");
         let mut text = String::new();
         f.read_to_string(&mut text).expect("could not read scene file");
-        sdl::parse(&options, &text).expect("could not parse scene file")
+        sdl::parse(&rendering_options, &text).expect("could not parse scene file")
     };
 
     let mut progress = CliRenderProgress::new("out.png");
 
     ThreadPoolBuilder::new()
-        .num_threads(options.num_threads)
+        .num_threads(rendering_options.num_threads)
         .build_global()
         .expect("could not configure threadpool");
 
-    system::render(options, scene, &mut progress);
+    system::render(rendering_options, scene, &mut progress);
 }
 
 struct CliRenderProgress {
