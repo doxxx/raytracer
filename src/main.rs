@@ -47,19 +47,19 @@ use crate::system::RenderProgress;
 )]
 struct CommandLineOptions {
     /// Image width
-    #[arg(short, long, default_value = "1024", value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(long, default_value = "1024", value_parser = clap::value_parser!(u32).range(1..))]
     width: u32,
 
     /// Image height
-    #[arg(short, long, default_value = "768", value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(long, default_value = "768", value_parser = clap::value_parser!(u32).range(1..))]
     height: u32,
 
     /// Number of render threads
-    #[arg(short, long, value_parser = clap::value_parser!(usize))]
-    num_threads: Option<usize>,
+    #[arg(short('t'), long, value_parser = clap::value_parser!(usize))]
+    threads: Option<usize>,
 
     /// Number of samples per camera pixel
-    #[arg(short, long, default_value = "1", value_parser = clap::value_parser!(u16).range(1..))]
+    #[arg(short('s'), long, default_value = "1", value_parser = clap::value_parser!(u16).range(1..))]
     samples: u16,
 
     /// The file describing the scene to render
@@ -71,7 +71,7 @@ fn main() {
     let opts: CommandLineOptions = CommandLineOptions::parse();
 
     let rendering_options = Options {
-        num_threads: opts.num_threads.unwrap_or_else(num_cpus::get),
+        num_threads: opts.threads.unwrap_or_else(num_cpus::get),
         width: opts.width,
         height: opts.height,
         bias: 1e-4,
