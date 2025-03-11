@@ -1,6 +1,7 @@
 use std::cmp;
 use std::f64;
 use std::sync::Arc;
+use std::sync::Mutex;
 
 use rand::distr::Uniform;
 use rand::prelude::*;
@@ -249,25 +250,37 @@ fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
 
 pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
 where
-    T: RenderProgress,
+    T: RenderProgress + Send,
 {
     progress.render_started(&options);
 
     let mut renderbuf = alloc_render_buf(options.width, options.height);
 
     let context = Arc::new(RenderContext { options, scene });
+    let progress = Arc::new(Mutex::new(progress));
 
     for current_sample in 0..options.samples {
-        progress.sample_started(&options);
+        if let Ok(mut progress_guard) = progress.lock() {
+            progress_guard.sample_started(&options);
+        }
+
+        let progress_clone = progress.clone();
 
         renderbuf.par_iter_mut().enumerate().for_each(|(y, row)| {
             row.iter_mut().enumerate().for_each(|(x, pixel)| {
                 pixel.add(&color_at_pixel(&context, x as u32, y as u32));
             });
+            if let Ok(mut progress_guard) = progress_clone.lock() {
+                progress_guard.row_finished(&options);
+            }
         });
 
-        progress.sample_finished(&options, &renderbuf, current_sample + 1);
+        if let Ok(mut progress_guard) = progress.lock() {
+            progress_guard.sample_finished(&options, &renderbuf, current_sample + 1);
+        }
     }
 
-    progress.render_finished(&options, &renderbuf, options.samples)
+    if let Ok(mut progress_guard) = progress.lock() {
+        progress_guard.render_finished(&options, &renderbuf, options.samples);
+    }
 }
