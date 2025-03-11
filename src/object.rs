@@ -1,7 +1,7 @@
 use crate::materials::Material;
 use crate::matrix::Matrix44f;
 use crate::shapes::Shape;
-use crate::system::{Intersection, Ray, Intersectable, Transformable};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
 
 #[derive(Clone)]
 pub struct Transformation {

@@ -10,7 +10,10 @@ pub struct Composite {
 
 impl Composite {
     pub fn new(shapes: Vec<Box<dyn Shape>>) -> Composite {
-        Composite { shapes, tx: Transformation::new() }
+        Composite {
+            shapes,
+            tx: Transformation::new(),
+        }
     }
 }
 
@@ -22,7 +25,8 @@ impl Intersectable for Composite {
 
         let object_ray = ray.to_object(&self.tx);
 
-        self.shapes.iter()
+        self.shapes
+            .iter()
             .flat_map(|s| s.intersect(&object_ray))
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .map(|i| i.to_world(ray, &object_ray, &self.tx))
@@ -33,10 +37,11 @@ impl Shape for Composite {
     fn transform(&mut self, m: Matrix44f) {
         self.tx.transform(m);
     }
-    
+
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let object_ray = ray.to_object(&self.tx);
-        let mut is: Vec<Interval> = self.shapes
+        let mut is: Vec<Interval> = self
+            .shapes
             .iter()
             .flat_map(|s| s.intersection_intervals(&object_ray))
             .collect();

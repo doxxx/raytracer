@@ -79,8 +79,10 @@ impl Shape for Sphere {
             }
 
             vec![Interval(
-                self.intersection_for_t(&object_ray, t0).to_world(ray, &object_ray, &self.tx),
-                self.intersection_for_t(&object_ray, t1).to_world(ray, &object_ray, &self.tx),
+                self.intersection_for_t(&object_ray, t0)
+                    .to_world(ray, &object_ray, &self.tx),
+                self.intersection_for_t(&object_ray, t1)
+                    .to_world(ray, &object_ray, &self.tx),
             )]
         } else {
             Vec::with_capacity(0)

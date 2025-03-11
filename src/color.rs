@@ -17,11 +17,21 @@ impl Color {
         Color { r, g, b }
     }
 
-    pub fn black() -> Color { Color::new(0.0, 0.0, 0.0) }
-    pub fn white() -> Color { Color::new(1.0, 1.0, 1.0) }
-    pub fn red() -> Color { Color::new(1.0, 0.0, 0.0) }
-    pub fn green() -> Color { Color::new(0.0, 1.0, 0.0) }
-    pub fn blue() -> Color { Color::new(0.0, 0.0, 1.0) }
+    pub fn black() -> Color {
+        Color::new(0.0, 0.0, 0.0)
+    }
+    pub fn white() -> Color {
+        Color::new(1.0, 1.0, 1.0)
+    }
+    pub fn red() -> Color {
+        Color::new(1.0, 0.0, 0.0)
+    }
+    pub fn green() -> Color {
+        Color::new(0.0, 1.0, 0.0)
+    }
+    pub fn blue() -> Color {
+        Color::new(0.0, 0.0, 1.0)
+    }
 
     pub fn gamma_2(&self) -> Color {
         Color::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())

@@ -1,11 +1,11 @@
-use crate::matrix::Matrix44f;
-use crate::object::Transformation;
 use std::f64;
 
 use rand;
 use rand::Rng;
 
 use crate::direction::*;
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
 use crate::shapes::{Interval, Shape, skip_negative_intervals};
 use crate::system::{Intersectable, Intersection, Ray, Transformable};
 use crate::vector::Vector2f;

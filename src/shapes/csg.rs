@@ -1,6 +1,6 @@
 use crate::matrix::Matrix44f;
 use crate::object::Transformation;
-use crate::shapes::{first_positive_intersection, Interval, Shape};
+use crate::shapes::{Interval, Shape, first_positive_intersection};
 use crate::system::{Intersectable, Intersection, Ray, Transformable};
 
 /// Constructive Solid Geometry Union
@@ -12,7 +12,11 @@ pub struct CSGUnion {
 
 impl CSGUnion {
     pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGUnion {
-        CSGUnion { a, b, tx: Transformation::new() }
+        CSGUnion {
+            a,
+            b,
+            tx: Transformation::new(),
+        }
     }
 }
 
@@ -87,7 +91,10 @@ impl Shape for CSGUnion {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
+        intervals
+            .into_iter()
+            .map(|i| i.to_world(ray, &object_ray, &self.tx))
+            .collect()
     }
 }
 
@@ -110,7 +117,11 @@ pub struct CSGIntersection {
 
 impl CSGIntersection {
     pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGIntersection {
-        CSGIntersection { a, b, tx: Transformation::new() }
+        CSGIntersection {
+            a,
+            b,
+            tx: Transformation::new(),
+        }
     }
 }
 
@@ -158,7 +169,10 @@ impl Shape for CSGIntersection {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
+        intervals
+            .into_iter()
+            .map(|i| i.to_world(ray, &object_ray, &self.tx))
+            .collect()
     }
 }
 
@@ -181,7 +195,11 @@ pub struct CSGDifference {
 
 impl CSGDifference {
     pub fn new(a: Box<dyn Shape>, b: Box<dyn Shape>) -> CSGDifference {
-        CSGDifference { a, b, tx: Transformation::new() }
+        CSGDifference {
+            a,
+            b,
+            tx: Transformation::new(),
+        }
     }
 }
 
@@ -255,7 +273,10 @@ impl Shape for CSGDifference {
 
         intervals.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        intervals.into_iter().map(|i| i.to_world(ray, &object_ray, &self.tx)).collect()
+        intervals
+            .into_iter()
+            .map(|i| i.to_world(ray, &object_ray, &self.tx))
+            .collect()
     }
 }
 

@@ -153,7 +153,6 @@ impl Matrix44f {
         }
 
         s
-
     }
 
     pub fn transpose(&self) -> Matrix44f {
@@ -188,10 +187,8 @@ impl Mul for Matrix44f {
         let mut result = Matrix44f::zero();
         for i in 0..4 {
             for j in 0..4 {
-                result[i][j] = self[i][0] * rhs[0][j] +
-                    self[i][1] * rhs[1][j] +
-                    self[i][2] * rhs[2][j] +
-                    self[i][3] * rhs[3][j]
+                result[i][j] =
+                    self[i][0] * rhs[0][j] + self[i][1] * rhs[1][j] + self[i][2] * rhs[2][j] + self[i][3] * rhs[3][j]
             }
         }
         result
@@ -217,7 +214,7 @@ impl Mul<Matrix44f> for Point {
 
 impl Mul<Matrix44f> for Direction {
     type Output = Direction;
-    
+
     fn mul(self, rhs: Matrix44f) -> Self::Output {
         Direction::new(
             self.x * rhs[0][0] + self.y * rhs[1][0] + self.z * rhs[2][0],
@@ -259,22 +256,18 @@ mod tests {
 
     #[test]
     fn inverse_non_identity() {
-        let m = Matrix44f(
-            [
-                [1.0, 3.0, 2.0, 4.0],
-                [4.0, 2.0, 3.0, 5.0],
-                [5.0, 4.0, 3.0, 1.0],
-                [3.0, 1.0, 2.0, 4.0],
-            ],
-        );
-        let expected = Matrix44f(
-            [
-                [0.0, -20.0 / 12.0, 4.0 / 12.0, 24.0 / 12.0],
-                [6.0 / 12.0, -20.0 / 12.0, 4.0 / 12.0, 18.0 / 12.0],
-                [-9.0 / 12.0, 64.0 / 12.0, -8.0 / 12.0, -69.0 / 12.0],
-                [3.0 / 12.0, -12.0 / 12.0, 0.0, 15.0 / 12.0],
-            ],
-        );
+        let m = Matrix44f([
+            [1.0, 3.0, 2.0, 4.0],
+            [4.0, 2.0, 3.0, 5.0],
+            [5.0, 4.0, 3.0, 1.0],
+            [3.0, 1.0, 2.0, 4.0],
+        ]);
+        let expected = Matrix44f([
+            [0.0, -20.0 / 12.0, 4.0 / 12.0, 24.0 / 12.0],
+            [6.0 / 12.0, -20.0 / 12.0, 4.0 / 12.0, 18.0 / 12.0],
+            [-9.0 / 12.0, 64.0 / 12.0, -8.0 / 12.0, -69.0 / 12.0],
+            [3.0 / 12.0, -12.0 / 12.0, 0.0, 15.0 / 12.0],
+        ]);
         let actual = m.inverse();
         assert_approx_eq!(actual, expected);
         let identity = m * actual;
@@ -365,7 +358,8 @@ mod tests {
     #[test]
     pub fn point_scaling_then_translation() {
         let p = Point::new(1.0, 0.0, 0.0);
-        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
+        let m =
+            Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
         let actual = p * m;
         let expected = Point::new(2.0, 4.0, 3.0);
         assert_approx_eq!(actual, expected);
@@ -374,7 +368,8 @@ mod tests {
     #[test]
     pub fn point_translation_then_scaling() {
         let p = Point::new(1.0, 0.0, 0.0);
-        let m = Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let m =
+            Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
         let actual = p * m;
         let expected = Point::new(2.0, 8.0, 6.0);
         assert_approx_eq!(actual, expected);
@@ -464,7 +459,8 @@ mod tests {
     #[test]
     pub fn dir_scaling_then_translation() {
         let d = Direction::new(1.0, 0.0, 0.0);
-        let m = Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
+        let m =
+            Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0)) * Matrix44f::translation(Direction::new(0.0, 4.0, 3.0));
         let actual = d * m;
         let expected = Direction::new(2.0, 0.0, 0.0);
         assert_approx_eq!(actual, expected);
@@ -473,7 +469,8 @@ mod tests {
     #[test]
     pub fn dir_translation_then_scaling() {
         let d = Direction::new(1.0, 0.0, 0.0);
-        let m = Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
+        let m =
+            Matrix44f::translation(Direction::new(0.0, 4.0, 3.0)) * Matrix44f::scaling(Direction::new(2.0, 2.0, 2.0));
         let actual = d * m;
         let expected = Direction::new(2.0, 0.0, 0.0);
         assert_approx_eq!(actual, expected);

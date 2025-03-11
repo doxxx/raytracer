@@ -5,10 +5,9 @@ use rand::Rng;
 
 use crate::color::Color;
 use crate::direction::{Direction, Dot};
+use crate::materials::Material;
 use crate::materials::ScatteredRay;
 use crate::system::{RayHit, RenderContext};
-
-use crate::materials::Material;
 
 #[derive(Clone)]
 pub struct Dielectric {
