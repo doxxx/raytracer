@@ -4,8 +4,7 @@ use crate::direction::{Direction, Dot};
 use crate::matrix::Matrix44f;
 use crate::object::Transformation;
 use crate::point::Point;
-use crate::shapes::bounding_box::BoundingBox;
-use crate::shapes::{Interval, Shape};
+use crate::shapes::{BoundingBox, Interval, Shape};
 use crate::system::{Intersectable, Intersection, Ray, Transformable};
 use crate::vector::Vector2f;
 
