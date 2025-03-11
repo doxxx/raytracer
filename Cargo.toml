@@ -2,7 +2,7 @@
 name = "raytracer"
 version = "0.1.0"
 authors = ["Gordon Tyler <gordon@doxxx.net>"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 image = "0.14.0"
@@ -11,7 +11,7 @@ wavefront_obj = "5.1.0"
 pbr = "1.0.4"
 num_cpus = "1.13.0"
 time = "0.1"
-rand = "0.8.4"
+rand = "0.9.0"
 rayon = "1.5.1"
 num-complex = "0.4.0"
 num-traits = "0.2.14"

@@ -6,7 +6,7 @@ use rand;
 use rand::Rng;
 
 use crate::direction::*;
-use crate::shapes::{skip_negative_intervals, Interval, Shape};
+use crate::shapes::{Interval, Shape, skip_negative_intervals};
 use crate::system::{Intersectable, Intersection, Ray, Transformable};
 use crate::vector::Vector2f;
 
@@ -34,13 +34,13 @@ impl Intersectable for HomogenousMedium {
             return None;
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         skip_negative_intervals(is)
             .flat_map(|Interval(a, b)| {
                 let (at, bt) = (a.t.max(0.0), b.t);
                 let distance = ((bt - at) * object_ray.direction).length();
-                let hit_distance = -(1.0 / self.density) * rng.gen::<f64>().ln();
+                let hit_distance = -(1.0 / self.density) * rng.random::<f64>().ln();
                 if hit_distance < distance {
                     Some(Intersection {
                         t: at + hit_distance / object_ray.direction.length(),

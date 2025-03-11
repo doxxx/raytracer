@@ -27,18 +27,18 @@ impl Direction {
     }
 
     pub fn uniform_sphere_distribution() -> Direction {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
-        let theta = 2.0 * f64::consts::PI * rng.gen::<f64>();
-        let phi = (1.0 - 2.0 * rng.gen::<f64>()).acos();
+        let theta = 2.0 * f64::consts::PI * rng.random::<f64>();
+        let phi = (1.0 - 2.0 * rng.random::<f64>()).acos();
         let x = phi.sin() * theta.cos();
         let y = phi.sin() * theta.sin();
         let z = phi.cos();
 
         Direction::new(x, y, z)
-     }
- 
-     pub fn cross(&self, rhs: Direction) -> Direction {
+    }
+
+    pub fn cross(&self, rhs: Direction) -> Direction {
         Direction::new(
             self.y * rhs.z - self.z * rhs.y,
             self.z * rhs.x - self.x * rhs.z,
@@ -77,7 +77,7 @@ impl Direction {
     }
 }
 
-pub trait Dot<RHS=Self> {
+pub trait Dot<RHS = Self> {
     fn dot(&self, rhs: RHS) -> f64;
 }
 

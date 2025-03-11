@@ -6,7 +6,7 @@ use rand::Rng;
 use crate::color::Color;
 use crate::direction::{Direction, Dot};
 use crate::materials::ScatteredRay;
-use crate::system::{RenderContext, RayHit};
+use crate::system::{RayHit, RenderContext};
 
 use crate::materials::Material;
 
@@ -29,8 +29,8 @@ impl Material for Dielectric {
         let bias = hit.n * context.options.bias;
 
         let kr = fresnel(hit.incident.direction, hit.n, self.ior);
-        let mut rng = rand::thread_rng();
-        if rng.gen::<f64>() < kr { 
+        let mut rng = rand::rng();
+        if rng.random::<f64>() < kr {
             // reflection
             let reflected = hit.incident.direction.reflect(hit.n);
             let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
@@ -40,7 +40,7 @@ impl Material for Dielectric {
                 origin: if outside { p + bias } else { p - bias },
                 direction: scattered,
             })
-        } else { 
+        } else {
             // refraction
             let refracted = refract(hit.incident.direction, hit.n, self.ior);
             let fuzz = self.fuzz * Direction::uniform_sphere_distribution();
