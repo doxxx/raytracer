@@ -1,7 +1,7 @@
-use matrix::Matrix44f;
-use object::Transformation;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Composite {
     shapes: Vec<Box<dyn Shape>>,

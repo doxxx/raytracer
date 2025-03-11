@@ -4,7 +4,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 use rand;
 use rand::Rng;
 
-use point::Point;
+use crate::point::Point;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Direction {

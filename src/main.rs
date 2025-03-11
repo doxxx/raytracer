@@ -35,9 +35,9 @@ use clap::Parser;
 use pbr::ProgressBar;
 use rayon::ThreadPoolBuilder;
 
-use color::Color;
-use system::Options;
-use system::RenderProgress;
+use crate::color::Color;
+use crate::system::Options;
+use crate::system::RenderProgress;
 
 #[derive(Parser)]
 #[command(version = "0.1.0", author = "Gordon Tyler <gordon@doxxx.net>", about = "Simple ray tracer")]

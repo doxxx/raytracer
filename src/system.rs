@@ -6,14 +6,14 @@ use rand::prelude::*;
 use rand::distributions::Uniform;
 use rayon::prelude::*;
 
-use color::Color;
-use direction::Direction;
-use matrix::Matrix44f;
-use object::Object;
-use object::Transformation;
-use point::Point;
-use sdl::Scene;
-use vector::Vector2f;
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::matrix::Matrix44f;
+use crate::object::Object;
+use crate::object::Transformation;
+use crate::point::Point;
+use crate::sdl::Scene;
+use crate::vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Options {

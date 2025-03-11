@@ -1,8 +1,8 @@
 use std::cmp::PartialEq;
 use std::ops::{Index, IndexMut, Mul};
 
-use direction::Direction;
-use point::Point;
+use crate::direction::Direction;
+use crate::point::Point;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix44f(pub [[f64; 4]; 4]);
@@ -246,9 +246,9 @@ impl PartialEq for Matrix44f {
 #[cfg(test)]
 mod tests {
     use super::Matrix44f;
-    use direction::Direction;
-    use point::Point;
-    use test_utils::ApproxEq;
+    use crate::direction::Direction;
+    use crate::point::Point;
+    use crate::test_utils::ApproxEq;
 
     #[test]
     fn inverse_identity() {

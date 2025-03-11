@@ -1,16 +1,16 @@
 use std::str::FromStr;
 
-use color::Color;
-use direction::Direction;
-use materials::*;
-use matrix::Matrix44f;
-use object::Object;
-use point::Point;
-use sdl;
-use sdl::{Scene,SceneOptions};
-use shapes::*;
-use system::{Camera,Options};
-use texture::{Pattern,Texture};
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::materials::*;
+use crate::matrix::Matrix44f;
+use crate::object::Object;
+use crate::point::Point;
+use crate::sdl;
+use crate::sdl::{Scene,SceneOptions};
+use crate::shapes::*;
+use crate::system::{Camera,Options};
+use crate::texture::{Pattern,Texture};
 
 peg::parser!{
 

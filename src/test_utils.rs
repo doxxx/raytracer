@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-use direction::Direction;
-use matrix::Matrix44f;
-use point::Point;
+use crate::direction::Direction;
+use crate::matrix::Matrix44f;
+use crate::point::Point;
 
 const TEST_EPSILON: f64 = 0.000001;
 
