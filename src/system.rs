@@ -230,10 +230,8 @@ pub struct RenderContext {
 
 pub trait RenderProgress {
     fn render_started(&mut self, options: &Options);
-    fn sample_started(&mut self, options: &Options);
-    fn row_finished(&mut self, options: &Options);
-    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
-    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16);
+    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>);
+    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>);
 }
 
 fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
@@ -248,39 +246,55 @@ fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
     renderbuf
 }
 
-pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
+fn render_sample(context: &RenderContext, buf: &mut Vec<Vec<Color>>) {
+    buf.iter_mut().enumerate().for_each(|(y, row)| {
+        row.iter_mut().enumerate().for_each(|(x, pixel)| {
+            *pixel = color_at_pixel(&context, x as u32, y as u32);
+        });
+    });
+}
+
+fn combine_renderbuf(dest: &mut Vec<Vec<Color>>, src: &Vec<Vec<Color>>) {
+    dest.iter_mut().enumerate().for_each(|(y, row)| {
+        row.iter_mut().enumerate().for_each(|(x, pixel)| {
+            pixel.add(&src[y][x]);
+        });
+    });
+}
+
+pub fn render<T>(options: Options, scene: Scene, progress: &mut Arc<Mutex<T>>)
 where
     T: RenderProgress + Send,
 {
-    progress.render_started(&options);
-
-    let mut renderbuf = alloc_render_buf(options.width, options.height);
-
-    let context = Arc::new(RenderContext { options, scene });
-    let progress = Arc::new(Mutex::new(progress));
-
-    for current_sample in 0..options.samples {
-        if let Ok(mut progress_guard) = progress.lock() {
-            progress_guard.sample_started(&options);
-        }
-
-        let progress_clone = progress.clone();
-
-        renderbuf.par_iter_mut().enumerate().for_each(|(y, row)| {
-            row.iter_mut().enumerate().for_each(|(x, pixel)| {
-                pixel.add(&color_at_pixel(&context, x as u32, y as u32));
-            });
-            if let Ok(mut progress_guard) = progress_clone.lock() {
-                progress_guard.row_finished(&options);
-            }
-        });
-
-        if let Ok(mut progress_guard) = progress.lock() {
-            progress_guard.sample_finished(&options, &renderbuf, current_sample + 1);
-        }
+    {
+        let mut progress_guard = progress.lock().unwrap();
+        progress_guard.render_started(&options);
     }
 
-    if let Ok(mut progress_guard) = progress.lock() {
-        progress_guard.render_finished(&options, &renderbuf, options.samples);
+    let render_buf = Arc::new(Mutex::new(alloc_render_buf(options.width, options.height)));
+    let context = Arc::new(RenderContext { options, scene });
+
+    {
+        let render_buf = render_buf.clone();
+        let progress = progress.clone();
+
+        (0..options.samples).into_par_iter().for_each(move |_| {
+            let mut sample_buf = alloc_render_buf(options.width, options.height);
+
+            render_sample(&context, &mut sample_buf);
+
+            {
+                let mut render_buf_guard = render_buf.lock().unwrap();
+                combine_renderbuf(&mut render_buf_guard, &sample_buf);
+                let mut progress_guard = progress.lock().unwrap();
+                progress_guard.sample_finished(&options, &render_buf_guard);
+            }
+        });
+    }
+
+    {
+        let render_buf_guard = render_buf.lock().unwrap();
+        let mut progress_guard = progress.lock().unwrap();
+        progress_guard.render_finished(&options, &render_buf_guard);
     }
 }

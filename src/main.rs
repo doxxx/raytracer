@@ -30,6 +30,14 @@ mod vector;
 use std::fs::File;
 use std::io::Stdout;
 use std::io::prelude::*;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::thread::JoinHandle;
+use std::thread::sleep;
+use std::thread::spawn;
+use std::time::Duration;
 
 use clap::Parser;
 use pbr::ProgressBar;
@@ -86,14 +94,40 @@ fn main() {
         sdl::parse(&rendering_options, &text).expect("could not parse scene file")
     };
 
-    let mut progress = CliRenderProgress::new("out.png");
-
     ThreadPoolBuilder::new()
         .num_threads(rendering_options.num_threads)
         .build_global()
         .expect("could not configure threadpool");
 
+    let mut progress = Arc::new(Mutex::new(CliRenderProgress::new("out.png")));
+
+    let (stop_ticker, progress_ticker_handle) = spawn_progress_ticker(&progress);
+
     system::render(rendering_options, scene, &mut progress);
+
+    stop_ticker.store(true, Ordering::Relaxed);
+    progress_ticker_handle.join().unwrap();
+}
+
+fn spawn_progress_ticker(progress: &Arc<Mutex<CliRenderProgress>>) -> (Arc<AtomicBool>, JoinHandle<()>) {
+    let stop = Arc::new(AtomicBool::new(false));
+    let thread_handle = {
+        let step = stop.clone();
+        let progress = progress.clone();
+        spawn(move || {
+            loop {
+                if step.load(Ordering::Relaxed) {
+                    break;
+                }
+                {
+                    let mut progress = progress.lock().unwrap();
+                    progress.tick();
+                }
+                sleep(Duration::from_millis(250));
+            }
+        })
+    };
+    (stop, thread_handle)
 }
 
 struct CliRenderProgress {
@@ -101,8 +135,8 @@ struct CliRenderProgress {
     start_time: time::Tm,
     steady_start_time: time::SteadyTime,
     pb: ProgressBar<Stdout>,
-    last_pb_tick: time::SteadyTime,
     last_output_time: time::SteadyTime,
+    num_samples: u16,
 }
 
 impl CliRenderProgress {
@@ -112,9 +146,13 @@ impl CliRenderProgress {
             start_time: time::now(),
             steady_start_time: time::SteadyTime::now(),
             pb: ProgressBar::new(0),
-            last_pb_tick: time::SteadyTime::now(),
             last_output_time: time::SteadyTime::now(),
+            num_samples: 0,
         }
+    }
+
+    fn tick(&mut self) {
+        self.pb.tick();
     }
 }
 
@@ -133,29 +171,21 @@ impl RenderProgress for CliRenderProgress {
         self.pb.set(0);
     }
 
-    fn sample_started(&mut self, _options: &Options) {}
+    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>) {
+        self.num_samples += 1;
 
-    fn row_finished(&mut self, _options: &Options) {
-        let now = time::SteadyTime::now();
-        if (now - self.last_pb_tick).num_milliseconds() >= 250 {
-            self.last_pb_tick = now;
-            self.pb.tick();
-        }
-    }
-
-    fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16) {
         let now = time::SteadyTime::now();
         if (now - self.last_output_time).num_milliseconds() >= 5000 {
             self.last_output_time = now;
 
-            write_render_result_to_file(&options, &self.filename, &renderbuf, num_samples);
+            write_render_result_to_file(&options, &self.filename, &renderbuf, self.num_samples);
         }
 
         self.pb.inc();
     }
 
-    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>, num_samples: u16) {
-        write_render_result_to_file(&options, &self.filename, &renderbuf, num_samples);
+    fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>) {
+        write_render_result_to_file(&options, &self.filename, &renderbuf, self.num_samples);
 
         let end_time = time::now();
         let elapsed = time::SteadyTime::now() - self.steady_start_time;
