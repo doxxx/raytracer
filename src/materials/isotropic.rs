@@ -1,10 +1,9 @@
-use color::Color;
-use direction::Direction;
-use materials::ScatteredRay;
-use system::{RayHit, RenderContext};
-use texture::{ColorSource, Texture};
-
-use materials::Material;
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::materials::Material;
+use crate::materials::ScatteredRay;
+use crate::system::{RayHit, RenderContext};
+use crate::texture::{ColorSource, Texture};
 
 #[derive(Clone)]
 pub struct Isotropic {

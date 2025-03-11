@@ -1,10 +1,10 @@
 use std::f64;
 use std::fmt;
 
-use image::{Pixel,DynamicImage,GenericImage};
+use image::{DynamicImage, GenericImage, Pixel};
 
-use color::Color;
-use vector::Vector2f;
+use crate::color::Color;
+use crate::vector::Vector2f;
 
 pub trait ColorSource {
     fn color_at_uv(&self, uv: Vector2f) -> Color;
@@ -17,24 +17,17 @@ pub enum Texture {
     Image(DynamicImage, f64),
 }
 
-
 impl fmt::Debug for Texture {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &Texture::Solid(ref c) =>
-                f.debug_tuple("Texture::Solid")
-                    .field(c)
-                    .finish(),
-            &Texture::Pattern(ref p) =>
-                f.debug_tuple("Texture::Pattern")
-                    .field(p)
-                    .finish(),
-            &Texture::Image(ref i, s) =>
-                f.debug_struct("Texture::Image")
-                    .field("width", &i.width())
-                    .field("height", &i.height())
-                    .field("scale", &s)
-                    .finish(),
+            &Texture::Solid(ref c) => f.debug_tuple("Texture::Solid").field(c).finish(),
+            &Texture::Pattern(ref p) => f.debug_tuple("Texture::Pattern").field(p).finish(),
+            &Texture::Image(ref i, s) => f
+                .debug_struct("Texture::Image")
+                .field("width", &i.width())
+                .field("height", &i.height())
+                .field("scale", &s)
+                .finish(),
         }
     }
 }
@@ -45,14 +38,12 @@ impl PartialEq for Texture {
             if let &Texture::Solid(ref c2) = other {
                 return c1 == c2;
             }
-        }
-        else if let &Texture::Pattern(ref p1) = self {
-            if let &Texture::Pattern(ref p2) = other{
+        } else if let &Texture::Pattern(ref p1) = self {
+            if let &Texture::Pattern(ref p2) = other {
                 return p1 == p2;
             }
-        }
-        else if let &Texture::Image(ref i1, ref s1) = self {
-            if let &Texture::Image(ref i2, ref s2) = other{
+        } else if let &Texture::Image(ref i1, ref s1) = self {
+            if let &Texture::Image(ref i2, ref s2) = other {
                 return i1.pixels().eq(i2.pixels()) && s1 == s2;
             }
         }
@@ -73,7 +64,7 @@ impl ColorSource for Texture {
                 let p = image.get_pixel(x, y);
                 let c = p.channels();
                 Color::new((c[0] as f64) / 255.0, (c[1] as f64) / 255.0, (c[2] as f64) / 255.0)
-            },
+            }
         }
     }
 }

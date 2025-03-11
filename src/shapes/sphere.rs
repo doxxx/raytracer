@@ -1,13 +1,13 @@
 use std::f64;
 use std::mem;
 
-use direction::Dot;
-use matrix::Matrix44f;
-use object::Transformation;
-use point::Point;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
-use vector::Vector2f;
+use crate::direction::Dot;
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::point::Point;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use crate::vector::Vector2f;
 
 pub struct Sphere {
     origin: Point,
@@ -79,8 +79,10 @@ impl Shape for Sphere {
             }
 
             vec![Interval(
-                self.intersection_for_t(&object_ray, t0).to_world(ray, &object_ray, &self.tx),
-                self.intersection_for_t(&object_ray, t1).to_world(ray, &object_ray, &self.tx),
+                self.intersection_for_t(&object_ray, t0)
+                    .to_world(ray, &object_ray, &self.tx),
+                self.intersection_for_t(&object_ray, t1)
+                    .to_world(ray, &object_ray, &self.tx),
             )]
         } else {
             Vec::with_capacity(0)
@@ -91,8 +93,8 @@ impl Shape for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use direction::*;
-    use test_utils::*;
+    use crate::direction::*;
+    use crate::test_utils::*;
 
     #[test]
     pub fn outside_intersection() {

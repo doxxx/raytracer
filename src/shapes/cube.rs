@@ -1,11 +1,11 @@
-use matrix::Matrix44f;
-use object::Transformation;
 use std::mem;
 
-use shapes::{XYRectangle, XZRectangle, ZYRectangle};
-use point::Point;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::point::Point;
+use crate::shapes::{Interval, Shape};
+use crate::shapes::{XYRectangle, XZRectangle, ZYRectangle};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
 
 pub struct Cube {
     min_x: ZYRectangle,
@@ -28,7 +28,7 @@ impl Cube {
         Cube {
             min_x: zyrect(min_z, min_y, max_z, max_y, min_x, true),
             max_x: zyrect(min_z, min_y, max_z, max_y, max_x, false),
-            min_y: xzrect(min_x, min_z, max_x, max_z, min_y, true,),
+            min_y: xzrect(min_x, min_z, max_x, max_z, min_y, true),
             max_y: xzrect(min_x, min_z, max_x, max_z, max_y, false),
             min_z: xyrect(min_x, min_y, max_x, max_y, min_z, true),
             max_z: xyrect(min_x, min_y, max_x, max_y, max_z, false),
@@ -78,9 +78,12 @@ impl Shape for Cube {
     fn intersection_intervals(&self, ray: &Ray) -> Vec<Interval> {
         let object_ray = ray.to_object(&self.tx);
         let is = [
-            self.min_x.intersect(&object_ray), self.max_x.intersect(&object_ray),
-            self.min_y.intersect(&object_ray), self.max_y.intersect(&object_ray),
-            self.min_z.intersect(&object_ray), self.max_z.intersect(&object_ray),
+            self.min_x.intersect(&object_ray),
+            self.max_x.intersect(&object_ray),
+            self.min_y.intersect(&object_ray),
+            self.max_y.intersect(&object_ray),
+            self.min_z.intersect(&object_ray),
+            self.max_z.intersect(&object_ray),
         ];
         let is: Vec<Intersection> = is.iter().flat_map(|i| *i).collect();
 
@@ -106,84 +109,60 @@ impl Shape for Cube {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use direction::*;
-    use test_utils::*;
+    use crate::direction::*;
+    use crate::test_utils::*;
 
     #[test]
     pub fn outside_intersection() {
         let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, 2.0), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(distances, vec![
-            1.0,
-            3.0,
-        ]);
-        assert_approx_eq!(normals, vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(distances, vec![1.0, 3.0,]);
+        assert_approx_eq!(
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0),]
+        );
     }
 
     #[test]
     pub fn coincident_intersection() {
         let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(distances, vec![
-            0.0,
-            2.0,
-        ]);
-        assert_approx_eq!(normals, vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(distances, vec![0.0, 2.0,]);
+        assert_approx_eq!(
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0),]
+        );
     }
 
     #[test]
     pub fn inside_intersection() {
         let s = Cube::new(Point::new(-1.0, -1.0, -1.0), Point::new(1.0, 1.0, 1.0));
         let r = Ray::primary(Point::new(0.0, 0.0, 0.9), Direction::new(0.0, 0.0, -1.0), 0);
-        let intersections: Vec<Intersection> = s.intersection_intervals(&r)
+        let intersections: Vec<Intersection> = s
+            .intersection_intervals(&r)
             .into_iter()
-            .flat_map(|Interval(a,b)| vec![a, b])
+            .flat_map(|Interval(a, b)| vec![a, b])
             .collect();
-        let distances: Vec<f64> = intersections
-            .iter()
-            .map(|i| i.t)
-            .collect();
-        let normals: Vec<Direction> = intersections
-            .iter()
-            .map(|i| i.n)
-            .collect();
-        assert_approx_eq!(distances, vec![
-            -0.1,
-            1.9,
-        ]);
-        assert_approx_eq!(normals, vec![
-            Direction::new(0.0, 0.0, 1.0),
-            Direction::new(0.0, 0.0, -1.0),
-        ]);
+        let distances: Vec<f64> = intersections.iter().map(|i| i.t).collect();
+        let normals: Vec<Direction> = intersections.iter().map(|i| i.n).collect();
+        assert_approx_eq!(distances, vec![-0.1, 1.9,]);
+        assert_approx_eq!(
+            normals,
+            vec![Direction::new(0.0, 0.0, 1.0), Direction::new(0.0, 0.0, -1.0),]
+        );
     }
 }

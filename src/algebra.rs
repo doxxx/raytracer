@@ -8,8 +8,9 @@ Adapted to Rust by Gordon Tyler.
 
 #![allow(non_snake_case)]
 
-use num_complex::Complex;
 use std::f64::consts::PI;
+
+use num_complex::Complex;
 
 const TOLERANCE: f64 = 1.0e-8;
 const TWO_PI: f64 = 2.0 * PI;
@@ -33,10 +34,7 @@ fn filter_real(c: Vec<Complex<f64>>) -> Vec<f64> {
 fn cbrt(c: Complex<f64>, n: isize) -> Complex<f64> {
     let rho = c.norm().powf(1.0 / 3.0);
     let theta = ((TWO_PI * n as f64) + c.arg()) / 3.0;
-    complex2(
-        rho * theta.cos(),
-        rho * theta.sin(),
-    )
+    complex2(rho * theta.cos(), rho * theta.sin())
 }
 
 pub fn solve_quadratic(a: Complex<f64>, b: Complex<f64>, c: Complex<f64>) -> Vec<Complex<f64>> {
@@ -77,10 +75,13 @@ pub fn solve_cubic(a: Complex<f64>, b: Complex<f64>, c: Complex<f64>, d: Complex
             F = F_root - E;
         }
 
-        (0..3).into_iter().map(|i| {
-            let G = cbrt(F, i);
-            G - D / G - S
-        }).collect()
+        (0..3)
+            .into_iter()
+            .map(|i| {
+                let G = cbrt(F, i);
+                G - D / G - S
+            })
+            .collect()
     }
 }
 
@@ -212,12 +213,11 @@ mod tests {
         check_roots(&known, &found);
     }
 
-    fn test_known_cubic_roots(M: Complex<f64>, K: Complex<f64>, L: Complex<f64>, N: Complex<f64>)
-    {
+    fn test_known_cubic_roots(M: Complex<f64>, K: Complex<f64>, L: Complex<f64>, N: Complex<f64>) {
         let a = M;
-        let b = -M*(K+L+N);
-        let c = M*(K*L + N*K + N*L);
-        let d = -M*K*L*N;
+        let b = -M * (K + L + N);
+        let c = M * (K * L + N * K + N * L);
+        let d = -M * K * L * N;
         let poly = [d, c, b, a];
 
         validate_polynomial(4, &poly, K);
@@ -234,10 +234,10 @@ mod tests {
 
     fn test_known_quartic_roots(m: Complex<f64>, a: Complex<f64>, b: Complex<f64>, c: Complex<f64>, d: Complex<f64>) {
         let A = m;
-        let B = -m*(a + b + c + d);
-        let C = m*(a*b + c*d + (a + b)*(c + d));
-        let D = -m*(c*d*(a + b) + a*b*(c + d));
-        let E = m*a*b*c*d;
+        let B = -m * (a + b + c + d);
+        let C = m * (a * b + c * d + (a + b) * (c + d));
+        let D = -m * (c * d * (a + b) + a * b * (c + d));
+        let E = m * a * b * c * d;
         let poly = [E, D, C, B, A];
 
         validate_polynomial(5, &poly, a);
@@ -256,20 +256,31 @@ mod tests {
 
     #[test]
     pub fn quadratic() {
-        test_known_quadratic_roots(complex2(-2.3,4.8), complex2(3.2,-4.1), complex2(-2.5,7.7));
-        test_known_quadratic_roots(complex2(5.5,4.4), complex2(8.2,-2.1), complex2(8.2,-2.1));
+        test_known_quadratic_roots(complex2(-2.3, 4.8), complex2(3.2, -4.1), complex2(-2.5, 7.7));
+        test_known_quadratic_roots(complex2(5.5, 4.4), complex2(8.2, -2.1), complex2(8.2, -2.1));
     }
 
     #[test]
     pub fn cubic() {
         test_known_cubic_roots(complex(1.0), complex(2.0), complex(3.0), complex(4.0));
-        test_known_cubic_roots(complex2(-2.3,4.8), complex2(3.2,-4.1), complex2(-2.5,7.7), complex2(53.0,-23.9));
+        test_known_cubic_roots(
+            complex2(-2.3, 4.8),
+            complex2(3.2, -4.1),
+            complex2(-2.5, 7.7),
+            complex2(53.0, -23.9),
+        );
     }
 
     #[test]
     pub fn quartic() {
         test_known_quartic_roots(complex(1.0), complex(2.0), complex(3.0), complex(4.0), complex(5.0));
         test_known_quartic_roots(complex(1.0), complex(3.2), complex(2.5), complex(53.0), complex(-8.7));
-        test_known_quartic_roots(complex2(-2.3,4.8), complex2(3.2,-4.1), complex2(-2.5,7.7), complex2(53.0,-23.9), complex2(-9.2,-8.7));
+        test_known_quartic_roots(
+            complex2(-2.3, 4.8),
+            complex2(3.2, -4.1),
+            complex2(-2.5, 7.7),
+            complex2(53.0, -23.9),
+            complex2(-9.2, -8.7),
+        );
     }
 }

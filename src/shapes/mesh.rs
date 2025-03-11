@@ -1,13 +1,13 @@
-use matrix::Matrix44f;
-use object::Transformation;
 use std::f64;
 
-use direction::{Direction, Dot};
-use point::Point;
-use shapes::bounding_box::BoundingBox;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
-use vector::Vector2f;
+use crate::direction::{Direction, Dot};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::point::Point;
+use crate::shapes::bounding_box::BoundingBox;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use crate::vector::Vector2f;
 
 pub struct Mesh {
     vertices: Vec<Point>,
@@ -53,10 +53,12 @@ impl Mesh {
     }
 
     fn intersect_triangles(&self, ray: &Ray) -> Vec<Intersection> {
-        let mut is: Vec<Intersection> = self.triangles.iter()
+        let mut is: Vec<Intersection> = self
+            .triangles
+            .iter()
             .filter_map(|triangle| self.intersect_triangle(ray, triangle))
             .collect();
-        
+
         is.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
 
         is
@@ -145,6 +147,5 @@ impl Shape for Mesh {
             .map(|i| i.to_world(ray, &object_ray, &self.tx))
             .map(|i| vec![Interval(i, i.clone())])
             .unwrap_or(Vec::with_capacity(0))
-        
     }
 }

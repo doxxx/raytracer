@@ -2,18 +2,18 @@ use std::cmp;
 use std::f64;
 use std::sync::Arc;
 
+use rand::distr::Uniform;
 use rand::prelude::*;
-use rand::distributions::Uniform;
 use rayon::prelude::*;
 
-use color::Color;
-use direction::Direction;
-use matrix::Matrix44f;
-use object::Object;
-use object::Transformation;
-use point::Point;
-use sdl::Scene;
-use vector::Vector2f;
+use crate::color::Color;
+use crate::direction::Direction;
+use crate::matrix::Matrix44f;
+use crate::object::Object;
+use crate::object::Transformation;
+use crate::point::Point;
+use crate::sdl::Scene;
+use crate::vector::Vector2f;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Options {
@@ -52,7 +52,7 @@ impl Camera {
             height,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world,
-            uniform_dist: Uniform::new(-0.5, 0.5),
+            uniform_dist: Uniform::new(-0.5, 0.5).expect("Failed to create uniform distribution"),
         }
     }
 
@@ -68,7 +68,7 @@ impl Camera {
     }
 
     fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let rand_x: f64 = 0.5 + rng.sample(self.uniform_dist);
         let rand_y: f64 = 0.5 + rng.sample(self.uniform_dist);
         self.pixel_ray(x as f64 + rand_x, y as f64 + rand_y)
@@ -128,20 +128,23 @@ impl Ray {
         }
     }
 
-    pub fn trace<'object, 'ray>(&'ray self, objects: &'object [Object], max_distance: f64) -> Option<RayHit<'ray, 'object>> {
-        objects.into_iter()
-            .flat_map(|o| o.intersect(self).map(|i| (o, i)))         // intersect with each object
-            .filter(|(_, i)| i.t < max_distance)                     // exclude intersections beyond max_distance
+    pub fn trace<'object, 'ray>(
+        &'ray self,
+        objects: &'object [Object],
+        max_distance: f64,
+    ) -> Option<RayHit<'ray, 'object>> {
+        objects
+            .into_iter()
+            .flat_map(|o| o.intersect(self).map(|i| (o, i))) // intersect with each object
+            .filter(|(_, i)| i.t < max_distance) // exclude intersections beyond max_distance
             .min_by(|(_, a), (_, b)| a.t.partial_cmp(&b.t).unwrap()) // find the nearest
-            .map(|(o, i)| RayHit::new(self, o, i))                   // create RayHit
+            .map(|(o, i)| RayHit::new(self, o, i)) // create RayHit
     }
 
     pub fn hit_color(&self, context: &RenderContext, hit: &RayHit) -> Color {
         let e = hit.object.material.emit(context, hit);
         let sr = hit.object.material.scatter(context, hit);
-        let s = sr.map(|s| {
-            s.attenuation * Ray::primary(s.origin, s.direction, self.depth + 1).cast(context)
-        });
+        let s = sr.map(|s| s.attenuation * Ray::primary(s.origin, s.direction, self.depth + 1).cast(context));
         let s = s.unwrap_or(context.scene.options.background_color);
 
         e + s
@@ -167,7 +170,13 @@ pub struct RayHit<'ray, 'object> {
 
 impl<'ray, 'object> RayHit<'ray, 'object> {
     pub fn new(incident: &'ray Ray, object: &'object Object, i: Intersection) -> RayHit<'ray, 'object> {
-        RayHit { object, incident, t: i.t, n: i.n, uv: i.uv }
+        RayHit {
+            object,
+            incident,
+            t: i.t,
+            n: i.n,
+            uv: i.uv,
+        }
     }
 
     pub fn point(&self) -> Point {
@@ -239,16 +248,14 @@ fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
 }
 
 pub fn render<T>(options: Options, scene: Scene, progress: &mut T)
-where T: RenderProgress,
+where
+    T: RenderProgress,
 {
     progress.render_started(&options);
 
     let mut renderbuf = alloc_render_buf(options.width, options.height);
 
-    let context = Arc::new(RenderContext {
-        options,
-        scene,
-    });
+    let context = Arc::new(RenderContext { options, scene });
 
     for current_sample in 0..options.samples {
         progress.sample_started(&options);

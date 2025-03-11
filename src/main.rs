@@ -1,13 +1,13 @@
-extern crate image; 
-extern crate clap; 
-extern crate wavefront_obj; 
-extern crate pbr; 
-extern crate num_cpus; 
-extern crate time; 
-extern crate rand; 
-extern crate rayon;
+extern crate clap;
+extern crate image;
 extern crate num_complex;
+extern crate num_cpus;
 extern crate num_traits;
+extern crate pbr;
+extern crate rand;
+extern crate rayon;
+extern crate time;
+extern crate wavefront_obj;
 
 #[cfg(test)]
 #[macro_use]
@@ -21,26 +21,30 @@ mod matrix;
 mod object;
 mod point;
 mod sdl;
+mod sdl_grammar;
 mod shapes;
 mod system;
 mod texture;
 mod vector;
-mod sdl_grammar;
 
+use std::fs::File;
 use std::io::Stdout;
 use std::io::prelude::*;
-use std::fs::File;
 
 use clap::Parser;
 use pbr::ProgressBar;
 use rayon::ThreadPoolBuilder;
 
-use color::Color;
-use system::Options;
-use system::RenderProgress;
+use crate::color::Color;
+use crate::system::Options;
+use crate::system::RenderProgress;
 
 #[derive(Parser)]
-#[command(version = "0.1.0", author = "Gordon Tyler <gordon@doxxx.net>", about = "Simple ray tracer")]
+#[command(
+    version = "0.1.0",
+    author = "Gordon Tyler <gordon@doxxx.net>",
+    about = "Simple ray tracer"
+)]
 struct CommandLineOptions {
     /// Image width
     #[arg(short, long, default_value = "1024", value_parser = clap::value_parser!(u32).range(1..))]
@@ -116,7 +120,10 @@ impl CliRenderProgress {
 
 impl RenderProgress for CliRenderProgress {
     fn render_started(&mut self, options: &Options) {
-        println!("Rendering {}x{}, {} samples per pixel, using {} threads.", options.width, options.height, options.samples, options.num_threads);
+        println!(
+            "Rendering {}x{}, {} samples per pixel, using {} threads.",
+            options.width, options.height, options.samples, options.num_threads
+        );
         println!("Started at {}", self.start_time.rfc822());
 
         // Trigger initial progress bar draw
@@ -153,7 +160,11 @@ impl RenderProgress for CliRenderProgress {
         let end_time = time::now();
         let elapsed = time::SteadyTime::now() - self.steady_start_time;
 
-        self.pb.finish_println(&format!("Finished at {} ({})", end_time.rfc822(), format_duration(elapsed)));
+        self.pb.finish_println(&format!(
+            "Finished at {} ({})",
+            end_time.rfc822(),
+            format_duration(elapsed)
+        ));
     }
 }
 
@@ -164,7 +175,11 @@ fn color_to_rgb(v: Color) -> image::Rgb<u8> {
     image::Rgb([r, g, b])
 }
 
-fn convert_render_result_to_image(renderbuf: &Vec<Vec<Color>>, num_samples: f64, imgbuf: &mut image::ImageBuffer<image::Rgb<u8>, Vec<u8>>) {
+fn convert_render_result_to_image(
+    renderbuf: &Vec<Vec<Color>>,
+    num_samples: f64,
+    imgbuf: &mut image::ImageBuffer<image::Rgb<u8>, Vec<u8>>,
+) {
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         let row = &renderbuf[y as usize];
         let c = (row[x as usize] / num_samples).gamma_2();
@@ -177,7 +192,9 @@ fn write_render_result_to_file(options: &Options, filename: &str, renderbuf: &Ve
     convert_render_result_to_image(&renderbuf, (current_sample + 1) as f64, &mut imgbuf);
 
     let ref mut fout = File::create(filename).expect("Could not open output file");
-    image::ImageRgb8(imgbuf).save(fout, image::PNG).expect("Could not write render result to output file");
+    image::ImageRgb8(imgbuf)
+        .save(fout, image::PNG)
+        .expect("Could not write render result to output file");
 }
 
 fn format_duration(mut d: time::Duration) -> String {

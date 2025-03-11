@@ -2,13 +2,13 @@
 
 use std::f64;
 
-use algebra::solve_quartic_f64;
-use direction::{Direction, Dot};
-use matrix::Matrix44f;
-use object::Transformation;
-use shapes::{Interval, Shape};
-use system::{Intersectable, Intersection, Ray, Transformable};
-use vector::Vector2f;
+use crate::algebra::solve_quartic_f64;
+use crate::direction::{Direction, Dot};
+use crate::matrix::Matrix44f;
+use crate::object::Transformation;
+use crate::shapes::{Interval, Shape};
+use crate::system::{Intersectable, Intersection, Ray, Transformable};
+use crate::vector::Vector2f;
 
 pub struct Torus {
     radius1: f64,
@@ -128,10 +128,10 @@ impl Shape for Torus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use direction::*;
-    use point::*;
-    use system::Ray;
-    use test_utils::*;
+    use crate::direction::*;
+    use crate::point::*;
+    use crate::system::Ray;
+    use crate::test_utils::*;
 
     #[test]
     pub fn front_orthogonal_intersection() {
