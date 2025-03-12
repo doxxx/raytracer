@@ -3,7 +3,6 @@ use std::f64;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use rand::distr::Uniform;
 use rand::prelude::*;
 use rayon::prelude::*;
 
@@ -32,7 +31,6 @@ pub struct Camera {
     height: f64,
     fov_factor: f64,
     camera_to_world: Matrix44f,
-    uniform_dist: Uniform<f64>,
 }
 
 impl Camera {
@@ -53,7 +51,6 @@ impl Camera {
             height,
             fov_factor: (fov * 0.5).to_radians().tan(),
             camera_to_world,
-            uniform_dist: Uniform::new(-0.5, 0.5).expect("Failed to create uniform distribution"),
         }
     }
 
@@ -66,13 +63,6 @@ impl Camera {
         let origin = Point::zero() * self.camera_to_world;
         let dir_point = Point::new(cx, cy, -1.0) * self.camera_to_world;
         Ray::primary(origin, (dir_point - origin).normalize(), 0)
-    }
-
-    fn random_pixel_ray(&self, x: u32, y: u32) -> Ray {
-        let mut rng = rand::rng();
-        let rand_x: f64 = 0.5 + rng.sample(self.uniform_dist);
-        let rand_y: f64 = 0.5 + rng.sample(self.uniform_dist);
-        self.pixel_ray(x as f64 + rand_x, y as f64 + rand_y)
     }
 }
 
@@ -226,16 +216,14 @@ pub trait Transformable {
 pub struct RenderContext {
     pub options: Options,
     pub scene: Scene,
+    pub sqrt_spp: u32,
+    pub recip_sqrt_spp: f64,
 }
 
 pub trait RenderProgress {
     fn render_started(&mut self, options: &Options);
     fn sample_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>);
     fn render_finished(&mut self, options: &Options, renderbuf: &Vec<Vec<Color>>);
-}
-
-fn color_at_pixel(context: &RenderContext, x: u32, y: u32) -> Color {
-    context.scene.camera.random_pixel_ray(x, y).cast(&context)
 }
 
 fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
@@ -246,10 +234,20 @@ fn alloc_render_buf(width: u32, height: u32) -> Vec<Vec<Color>> {
     renderbuf
 }
 
-fn render_sample(context: &RenderContext, buf: &mut Vec<Vec<Color>>) {
+fn get_stratified_ray(context: &RenderContext, x: u32, y: u32, s_i: u32, s_j: u32) -> Ray {
+    let mut rng = rand::rng();
+    let s_x = ((s_i as f64 + rng.random::<f64>()) * context.recip_sqrt_spp) - 0.5;
+    let s_y = ((s_j as f64 + rng.random::<f64>()) * context.recip_sqrt_spp) - 0.5;
+    context.scene.camera.pixel_ray(x as f64 + s_x, y as f64 + s_y)
+}
+
+fn render_sample(context: &RenderContext, buf: &mut Vec<Vec<Color>>, s_i: u32, s_j: u32) {
     buf.iter_mut().enumerate().for_each(|(y, row)| {
         row.iter_mut().enumerate().for_each(|(x, pixel)| {
-            *pixel = color_at_pixel(&context, x as u32, y as u32);
+            let x = x as u32;
+            let y = y as u32;
+            let ray = get_stratified_ray(context, x, y, s_i, s_j);
+            *pixel = ray.cast(&context);
         });
     });
 }
@@ -272,16 +270,25 @@ where
     }
 
     let render_buf = Arc::new(Mutex::new(alloc_render_buf(options.width, options.height)));
-    let context = Arc::new(RenderContext { options, scene });
+    let context = Arc::new(RenderContext {
+        options,
+        scene,
+        sqrt_spp: (options.samples as f64).sqrt() as u32,
+        recip_sqrt_spp: (options.samples as f64).sqrt().recip(),
+    });
 
     {
         let render_buf = render_buf.clone();
         let progress = progress.clone();
 
-        (0..options.samples).into_par_iter().for_each(move |_| {
+        let strat_coords: Vec<(u32, u32)> = (0..context.sqrt_spp)
+            .flat_map(|i| (0..context.sqrt_spp).map(move |j| (i, j)))
+            .collect();
+
+        strat_coords.into_par_iter().for_each(move |(s_i, s_j)| {
             let mut sample_buf = alloc_render_buf(options.width, options.height);
 
-            render_sample(&context, &mut sample_buf);
+            render_sample(&context, &mut sample_buf, s_i, s_j);
 
             {
                 let mut render_buf_guard = render_buf.lock().unwrap();
