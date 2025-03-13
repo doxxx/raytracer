@@ -87,17 +87,17 @@ fn main() {
         samples: opts.samples,
     };
 
+    ThreadPoolBuilder::new()
+        .num_threads(rendering_options.num_threads)
+        .build_global()
+        .expect("could not configure threadpool");
+
     let scene = {
         let mut f = File::open(&opts.scene).expect("could not open scene file");
         let mut text = String::new();
         f.read_to_string(&mut text).expect("could not read scene file");
         sdl::parse(&rendering_options, &text).expect("could not parse scene file")
     };
-
-    ThreadPoolBuilder::new()
-        .num_threads(rendering_options.num_threads)
-        .build_global()
-        .expect("could not configure threadpool");
 
     let mut progress = Arc::new(Mutex::new(CliRenderProgress::new("out.png")));
 
